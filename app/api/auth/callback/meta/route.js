@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url)
@@ -32,20 +31,46 @@ export async function GET(request) {
     const expiresAt = new Date(Date.now() + (longData.expires_in || 5184000) * 1000)
     const accessToken = longData.access_token
 
-    const accsRes = await fetch(
+    const allAccounts = []
+
+    const personalRes = await fetch(
       `https://graph.facebook.com/v21.0/me/adaccounts?fields=id,name,account_status&limit=50&access_token=${accessToken}`
     )
-    const accsData = await accsRes.json()
-    const accounts = accsData.data || []
+    const personalData = await personalRes.json()
+    ;(personalData.data || []).forEach(a => allAccounts.push({ id: a.id, name: a.name, status: a.account_status }))
+
+    const bizRes = await fetch(
+      `https://graph.facebook.com/v21.0/me/businesses?fields=id,name&limit=50&access_token=${accessToken}`
+    )
+    const bizData = await bizRes.json()
+    const businesses = bizData.data || []
+
+    for (const biz of businesses) {
+      const clientRes = await fetch(
+        `https://graph.facebook.com/v21.0/${biz.id}/client_ad_accounts?fields=id,name,account_status&limit=50&access_token=${accessToken}`
+      )
+      const clientData = await clientRes.json()
+      ;(clientData.data || []).forEach(a => {
+        if (!allAccounts.find(x => x.id === a.id)) {
+          allAccounts.push({ id: a.id, name: a.name || a.id, status: a.account_status })
+        }
+      })
+
+      const ownedRes = await fetch(
+        `https://graph.facebook.com/v21.0/${biz.id}/owned_ad_accounts?fields=id,name,account_status&limit=50&access_token=${accessToken}`
+      )
+      const ownedData = await ownedRes.json()
+      ;(ownedData.data || []).forEach(a => {
+        if (!allAccounts.find(x => x.id === a.id)) {
+          allAccounts.push({ id: a.id, name: a.name || a.id, status: a.account_status })
+        }
+      })
+    }
 
     const encoded = encodeURIComponent(JSON.stringify({
       token: accessToken,
       expires: expiresAt.toISOString(),
-      accounts: accounts.map(a => ({
-        id: a.id,
-        name: a.name,
-        status: a.account_status
-      }))
+      accounts: allAccounts
     }))
 
     return NextResponse.redirect(
