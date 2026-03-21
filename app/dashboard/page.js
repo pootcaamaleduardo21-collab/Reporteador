@@ -5,18 +5,24 @@ import { supabase } from '../lib/supabase'
 export default function Dashboard() {
   const [user, setUser] = useState(null)
   const [accounts, setAccounts] = useState([])
-  const [metaConnected, setMetaConnected] = useState(false)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    supabase.auth.getUser().then(async ({ data }) => {
-      if (!data.user) { window.location.href = '/'; return }
-      setUser(data.user)
-      const { data: accs } = await supabase.from('ad_accounts').select('*')
-      if (accs && accs.length > 0) {
-        setAccounts(accs)
-        setMetaConnected(true)
-      }
-    })
+    async function init() {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { window.location.href = '/'; return }
+      setUser(user)
+
+      const { data: accs, error } = await supabase
+        .from('ad_accounts')
+        .select('*')
+        .eq('user_id', user.id)
+
+      console.log('accounts:', accs, 'error:', error)
+      if (accs) setAccounts(accs)
+      setLoading(false)
+    }
+    init()
   }, [])
 
   async function handleLogout() {
@@ -43,7 +49,9 @@ export default function Dashboard() {
       </header>
 
       <div style={{padding:'48px 36px',maxWidth:'900px',margin:'0 auto'}}>
-        {!metaConnected ? (
+        {loading ? (
+          <div style={{textAlign:'center',padding:'80px 0',color:'#666',fontFamily:'monospace'}}>Cargando cuentas...</div>
+        ) : accounts.length === 0 ? (
           <div style={{textAlign:'center',padding:'80px 0'}}>
             <div style={{fontSize:'48px',marginBottom:'24px'}}>📊</div>
             <h1 style={{color:'#fff',fontSize:'24px',fontWeight:'800',marginBottom:'12px'}}>Conecta tu cuenta de Meta Ads</h1>
