@@ -117,6 +117,129 @@ const MiniMetric = ({l,v,alert,pos}) => (
   </div>
 )
 
+
+const diagnoseCampaign = (row) => {
+  const issues = []
+  const wins = []
+  if (row.frequency > 3.5) issues.push({ icon: '🔴', msg: 'Fatiga publicitaria — rota los creativos urgente', action: 'Pausa los anuncios con mas de 3.5 frecuencia y lanza nuevos creativos' })
+  else if (row.frequency > 2.5) issues.push({ icon: '🟡', msg: 'Frecuencia elevada — monitorea el CTR', action: 'Prepara nuevos creativos antes de que el rendimiento caiga' })
+  if (row.ctr < 0.5) issues.push({ icon: '🔴', msg: 'CTR muy bajo — el creativo no engancha', action: 'Cambia la imagen/video y el primer segundo del copy' })
+  else if (row.ctr < 1) issues.push({ icon: '🟡', msg: 'CTR mejorable', action: 'Prueba un hook mas directo o una oferta mas clara' })
+  else if (row.ctr >= 2) wins.push({ icon: '🟢', msg: 'CTR excelente — este creativo funciona', action: 'Escala el presupuesto 20-30% cada 3 dias' })
+  if (row.cpm > 150) issues.push({ icon: '🔴', msg: 'CPM muy alto — audiencia saturada o puja competitiva', action: 'Amplia la segmentacion o prueba otras ubicaciones' })
+  else if (row.cpm > 100) issues.push({ icon: '🟡', msg: 'CPM elevado', action: 'Revisa la segmentacion y considera ampliar la audiencia' })
+  if (row.results > 0 && row.cpr > 0) wins.push({ icon: '🟢', msg: 'Generando resultados', action: 'Mantener activo y escalar si el CPR es rentable' })
+  if (row.results === 0 && row.spend > 50) issues.push({ icon: '🔴', msg: 'Sin resultados con gasto significativo', action: 'Revisa el objetivo, la segmentacion y la landing page' })
+  if (row.vid25 > 0 && row.vid100 > 0) {
+    const retention = Math.round(row.vid100/row.vid25*100)
+    if (retention < 20) issues.push({ icon: '🟡', msg: `Retencion de video baja (${retention}% llega al final)`, action: 'El gancho inicial funciona pero el video pierde atencion — edita el ritmo' })
+    else if (retention >= 40) wins.push({ icon: '🟢', msg: `Buena retencion de video (${retention}% llega al final)`, action: 'Video efectivo — considera usarlo en mas conjuntos' })
+  }
+  return { issues, wins }
+}
+
+const AdScoreCard = ({ ad }) => {
+  const qs = qualityScore(ad)
+  const ql = qualityLabel(qs)
+  const diag = diagnoseCampaign(ad)
+  const [open, setOpen] = React.useState(false)
+  return (
+    <div style={{background:'#111116',border:`1px solid ${qs>=75?'rgba(110,231,183,.2)':qs>=50?'rgba(252,211,77,.15)':'rgba(248,113,113,.2)'}`,borderRadius:'10px',padding:'16px 20px',marginBottom:'8px'}}>
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'10px',flexWrap:'wrap',gap:'8px',cursor:'pointer'}} onClick={()=>setOpen(!open)}>
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'2px'}}>
+            <div style={{width:'8px',height:'8px',borderRadius:'50%',background:ad.status==='ACTIVE'?'#6ee7b7':ad.status==='PAUSED'?'#fcd34d':'#555',flexShrink:0}}></div>
+            <div style={{color:'#fff',fontSize:'13px',fontWeight:'700',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{ad.name}</div>
+          </div>
+          <div style={{color:'#333',fontSize:'10px',fontFamily:'monospace',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',paddingLeft:'16px'}}>{ad.adset} · {ad.campaign}</div>
+        </div>
+        <div style={{display:'flex',alignItems:'center',gap:'12px',flexShrink:0}}>
+          <div style={{textAlign:'center',background:qs>=75?'rgba(110,231,183,.08)':qs>=50?'rgba(252,211,77,.08)':'rgba(248,113,113,.08)',borderRadius:'8px',padding:'6px 12px',border:`1px solid ${qs>=75?'rgba(110,231,183,.2)':qs>=50?'rgba(252,211,77,.15)':'rgba(248,113,113,.2)'}`}}>
+            <div style={{fontSize:'18px',fontWeight:'800',color:ql.color}}>{qs}</div>
+            <div style={{fontSize:'9px',color:ql.color,fontFamily:'monospace'}}>/100</div>
+          </div>
+          <div style={{textAlign:'right'}}>
+            <div style={{fontSize:'16px',fontWeight:'800',color:'#fff'}}>{fmt$(ad.spend)}</div>
+            <div style={{fontSize:'10px',color:ad.results>0?'#6ee7b7':'#555',fontFamily:'monospace'}}>{fmtN(ad.results)} resultados</div>
+          </div>
+          <div style={{color:'#444',fontSize:'16px'}}>{open?'▲':'▼'}</div>
+        </div>
+      </div>
+
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(80px,1fr))',gap:'6px',marginBottom:open?'12px':'0'}}>
+        {[
+          {l:'CTR',v:fmtP(ad.ctr),alert:ad.ctr<1,pos:ad.ctr>=2},
+          {l:'CPM',v:fmt$(ad.cpm),alert:ad.cpm>150},
+          {l:'CPC',v:fmt$(ad.cpc)},
+          {l:'Frecuencia',v:(+ad.frequency).toFixed(2),alert:ad.frequency>3.5,pos:ad.frequency<=2},
+          {l:'Alcance',v:fmtN(ad.reach)},
+          {l:'Impresiones',v:fmtN(ad.impressions)},
+          {l:'Reacciones',v:fmtN(ad.reactions)},
+          {l:'Guardados',v:fmtN(ad.saves)},
+        ].map(m=>(
+          <div key={m.l} style={{background:'#0d0d12',borderRadius:'6px',padding:'6px 8px',border:`1px solid ${m.alert?'rgba(248,113,113,.15)':m.pos?'rgba(110,231,183,.1)':'transparent'}`}}>
+            <div style={{fontSize:'9px',color:'#333',fontFamily:'monospace',marginBottom:'2px'}}>{m.l}</div>
+            <div style={{fontSize:'12px',fontWeight:'700',color:m.alert?'#f87171':m.pos?'#6ee7b7':'#fff'}}>{m.v}</div>
+          </div>
+        ))}
+      </div>
+
+      {open && (
+        <div style={{borderTop:'1px solid #1a1a22',paddingTop:'12px',marginTop:'4px'}}>
+          {diag.wins.length>0 && (
+            <div style={{marginBottom:'8px'}}>
+              {diag.wins.map((w,i)=>(
+                <div key={i} style={{display:'flex',gap:'8px',marginBottom:'6px',padding:'8px 12px',background:'rgba(110,231,183,.05)',borderRadius:'6px',border:'1px solid rgba(110,231,183,.1)'}}>
+                  <span style={{fontSize:'14px',flexShrink:0}}>{w.icon}</span>
+                  <div>
+                    <div style={{fontSize:'12px',color:'#6ee7b7',fontWeight:'600',marginBottom:'2px'}}>{w.msg}</div>
+                    <div style={{fontSize:'11px',color:'#444',fontFamily:'monospace'}}>→ {w.action}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          {diag.issues.length>0 && (
+            <div>
+              {diag.issues.map((issue,i)=>(
+                <div key={i} style={{display:'flex',gap:'8px',marginBottom:'6px',padding:'8px 12px',background:'rgba(248,113,113,.04)',borderRadius:'6px',border:'1px solid rgba(248,113,113,.1)'}}>
+                  <span style={{fontSize:'14px',flexShrink:0}}>{issue.icon}</span>
+                  <div>
+                    <div style={{fontSize:'12px',color:'#f87171',fontWeight:'600',marginBottom:'2px'}}>{issue.msg}</div>
+                    <div style={{fontSize:'11px',color:'#444',fontFamily:'monospace'}}>→ {issue.action}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          {diag.wins.length===0 && diag.issues.length===0 && (
+            <div style={{fontSize:'11px',color:'#444',fontFamily:'monospace',textAlign:'center',padding:'8px'}}>Sin datos suficientes para diagnosticar</div>
+          )}
+
+          {ad.vid25>0 && (
+            <div style={{marginTop:'12px'}}>
+              <div style={{fontSize:'9px',color:'#444',fontFamily:'monospace',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:'8px'}}>Retencion de video</div>
+              <div style={{display:'flex',gap:'4px',alignItems:'flex-end',height:'60px'}}>
+                {[{l:'25%',v:ad.vid25},{l:'50%',v:ad.vid50},{l:'75%',v:ad.vid75},{l:'100%',v:ad.vid100}].map((b,i,arr)=>{
+                  const max=arr[0].v||1; const pct=Math.round(b.v/max*100)
+                  const color = pct>60?'#6ee7b7':pct>30?'#fcd34d':'#f87171'
+                  return (
+                    <div key={b.l} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:'2px'}}>
+                      <div style={{fontSize:'9px',color:'#fff',fontWeight:'700'}}>{pct}%</div>
+                      <div style={{width:'100%',height:Math.max(pct*.4,2)+'px',background:color,borderRadius:'2px 2px 0 0',opacity:.8}}></div>
+                      <div style={{fontSize:'9px',color:'#444',fontFamily:'monospace'}}>{b.l}</div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 const RowCard = ({name, sub, row}) => {
   const qs = qualityScore(row); const ql = qualityLabel(qs)
   return (
@@ -447,7 +570,12 @@ export default function Reportes() {
 
           {activeTab==='anuncios' && (
             <>
-              {ads.map((a,i)=><RowCard key={i} name={a.name} sub={`${a.adset} · ${a.campaign}`} row={a}/>)}
+              {ads.length>0 && (
+                <div style={{background:'rgba(167,139,250,.05)',border:'1px solid rgba(167,139,250,.15)',borderRadius:'8px',padding:'10px 16px',marginBottom:'16px',fontSize:'11px',color:'#a78bfa',fontFamily:'monospace'}}>
+                  🎯 Score de creativos — haz clic en cada anuncio para ver el diagnostico detallado y recomendaciones
+                </div>
+              )}
+              {[...ads].sort((a,b)=>qualityScore(b)-qualityScore(a)).map((a,i)=><AdScoreCard key={i} ad={a}/>)}
               {ads.length===0&&<div style={{textAlign:'center',padding:'60px 0',color:'#444',fontFamily:'monospace'}}>Sin datos para este periodo</div>}
             </>
           )}
