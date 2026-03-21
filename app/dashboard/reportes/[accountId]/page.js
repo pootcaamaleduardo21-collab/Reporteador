@@ -212,10 +212,14 @@ export default function Reportes() {
         fetch(`${base}?fields=${fields}&time_range=${tr}&time_increment=1&access_token=${token}&limit=90`),
         fetch(`${base}?fields=${campFields}&level=campaign&time_range=${tr}&limit=50&access_token=${token}`),
         fetch(`${base}?fields=${adsetFields}&level=adset&time_range=${tr}&limit=50&access_token=${token}`),
-        fetch(`${base}?fields=${adFields},effective_status&level=ad&time_range=${tr}&limit=50&access_token=${token}`)
+        fetch(`${base}?fields=${adFields}&level=ad&time_range=${tr}&limit=50&access_token=${token}`)
       ])
 
       const [ovJ,ovPrevJ,dailyJ,campJ,adsetJ,adJ] = await Promise.all([ovR.json(),ovPrevR.json(),dailyR.json(),campR.json(),adsetR.json(),adR.json()])
+      const adStatusRes = await fetch(`https://graph.facebook.com/v21.0/${accountId}/ads?fields=id,name,effective_status&limit=100&access_token=${token}`)
+      const adStatusJ = await adStatusRes.json()
+      const adStatusMap = {}
+      ;(adStatusJ.data||[]).forEach(a=>{ adStatusMap[a.name]=a.effective_status })
 
       const objective = ovJ.data?.[0]?.objective || 'MULTIPLE'
       setDetectedObjective(objective)
@@ -257,7 +261,7 @@ export default function Reportes() {
       setDaily((dailyJ.data||[]).map(d=>({date:d.date_start,...parseRow(d)})))
       setCampaigns((campJ.data||[]).map(d=>({name:d.campaign_name,objective:d.objective,...parseRow(d)})))
       setAdsets((adsetJ.data||[]).map(d=>({name:d.adset_name,campaign:d.campaign_name,...parseRow(d)})))
-      setAds((adJ.data||[]).map(d=>({name:d.ad_name,adset:d.adset_name,campaign:d.campaign_name,status:d.effective_status||'UNKNOWN',...parseRow(d)})))
+      setAds((adJ.data||[]).map(d=>({name:d.ad_name,adset:d.adset_name,campaign:d.campaign_name,status:adStatusMap[d.ad_name]||'UNKNOWN',...parseRow(d)})))
     } catch(e){console.error(e)}
     setLoading(false)
   }
