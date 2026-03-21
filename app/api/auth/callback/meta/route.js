@@ -1,11 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_KEY
-)
-
 export async function GET(request) {
   const { searchParams } = new URL(request.url)
   const code = searchParams.get('code')
@@ -35,12 +30,26 @@ export async function GET(request) {
     )
     const longData = await longRes.json()
     const expiresAt = new Date(Date.now() + (longData.expires_in || 5184000) * 1000)
+    const accessToken = longData.access_token
 
-    const cookies = request.headers.get('cookie') || ''
-    const sessionMatch = cookies.match(/sb-[^=]+-auth-token=([^;]+)/)
-    
+    const accsRes = await fetch(
+      `https://graph.facebook.com/v21.0/me/adaccounts?fields=id,name,account_status&limit=50&access_token=${accessToken}`
+    )
+    const accsData = await accsRes.json()
+    const accounts = accsData.data || []
+
+    const encoded = encodeURIComponent(JSON.stringify({
+      token: accessToken,
+      expires: expiresAt.toISOString(),
+      accounts: accounts.map(a => ({
+        id: a.id,
+        name: a.name,
+        status: a.account_status
+      }))
+    }))
+
     return NextResponse.redirect(
-      `${process.env.NEXTAUTH_URL}/dashboard/connect?token=${longData.access_token}&expires=${expiresAt.toISOString()}`
+      `${process.env.NEXTAUTH_URL}/dashboard/connect?data=${encoded}`
     )
   } catch (err) {
     return NextResponse.redirect(`${process.env.NEXTAUTH_URL}/dashboard?error=meta_failed`)

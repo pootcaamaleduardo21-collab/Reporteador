@@ -10,42 +10,48 @@ function ConnectContent() {
   const [accounts, setAccounts] = useState([])
 
   useEffect(() => {
-    const token = searchParams.get('token')
-    const expires = searchParams.get('expires')
-    if (token) saveTokenAndLoadAccounts(token, expires)
+    const data = searchParams.get('data')
+    if (data) {
+      try {
+        const parsed = JSON.parse(decodeURIComponent(data))
+        saveData(parsed)
+      } catch(e) {
+        setStatus('error')
+      }
+    } else {
+      setStatus('error')
+    }
   }, [])
 
-  async function saveTokenAndLoadAccounts(token, expires) {
+  async function saveData({ token, expires, accounts }) {
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { window.location.href = '/'; return }
 
-      await supabase.from('meta_tokens').upsert({
+      const { error: tokenError } = await supabase.from('meta_tokens').upsert({
         user_id: user.id,
         access_token: token,
         token_expires_at: expires,
         updated_at: new Date().toISOString()
       }, { onConflict: 'user_id' })
 
-      const res = await fetch(
-        `https://graph.facebook.com/v21.0/me/adaccounts?fields=id,name,account_status&access_token=${token}`
-      )
-      const data = await res.json()
-      const accs = data.data || []
+      console.log('token save error:', tokenError)
 
-      for (const acc of accs) {
-        await supabase.from('ad_accounts').upsert({
+      for (const acc of accounts) {
+        const { error: accError } = await supabase.from('ad_accounts').upsert({
           user_id: user.id,
           account_id: acc.id,
           account_name: acc.name,
           platform: 'meta',
-          is_active: acc.account_status === 1
+          is_active: acc.status === 1
         }, { onConflict: 'user_id,account_id' })
+        console.log('acc save error:', accError)
       }
 
-      setAccounts(accs)
+      setAccounts(accounts)
       setStatus('success')
     } catch(err) {
+      console.log('error:', err)
       setStatus('error')
     }
   }
@@ -68,8 +74,8 @@ function ConnectContent() {
             {accounts.map(acc => (
               <div key={acc.id} style={{background:'#18181f',border:'1px solid #2a2a35',borderRadius:'8px',padding:'12px 16px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
                 <span style={{color:'#fff',fontSize:'13px',fontWeight:'600'}}>{acc.name}</span>
-                <span style={{fontSize:'10px',fontFamily:'monospace',color:acc.account_status===1?'#6ee7b7':'#f87171'}}>
-                  {acc.account_status===1?'ACTIVA':'PAUSADA'}
+                <span style={{fontSize:'10px',fontFamily:'monospace',color:acc.status===1?'#6ee7b7':'#f87171'}}>
+                  {acc.status===1?'ACTIVA':'PAUSADA'}
                 </span>
               </div>
             ))}
