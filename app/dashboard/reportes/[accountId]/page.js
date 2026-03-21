@@ -37,15 +37,16 @@ export default function Reportes() {
   const [loading, setLoading] = useState(false)
   const [accountName, setAccountName] = useState('')
 
-  useEffect(() => {
+   useEffect(() => {
     async function init() {
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { window.location.href = '/'; return }
-      const { data: tokenRow } = await supabase.from('meta_tokens').select('access_token').eq('user_id', user.id).single()
-      if (!tokenRow) { window.location.href = '/dashboard'; return }
+      if (!user) { setAccountName('ERROR: no user'); return }
+      const { data: tokenRow, error: tokenError } = await supabase.from('meta_tokens').select('access_token').eq('user_id', user.id).single()
+      if (!tokenRow) { setAccountName('ERROR: no token - ' + JSON.stringify(tokenError)); return }
       setToken(tokenRow.access_token)
       const { data: acc } = await supabase.from('ad_accounts').select('account_name').eq('account_id', accountId).single()
       if (acc) setAccountName(acc.account_name)
+      else setAccountName('cuenta ' + accountId)
     }
     init()
   }, [])
