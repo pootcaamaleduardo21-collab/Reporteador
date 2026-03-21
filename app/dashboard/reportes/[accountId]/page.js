@@ -62,7 +62,7 @@ const fmtP = v => ((+v)||0).toFixed(2)+'%'
 const findAction = (actions, types) => { const m = (actions||[]).find(a => types.some(t => a.action_type?.includes(t))); return m ? parseFloat(m.value)||0 : 0 }
 
 function getResults(actions, resultType) {
-  if (resultType === 'messages') return findAction(actions, ['onsite_conversion.messaging_conversation_started_7d','onsite_conversion.total_messaging_connection'])
+  if (resultType === 'messages') return findAction(actions, ['onsite_conversion.messaging_conversation_started_7d'])
   if (resultType === 'leads') return findAction(actions, ['lead','onsite_conversion.lead','offsite_complete_registration'])
   if (resultType === 'purchases') return findAction(actions, ['purchase','offsite_conversion.fb_pixel_purchase'])
   if (resultType === 'traffic') return findAction(actions, ['link_click'])
