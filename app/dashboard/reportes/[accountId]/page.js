@@ -124,7 +124,7 @@ const RowCard = ({name, sub, row}) => {
       <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'12px',flexWrap:'wrap',gap:'8px'}}>
         <div style={{flex:1,minWidth:0}}>
           <div style={{color:'#fff',fontSize:'13px',fontWeight:'700',marginBottom:'2px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{name}</div>
-          {sub && <div style={{color:'#333',fontSize:'10px',fontFamily:'monospace',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{sub}</div>}
+          {sub && <div style={{color:'#333',fontSize:'10px',fontFamily:'monospace',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{sub}</div>}{row.status && <div style={{display:'inline-flex',alignItems:'center',gap:'4px',marginTop:'4px'}}><div style={{width:'6px',height:'6px',borderRadius:'50%',background:row.status==='ACTIVE'?'#6ee7b7':row.status==='PAUSED'?'#fcd34d':'#f87171',flexShrink:0}}></div><span style={{fontSize:'9px',fontFamily:'monospace',color:row.status==='ACTIVE'?'#6ee7b7':row.status==='PAUSED'?'#fcd34d':'#f87171'}}>{row.status==='ACTIVE'?'ACTIVO':row.status==='PAUSED'?'PAUSADO':'INACTIVO'}</span></div>}
         </div>
         <div style={{display:'flex',alignItems:'center',gap:'12px',flexShrink:0}}>
           <div style={{textAlign:'right'}}>
@@ -212,7 +212,7 @@ export default function Reportes() {
         fetch(`${base}?fields=${fields}&time_range=${tr}&time_increment=1&access_token=${token}&limit=90`),
         fetch(`${base}?fields=${campFields}&level=campaign&time_range=${tr}&limit=50&access_token=${token}`),
         fetch(`${base}?fields=${adsetFields}&level=adset&time_range=${tr}&limit=50&access_token=${token}`),
-        fetch(`${base}?fields=${adFields}&level=ad&time_range=${tr}&limit=50&access_token=${token}`)
+        fetch(`${base}?fields=${adFields},effective_status&level=ad&time_range=${tr}&limit=50&access_token=${token}`)
       ])
 
       const [ovJ,ovPrevJ,dailyJ,campJ,adsetJ,adJ] = await Promise.all([ovR.json(),ovPrevR.json(),dailyR.json(),campR.json(),adsetR.json(),adR.json()])
@@ -257,7 +257,7 @@ export default function Reportes() {
       setDaily((dailyJ.data||[]).map(d=>({date:d.date_start,...parseRow(d)})))
       setCampaigns((campJ.data||[]).map(d=>({name:d.campaign_name,objective:d.objective,...parseRow(d)})))
       setAdsets((adsetJ.data||[]).map(d=>({name:d.adset_name,campaign:d.campaign_name,...parseRow(d)})))
-      setAds((adJ.data||[]).map(d=>({name:d.ad_name,adset:d.adset_name,campaign:d.campaign_name,...parseRow(d)})))
+      setAds((adJ.data||[]).map(d=>({name:d.ad_name,adset:d.adset_name,campaign:d.campaign_name,status:d.effective_status||'UNKNOWN',...parseRow(d)})))
     } catch(e){console.error(e)}
     setLoading(false)
   }
