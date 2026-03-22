@@ -375,6 +375,8 @@ const MapChart = ({ countryData, regionData }) => {
     link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'
     document.head.appendChild(link)
 
+    console.log('regionData:', JSON.stringify(regionData?.slice(0,5)))
+    console.log('countryData:', JSON.stringify(countryData?.slice(0,3)))
     const script = document.createElement('script')
     script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
     script.onload = () => {
