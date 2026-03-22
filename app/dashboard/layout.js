@@ -14,6 +14,15 @@ export default function DashboardLayout({ children }) {
   const pathname = usePathname()
 
   useEffect(() => {
+    // Apply saved theme on load
+    const prefs = JSON.parse(localStorage.getItem('reporteador_prefs') || '{}')
+    if (prefs.theme === 'Claro') {
+      document.body.style.background = '#f0f0f5'
+      document.body.style.color = '#0c0c10'
+    }
+  }, [])
+
+  useEffect(() => {
     async function init() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/'); return }
