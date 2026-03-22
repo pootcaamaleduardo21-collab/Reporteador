@@ -113,7 +113,7 @@ export default function DashboardLayout({ children }) {
           {sidebarOpen && <div style={{fontSize:'9px',color:'#333',fontWeight:'600',letterSpacing:'.08em',textTransform:'uppercase',padding:'8px 8px 3px'}}>Principal</div>}
 
           {[
-            {id:'overview',icon:'🏠',label:'Resumen',path:'/dashboard'},
+            {id:'overview',icon:'🏠',label:'Resumen',path:'/dashboard',sub:'Pagado + organico',sub:'Pagado + organico'},
             {id:'facebook',icon:'📘',label:'Facebook',sub:'Organico',path:'/dashboard/facebook'},
             {id:'instagram',icon:'📸',label:'Instagram',sub:'Organico',path:'/dashboard/instagram'},
           ].map(s=>(

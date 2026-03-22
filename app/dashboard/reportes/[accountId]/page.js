@@ -711,36 +711,7 @@ export default function Reportes() {
 
   return (
     <div style={{background:'#0a0a0e',fontFamily:'Inter,sans-serif',minHeight:'100%'}}>
-      <div style={{background:'#0a0a0e',borderBottom:'1px solid #1a1a22',padding:'0 24px',position:'sticky',top:0,zIndex:50}}>
-        <div style={{display:'flex',alignItems:'center',gap:'0',borderTop:'1px solid #111',overflowX:'auto'}}>
-          <div style={{position:'relative',marginRight:'12px',flexShrink:0,padding:'6px 0'}}>
-            <button onClick={()=>setShowTypeDropdown(!showTypeDropdown)} style={{padding:'5px 12px',borderRadius:'6px',border:'1px solid #a78bfa',background:'rgba(167,139,250,.1)',color:'#a78bfa',fontSize:'11px',cursor:'pointer',fontFamily:'monospace',whiteSpace:'nowrap'}}>
-              Objetivo: {currentTypeLabel} ▾
-            </button>
-            {showTypeDropdown&&(
-              <div style={{position:'absolute',top:'100%',left:0,background:'#18181f',border:'1px solid #2a2a35',borderRadius:'8px',padding:'6px',zIndex:200,minWidth:'220px',boxShadow:'0 8px 24px rgba(0,0,0,.5)'}}>
-                <div onClick={()=>{setResultType('auto');setShowTypeDropdown(false)}} style={{padding:'8px 12px',borderRadius:'6px',cursor:'pointer',color:resultType==='auto'?'#a78bfa':'#888',background:resultType==='auto'?'rgba(167,139,250,.1)':'transparent',fontSize:'12px',fontFamily:'monospace',marginBottom:'4px'}}>
-                  Auto — detectar por objetivo
-                </div>
-                <div style={{height:'1px',background:'#2a2a35',margin:'4px 0'}}></div>
-                {availableTypes.map(t=>(
-                  <div key={t} onClick={()=>{setResultType(t);setShowTypeDropdown(false)}} style={{padding:'8px 12px',borderRadius:'6px',cursor:'pointer',color:resultType===t?'#a78bfa':'#888',background:resultType===t?'rgba(167,139,250,.1)':'transparent',fontSize:'12px',fontFamily:'monospace'}}>
-                    {RESULT_TYPE_LABELS[t]}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-          <div style={{flex:1,display:'flex'}}>
-            {tabs.map(t=>(
-              <button key={t} onClick={()=>setActiveTab(t)} style={{padding:'8px 14px',fontSize:'10px',fontFamily:'monospace',cursor:'pointer',color:activeTab===t?'#fff':'#444',borderBottom:activeTab===t?'1.5px solid #fff':'1.5px solid transparent',background:'transparent',border:'none',textTransform:'uppercase',letterSpacing:'.07em',whiteSpace:'nowrap'}}>
-                {tabLabels[t]}
-              </button>
-            ))}
-          </div>
-        </div>
-      
-      </div>
+
 
       {loading&&<div style={{textAlign:'center',padding:'80px 0',color:'#444',fontFamily:'monospace',fontSize:'12px'}}>Cargando datos...</div>}
 
