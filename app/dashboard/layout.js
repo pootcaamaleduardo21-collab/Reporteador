@@ -113,7 +113,7 @@ export default function DashboardLayout({ children }) {
           {sidebarOpen && <div style={{fontSize:'9px',color:'#333',fontWeight:'600',letterSpacing:'.08em',textTransform:'uppercase',padding:'8px 8px 3px'}}>Principal</div>}
 
           {[
-            {id:'overview',icon:'📊',label:'Overview',path:'/dashboard'},
+            {id:'overview',icon:'🏠',label:'Resumen',path:'/dashboard'},
             {id:'facebook',icon:'📘',label:'Facebook',sub:'Organico',path:'/dashboard/facebook'},
             {id:'instagram',icon:'📸',label:'Instagram',sub:'Organico',path:'/dashboard/instagram'},
           ].map(s=>(
@@ -146,7 +146,7 @@ export default function DashboardLayout({ children }) {
               {id:'audiencia',icon:'👥',label:'Audiencia',tab:'audiencia'},
             ].map(r=>(
               <div key={r.id} className="nav-hover"
-                onClick={()=>{ if(selectedAccount) navigate('/dashboard/reportes/'+selectedAccount.account_id+'?tab='+r.tab) }}
+                onClick={()=>{ if(selectedAccount) navigate('/dashboard/reportes/'+selectedAccount.account_id+'?tab='+r.tab); else alert('Selecciona una cuenta primero') }}
                 style={{display:'flex',alignItems:'center',gap:'8px',padding:'6px 8px 6px 20px',borderRadius:'7px',cursor:'pointer',marginBottom:'1px'}}>
                 <span style={{fontSize:'13px',width:'20px',textAlign:'center',flexShrink:0}}>{r.icon}</span>
                 <div style={{fontSize:'11px',fontWeight:'600',color:'#555',whiteSpace:'nowrap'}}>{r.label}</div>

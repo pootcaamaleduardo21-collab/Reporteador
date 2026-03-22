@@ -1,6 +1,6 @@
 'use client'
 import React, { useEffect, useState, useRef } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useSearchParams } from 'next/navigation'
 import { supabase } from '../../../lib/supabase'
 import { Line, Bar, Doughnut } from 'react-chartjs-2'
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, ArcElement, Title, Tooltip, Legend, Filler } from 'chart.js'
@@ -526,6 +526,7 @@ const MapChart = ({ countryData, regionData }) => {
 
 export default function Reportes() {
   const { accountId } = useParams()
+  const searchParams = useSearchParams()
   const [token, setToken] = useState(null)
   const [preset, setPreset] = useState('this_month')
   const [customFrom, setCustomFrom] = useState('')
@@ -546,6 +547,14 @@ export default function Reportes() {
   const [loadingDemo, setLoadingDemo] = useState(false)
   const [accountName, setAccountName] = useState('')
   const [activeTab, setActiveTab] = useState('overview')
+
+  // Sync tab from URL ?tab= param
+  useEffect(() => {
+    const tab = searchParams?.get('tab')
+    if (tab && ['overview','campanas','conjuntos','anuncios','audiencia'].includes(tab)) {
+      setActiveTab(tab)
+    }
+  }, [searchParams])
   const [comparing, setComparing] = useState(false)
   const reportRef = useRef(null)
 
@@ -701,38 +710,8 @@ export default function Reportes() {
   const currentTypeLabel = resultType==='auto'?'Auto - '+(RESULT_TYPE_LABELS[objInfo?.resultTypes?.[0]]||''):RESULT_TYPE_LABELS[resultType]||resultType
 
   return (
-    <main style={{minHeight:'100vh',background:'#0a0a0e',fontFamily:'Inter,sans-serif'}}>
-      <header style={{padding:'0 24px',background:'rgba(10,10,14,.97)',borderBottom:'1px solid #1a1a22',position:'sticky',top:0,zIndex:100}}>
-        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',height:'52px',gap:'8px',flexWrap:'wrap'}}>
-          <div style={{display:'flex',alignItems:'center',gap:'10px'}}>
-            <button onClick={()=>window.location.href='/dashboard'} style={{background:'transparent',border:'none',color:'#555',cursor:'pointer',fontSize:'18px'}}>←</button>
-            <span>📊</span>
-            <span style={{color:'#fff',fontWeight:'700',fontSize:'14px'}}>{accountName}</span>
-            {detectedObjective&&<span style={{fontSize:'10px',color:'#555',fontFamily:'monospace',background:'#18181f',padding:'2px 8px',borderRadius:'4px'}}>{OBJECTIVE_MAP[detectedObjective]?.label||detectedObjective}</span>}
-          </div>
-          <div style={{display:'flex',gap:'4px',flexWrap:'wrap'}}>
-            {PRESETS.map(p=>(
-              <button key={p.value} onClick={()=>{setPreset(p.value);setShowCustom(p.value==='custom');if(p.value!=='custom')setDemographics(null)}}
-                style={{padding:'5px 10px',borderRadius:'6px',border:'1px solid',fontSize:'11px',cursor:'pointer',fontFamily:'monospace',borderColor:preset===p.value?'#fff':'#222',background:preset===p.value?'#fff':'transparent',color:preset===p.value?'#0a0a0e':'#555',fontWeight:preset===p.value?'700':'400'}}>
-                {p.label}
-              </button>
-            ))}
-          </div>
-          <div style={{display:'flex',gap:'8px',alignItems:'center'}}>
-            <button onClick={()=>setComparing(!comparing)} style={{padding:'5px 12px',borderRadius:'6px',border:'1px solid',fontSize:'11px',cursor:'pointer',fontFamily:'monospace',borderColor:comparing?'#6ee7b7':'#222',background:comparing?'rgba(110,231,183,.1)':'transparent',color:comparing?'#6ee7b7':'#555'}}>{comparing?'Comparando':'Comparar'}</button>
-            <button onClick={exportPDF} style={{padding:'5px 12px',borderRadius:'6px',border:'1px solid #222',background:'transparent',color:'#555',fontSize:'11px',cursor:'pointer',fontFamily:'monospace'}}>PDF</button>
-          </div>
-        </div>
-
-        {showCustom&&(
-          <div style={{display:'flex',gap:'8px',padding:'6px 0',alignItems:'center'}}>
-            <span style={{fontSize:'11px',color:'#444',fontFamily:'monospace'}}>Desde</span>
-            <input type="date" value={customFrom} onChange={e=>{setCustomFrom(e.target.value);setDemographics(null)}} style={{background:'#18181f',border:'1px solid #2a2a35',color:'#fff',padding:'4px 8px',borderRadius:'6px',fontSize:'11px',outline:'none'}}/>
-            <span style={{fontSize:'11px',color:'#444',fontFamily:'monospace'}}>Hasta</span>
-            <input type="date" value={customTo} onChange={e=>{setCustomTo(e.target.value);setDemographics(null)}} style={{background:'#18181f',border:'1px solid #2a2a35',color:'#fff',padding:'4px 8px',borderRadius:'6px',fontSize:'11px',outline:'none'}}/>
-          </div>
-        )}
-
+    <div style={{background:'#0a0a0e',fontFamily:'Inter,sans-serif',minHeight:'100%'}}>
+      <div style={{background:'#0a0a0e',borderBottom:'1px solid #1a1a22',padding:'0 24px',position:'sticky',top:0,zIndex:50}}>
         <div style={{display:'flex',alignItems:'center',gap:'0',borderTop:'1px solid #111',overflowX:'auto'}}>
           <div style={{position:'relative',marginRight:'12px',flexShrink:0,padding:'6px 0'}}>
             <button onClick={()=>setShowTypeDropdown(!showTypeDropdown)} style={{padding:'5px 12px',borderRadius:'6px',border:'1px solid #a78bfa',background:'rgba(167,139,250,.1)',color:'#a78bfa',fontSize:'11px',cursor:'pointer',fontFamily:'monospace',whiteSpace:'nowrap'}}>
@@ -760,7 +739,8 @@ export default function Reportes() {
             ))}
           </div>
         </div>
-      </header>
+      
+      </div>
 
       {loading&&<div style={{textAlign:'center',padding:'80px 0',color:'#444',fontFamily:'monospace',fontSize:'12px'}}>Cargando datos...</div>}
 
@@ -1074,6 +1054,6 @@ export default function Reportes() {
           )}
         </div>
       )}
-    </main>
+    </div>
   )
 }
