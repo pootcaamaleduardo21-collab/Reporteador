@@ -375,10 +375,10 @@ const MapChart = ({ countryData, regionData }) => {
     link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'
     document.head.appendChild(link)
 
-    console.log('regionData:', JSON.stringify(regionData?.slice(0,5)))
-    console.log('countryData:', JSON.stringify(countryData?.slice(0,3)))
     const script = document.createElement('script')
     script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
+    const RC = REGION_COORDS
+    const CC = COUNTRY_COORDS
     script.onload = () => {
       if (!mapRef.current || mapInstanceRef.current) return
       const L = window.L
@@ -396,7 +396,7 @@ const MapChart = ({ countryData, regionData }) => {
       let topLat=22, topLng=-95, topZoom=4, hasRegion=false
 
       ;(regionData||[]).forEach((r,i) => {
-        const coords = REGION_COORDS[r.region]
+        const coords = RC[r.region]
         if (!coords) return
         const spend = parseFloat(r.spend)||0
         const pct = totalRegion>0?Math.round(spend/totalRegion*100):0
@@ -417,7 +417,7 @@ const MapChart = ({ countryData, regionData }) => {
       const maxCountry = parseFloat(countryData?.[0]?.spend)||1
 
       ;(countryData||[]).forEach((c,i) => {
-        const coords = COUNTRY_COORDS[c.country]
+        const coords = CC[c.country]
         if (!coords) return
         const spend = parseFloat(c.spend)||0
         const pct = totalCountry>0?Math.round(spend/totalCountry*100):0
@@ -433,8 +433,6 @@ const MapChart = ({ countryData, regionData }) => {
         if (!hasRegion && i===0) { topLat=coords.lat; topLng=coords.lng; topZoom=5 }
       })
 
-      console.log('REGIONS FROM META:', (regionData||[]).map(r=>r.region))
-      console.log('COUNTRIES FROM META:', (countryData||[]).map(c=>c.country))
       setTimeout(()=>map.flyTo([topLat,topLng],topZoom,{duration:1.5}), 500)
     }
     document.head.appendChild(script)
