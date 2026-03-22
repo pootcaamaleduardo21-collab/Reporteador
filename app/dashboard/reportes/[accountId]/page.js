@@ -446,7 +446,7 @@ export default function Reportes() {
           reactions:findAction(actions,['post_reaction','like']),
           saves:findAction(actions,['onsite_conversion.post_save']),
           engagementRate: imp>0 ? ((findAction(actions,['post_engagement'])/imp)*100) : 0,
-          vid3s, vid25, vid50, vid75, vid100, vidAvg,
+          vid3s, vid25, vid50, vid75, vid100,
         }
       }
 
