@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { supabase } from '../lib/supabase'
+import { usePlan } from '../lib/usePlan'
 
 export default function DashboardLayout({ children }) {
   const [user, setUser] = useState(null)
@@ -228,6 +229,17 @@ export default function DashboardLayout({ children }) {
           </div>
         </div>
 
+        {/* FREE PLAN BANNER */}
+        {!isPro && (
+          <div style={{background:'rgba(99,102,241,.08)',borderBottom:'1px solid rgba(99,102,241,.15)',padding:'8px 16px',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
+            <span style={{fontSize:'11px',color:'#a5b4fc',fontFamily:'monospace'}}>
+              Plan Free — acceso limitado a Overview y ultimos 7 dias
+            </span>
+            <a href="/planes" style={{fontSize:'11px',color:'#fff',background:'linear-gradient(135deg,#6366f1,#8b5cf6)',padding:'4px 12px',borderRadius:'6px',textDecoration:'none',fontWeight:'700',flexShrink:0}}>
+              Actualizar a Pro →
+            </a>
+          </div>
+        )}
         {/* PAGE CONTENT */}
         <div style={{flex:1,overflowY:'auto'}}>
           {children}

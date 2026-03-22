@@ -1,5 +1,7 @@
 'use client'
 import React, { useEffect, useState, useRef } from 'react'
+import { usePlan } from '../../../lib/usePlan'
+import ProGate from '../../../components/ProGate'
 import { useParams, useSearchParams } from 'next/navigation'
 import { supabase } from '../../../lib/supabase'
 import { Line, Bar, Doughnut } from 'react-chartjs-2'
@@ -527,6 +529,7 @@ const MapChart = ({ countryData, regionData }) => {
 export default function Reportes() {
   const { accountId } = useParams()
   const searchParams = useSearchParams()
+  const { isPro, loading: planLoading } = usePlan()
   const [token, setToken] = useState(null)
   const [preset, setPreset] = useState('this_month')
   const [customFrom, setCustomFrom] = useState('')
@@ -825,6 +828,8 @@ export default function Reportes() {
           )}
 
           {activeTab==='campanas'&&(
+            !isPro ? <ProGate feature="El desglose de campanas"/> :
+
             <>
               {campaigns.length>1&&(
                 <div style={{background:'#111116',border:'1px solid #1a1a22',borderRadius:'10px',padding:'20px',marginBottom:'16px'}}>
@@ -840,6 +845,8 @@ export default function Reportes() {
           )}
 
           {activeTab==='conjuntos'&&(
+            !isPro ? <ProGate feature="El desglose de conjuntos"/> :
+
             <>
               {adsets.length>1&&(
                 <div style={{background:'#111116',border:'1px solid #1a1a22',borderRadius:'10px',padding:'20px',marginBottom:'16px'}}>
@@ -855,6 +862,8 @@ export default function Reportes() {
           )}
 
           {activeTab==='anuncios'&&(
+            !isPro ? <ProGate feature="El score de creativos y anuncios"/> :
+
             <>
               {ads.length>0&&(
                 <div style={{background:'rgba(167,139,250,.05)',border:'1px solid rgba(167,139,250,.15)',borderRadius:'8px',padding:'10px 16px',marginBottom:'16px',fontSize:'11px',color:'#a78bfa',fontFamily:'monospace'}}>
@@ -867,6 +876,8 @@ export default function Reportes() {
           )}
 
           {activeTab==='audiencia'&&(
+            !isPro ? <ProGate feature="Los datos demograficos y mapa de audiencia"/> :
+
             <>
               {loadingDemo&&<div style={{textAlign:'center',padding:'80px 0',color:'#444',fontFamily:'monospace',fontSize:'12px'}}>Cargando datos demograficos para {preset}...</div>}
               {!loadingDemo&&!demographics&&<div style={{textAlign:'center',padding:'60px 0',color:'#444',fontFamily:'monospace'}}>Sin datos disponibles</div>}
