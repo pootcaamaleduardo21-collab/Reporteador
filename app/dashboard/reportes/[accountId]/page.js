@@ -333,6 +333,157 @@ const AdScoreCard = ({ ad }) => {
   )
 }
 
+const COUNTRY_COORDS = {
+  MX:{lat:23.6345,lng:-102.5528,name:'Mexico'},
+  US:{lat:37.0902,lng:-95.7129,name:'Estados Unidos'},
+  CO:{lat:4.5709,lng:-74.2973,name:'Colombia'},
+  AR:{lat:-38.4161,lng:-63.6167,name:'Argentina'},
+  CL:{lat:-35.6751,lng:-71.543,name:'Chile'},
+  PE:{lat:-9.19,lng:-75.0152,name:'Peru'},
+  ES:{lat:40.4637,lng:-3.7492,name:'Espana'},
+  BR:{lat:-14.235,lng:-51.9253,name:'Brasil'},
+  GT:{lat:15.7835,lng:-90.2308,name:'Guatemala'},
+  EC:{lat:-1.8312,lng:-78.1834,name:'Ecuador'},
+  VE:{lat:6.4238,lng:-66.5897,name:'Venezuela'},
+  BO:{lat:-16.2902,lng:-63.5887,name:'Bolivia'},
+  UY:{lat:-32.5228,lng:-55.7658,name:'Uruguay'},
+  PY:{lat:-23.4425,lng:-58.4438,name:'Paraguay'},
+  CR:{lat:9.7489,lng:-83.7534,name:'Costa Rica'},
+  PA:{lat:8.538,lng:-80.7821,name:'Panama'},
+  HN:{lat:15.2,lng:-86.2419,name:'Honduras'},
+  SV:{lat:13.7942,lng:-88.8965,name:'El Salvador'},
+  NI:{lat:12.8654,lng:-85.2072,name:'Nicaragua'},
+  DO:{lat:18.7357,lng:-70.1627,name:'Rep. Dominicana'},
+  PR:{lat:18.2208,lng:-66.5901,name:'Puerto Rico'},
+  GB:{lat:55.3781,lng:-3.436,name:'Reino Unido'},
+  CA:{lat:56.1304,lng:-106.3468,name:'Canada'},
+  DE:{lat:51.1657,lng:10.4515,name:'Alemania'},
+  FR:{lat:46.2276,lng:2.2137,name:'Francia'},
+  IT:{lat:41.8719,lng:12.5674,name:'Italia'},
+  PT:{lat:39.3999,lng:-8.2245,name:'Portugal'},
+}
+
+const MapChart = ({ countryData, regionData }) => {
+  const mapRef = React.useRef(null)
+  const mapInstanceRef = React.useRef(null)
+  const markersRef = React.useRef([])
+
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return
+    if (mapInstanceRef.current) {
+      mapInstanceRef.current.remove()
+      mapInstanceRef.current = null
+    }
+
+    const link = document.createElement('link')
+    link.rel = 'stylesheet'
+    link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'
+    document.head.appendChild(link)
+
+    const script = document.createElement('script')
+    script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
+    script.onload = () => {
+      if (!mapRef.current || mapInstanceRef.current) return
+      const L = window.L
+
+      const map = L.map(mapRef.current, {
+        center: [20, -60],
+        zoom: 2,
+        zoomControl: true,
+        scrollWheelZoom: true,
+      })
+
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution: '',
+        maxZoom: 10
+      }).addTo(map)
+
+      mapInstanceRef.current = map
+      markersRef.current = []
+
+      const totalSpend = countryData.reduce((s,c)=>s+(parseFloat(c.spend)||0),0)
+      const maxSpend = parseFloat(countryData[0]?.spend)||1
+
+      let topLat = 20, topLng = -60, topZoom = 2
+      let hasMarkers = false
+
+      countryData.forEach((c, i) => {
+        const coords = COUNTRY_COORDS[c.country]
+        if (!coords) return
+        const spend = parseFloat(c.spend)||0
+        const pct = Math.round(spend/totalSpend*100)
+        const size = Math.max(20, Math.min(60, (spend/maxSpend)*60))
+        const color = i===0?'#6ee7b7':i<3?'#3b82f6':i<6?'#f97316':'#888'
+
+        const marker = L.circleMarker([coords.lat, coords.lng], {
+          radius: size/2,
+          fillColor: color,
+          color: color,
+          weight: 2,
+          opacity: 0.9,
+          fillOpacity: 0.4,
+        }).addTo(map)
+
+        marker.bindPopup(`
+          <div style="font-family:monospace;font-size:12px;color:#fff;background:#18181f;padding:10px;border-radius:8px;min-width:150px">
+            <div style="font-weight:800;font-size:14px;margin-bottom:6px">${coords.name}</div>
+            <div style="color:#6ee7b7">$${spend.toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
+            <div style="color:#888">${pct}% del gasto total</div>
+          </div>
+        `, { className: 'dark-popup' })
+
+        markersRef.current.push(marker)
+
+        if (i === 0) {
+          topLat = coords.lat
+          topLng = coords.lng
+          topZoom = 4
+          hasMarkers = true
+        }
+      })
+
+      if (hasMarkers) {
+        setTimeout(() => {
+          map.flyTo([topLat, topLng], topZoom, { duration: 1.5 })
+        }, 500)
+      }
+
+      const style = document.createElement('style')
+      style.textContent = '.dark-popup .leaflet-popup-content-wrapper{background:#18181f;border:1px solid #2a2a35;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,.5)}.dark-popup .leaflet-popup-tip{background:#18181f}.leaflet-popup-content{margin:0}.leaflet-container{background:#0d0d12}'
+      document.head.appendChild(style)
+    }
+    document.head.appendChild(script)
+
+    return () => {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove()
+        mapInstanceRef.current = null
+      }
+    }
+  }, [countryData])
+
+  return (
+    <div style={{position:'relative'}}>
+      <div ref={mapRef} style={{height:'400px',borderRadius:'8px',overflow:'hidden',background:'#0d0d12'}}></div>
+      <div style={{position:'absolute',bottom:'12px',left:'12px',background:'rgba(10,10,14,.9)',border:'1px solid #2a2a35',borderRadius:'8px',padding:'10px 14px',zIndex:1000}}>
+        <div style={{fontSize:'9px',color:'#555',fontFamily:'monospace',marginBottom:'6px'}}>LEYENDA — GASTO</div>
+        {countryData.slice(0,5).map((c,i)=>{
+          const coords = COUNTRY_COORDS[c.country]
+          const color = i===0?'#6ee7b7':i<3?'#3b82f6':i<6?'#f97316':'#888'
+          return (
+            <div key={i} style={{display:'flex',alignItems:'center',gap:'6px',marginBottom:'4px'}}>
+              <div style={{width:'8px',height:'8px',borderRadius:'50%',background:color,opacity:.8,flexShrink:0}}></div>
+              <span style={{fontSize:'10px',color:'#888',fontFamily:'monospace'}}>{coords?.name||c.country}</span>
+              <span style={{fontSize:'10px',color:'#fff',fontFamily:'monospace',marginLeft:'auto'}}>${parseFloat(c.spend).toFixed(0)}</span>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+
 export default function Reportes() {
   const { accountId } = useParams()
   const [token, setToken] = useState(null)
@@ -838,6 +989,11 @@ export default function Reportes() {
                     </div>
                   </div>
 
+
+                  <div style={{background:'#111116',border:'1px solid #1a1a22',borderRadius:'10px',padding:'20px',marginBottom:'20px'}}>
+                    <div style={{fontSize:'10px',color:'#444',fontFamily:'monospace',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:'16px'}}>Mapa de alcance — donde ven tus anuncios</div>
+                    <MapChart countryData={demographics.country} regionData={demographics.region}/>
+                  </div>
                   <div style={{background:'rgba(167,139,250,.05)',border:'1px solid rgba(167,139,250,.15)',borderRadius:'10px',padding:'20px'}}>
                     <div style={{fontSize:'10px',color:'#a78bfa',fontFamily:'monospace',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:'12px'}}>Recomendaciones de audiencia</div>
                     {(()=>{
