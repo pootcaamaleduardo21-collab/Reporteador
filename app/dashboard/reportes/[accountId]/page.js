@@ -92,13 +92,17 @@ const doughnutOpts = {
   }
 }
 
+const COLORS = ['#6ee7b7','#3b82f6','#f97316','#a78bfa','#fcd34d','#f87171','#ec4899','#14b8a6','#84cc16','#f59e0b']
+
 const qualityScore = (row) => {
   if (!row) return 0
   let s = 0
-  if (row.ctr>=2) s+=30; else if(row.ctr>=1) s+=15
-  if (row.frequency<=2) s+=25; else if(row.frequency<=3.5) s+=12
-  if (row.cpm<=50) s+=25; else if(row.cpm<=100) s+=12
-  if (row.results>0) s+=20
+  if (row.ctr>=2) s+=20; else if(row.ctr>=1) s+=10
+  if (row.frequency<=2) s+=20; else if(row.frequency<=3.5) s+=10
+  if (row.cpm<=50) s+=15; else if(row.cpm<=100) s+=8
+  if (row.results>0) s+=15
+  if (row.hookRate>=25) s+=15; else if(row.hookRate>=15) s+=8
+  if (row.holdRate>=40) s+=15; else if(row.holdRate>=25) s+=8
   return Math.min(s,100)
 }
 const qualityLabel = s => s>=75?{label:'Excelente',color:'#6ee7b7'}:s>=50?{label:'Bueno',color:'#fcd34d'}:{label:'Mejorar',color:'#f87171'}
@@ -106,44 +110,46 @@ const delta = (curr, prev) => { if (!prev||prev===0) return null; const pct = ((
 
 const diagnoseCampaign = (row) => {
   const issues = [], wins = []
-  if (row.frequency > 3.5) issues.push({ icon: 'R', msg: 'Fatiga publicitaria — rota creativos urgente', action: 'Pausa anuncios con mas de 3.5 frecuencia y lanza nuevos' })
-  else if (row.frequency > 2.5) issues.push({ icon: 'Y', msg: 'Frecuencia elevada — monitorea el CTR', action: 'Prepara nuevos creativos antes de que el rendimiento caiga' })
-  if (row.ctr < 0.5) issues.push({ icon: 'R', msg: 'CTR muy bajo — el creativo no engancha', action: 'Cambia la imagen/video y el primer segundo del copy' })
-  else if (row.ctr < 1) issues.push({ icon: 'Y', msg: 'CTR mejorable', action: 'Prueba un hook mas directo o una oferta mas clara' })
-  else if (row.ctr >= 2) wins.push({ icon: 'G', msg: 'CTR excelente — este creativo funciona', action: 'Escala el presupuesto 20-30% cada 3 dias' })
-  if (row.cpm > 150) issues.push({ icon: 'R', msg: 'CPM muy alto — audiencia saturada', action: 'Amplia la segmentacion o prueba otras ubicaciones' })
-  else if (row.cpm > 100) issues.push({ icon: 'Y', msg: 'CPM elevado', action: 'Revisa la segmentacion y considera ampliar la audiencia' })
-  if (row.results > 0) wins.push({ icon: 'G', msg: 'Generando resultados', action: 'Mantener activo y escalar si el CPR es rentable' })
-  if (row.results === 0 && row.spend > 50) issues.push({ icon: 'R', msg: 'Sin resultados con gasto significativo', action: 'Revisa el objetivo, la segmentacion y la landing page' })
-  if (row.vid25 > 0 && row.vid100 > 0) {
-    const retention = Math.round(row.vid100/row.vid25*100)
-    if (retention < 20) issues.push({ icon: 'Y', msg: 'Retencion de video baja ('+retention+'% al final)', action: 'El gancho funciona pero el video pierde atencion — edita el ritmo' })
-    else if (retention >= 40) wins.push({ icon: 'G', msg: 'Buena retencion de video ('+retention+'% al final)', action: 'Video efectivo — considera usarlo en mas conjuntos' })
+  if (row.frequency > 3.5) issues.push({ t:'R', msg:'Fatiga publicitaria detectada', action:'Pausa anuncios con frecuencia >3.5 y lanza nuevos creativos esta semana' })
+  else if (row.frequency > 2.5) issues.push({ t:'Y', msg:'Frecuencia elevada', action:'Prepara nuevos creativos antes de que el rendimiento caiga' })
+  if (row.ctr < 0.5) issues.push({ t:'R', msg:'CTR muy bajo — el creativo no engancha', action:'Cambia la imagen/video y el copy del primer segundo' })
+  else if (row.ctr < 1) issues.push({ t:'Y', msg:'CTR mejorable', action:'Prueba un hook mas directo o una oferta mas clara' })
+  else if (row.ctr >= 2) wins.push({ t:'G', msg:'CTR excelente', action:'Escala el presupuesto 20-30% cada 3 dias' })
+  if (row.hookRate > 0) {
+    if (row.hookRate < 15) issues.push({ t:'R', msg:'Hook Rate bajo ('+row.hookRate.toFixed(1)+'%) — el video no detiene el scroll', action:'Cambia los primeros 3 segundos del video completamente' })
+    else if (row.hookRate < 25) issues.push({ t:'Y', msg:'Hook Rate mejorable ('+row.hookRate.toFixed(1)+'%)', action:'Prueba un hook mas impactante: pregunta, estadistica o situacion reconocible' })
+    else wins.push({ t:'G', msg:'Hook Rate solido ('+row.hookRate.toFixed(1)+'%)', action:'El gancho funciona — mantener y probar variaciones del cuerpo del video' })
   }
+  if (row.holdRate > 0) {
+    if (row.holdRate < 25) issues.push({ t:'R', msg:'Hold Rate bajo ('+row.holdRate.toFixed(1)+'%) — la gente abandona el video rapido', action:'El gancho funciona pero el contenido no engancha — edita el ritmo y agrega subtitulos' })
+    else if (row.holdRate >= 40) wins.push({ t:'G', msg:'Hold Rate excelente ('+row.holdRate.toFixed(1)+'%)', action:'El video retiene muy bien — considera usarlo en mas conjuntos y aumentar presupuesto' })
+  }
+  if (row.cpm > 150) issues.push({ t:'R', msg:'CPM muy alto — audiencia saturada o puja competitiva', action:'Amplia la segmentacion o prueba otras ubicaciones' })
+  else if (row.cpm > 100) issues.push({ t:'Y', msg:'CPM elevado', action:'Revisa la segmentacion y considera ampliar la audiencia' })
+  if (row.results > 0 && row.cpr > 0) wins.push({ t:'G', msg:'Generando resultados — CPR: '+fmt$(row.cpr), action:'Mantener activo y escalar si el CPR es rentable para el cliente' })
+  if (row.results === 0 && row.spend > 50) issues.push({ t:'R', msg:'Sin resultados con gasto significativo', action:'Revisa el objetivo, la segmentacion y la landing/formulario' })
   return { issues, wins }
 }
 
 const DiagPanel = ({ row }) => {
   const diag = diagnoseCampaign(row)
-  const iconColor = { R:'#f87171', Y:'#fcd34d', G:'#6ee7b7' }
-  const iconBg = { R:'rgba(248,113,113,.04)', Y:'rgba(252,211,77,.04)', G:'rgba(110,231,183,.05)' }
-  const iconBorder = { R:'rgba(248,113,113,.1)', Y:'rgba(252,211,77,.1)', G:'rgba(110,231,183,.15)' }
-  const iconChar = { R:'!', Y:'~', G:'OK' }
+  const all = [...diag.wins, ...diag.issues]
+  if (all.length === 0) return <div style={{fontSize:'11px',color:'#444',fontFamily:'monospace',padding:'8px'}}>Sin datos suficientes para diagnosticar</div>
+  const colors = { R:'#f87171', Y:'#fcd34d', G:'#6ee7b7' }
+  const bgs = { R:'rgba(248,113,113,.04)', Y:'rgba(252,211,77,.04)', G:'rgba(110,231,183,.05)' }
+  const borders = { R:'rgba(248,113,113,.1)', Y:'rgba(252,211,77,.1)', G:'rgba(110,231,183,.15)' }
   return (
     <div style={{borderTop:'1px solid #1a1a22',paddingTop:'12px',marginTop:'8px'}}>
       <div style={{fontSize:'9px',color:'#444',fontFamily:'monospace',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:'8px'}}>Diagnostico y recomendaciones</div>
-      {[...diag.wins, ...diag.issues].map((item,i)=>(
-        <div key={i} style={{display:'flex',gap:'8px',marginBottom:'6px',padding:'8px 12px',background:iconBg[item.icon],borderRadius:'6px',border:'1px solid '+iconBorder[item.icon]}}>
-          <span style={{fontSize:'10px',color:iconColor[item.icon],fontWeight:'800',flexShrink:0,fontFamily:'monospace',minWidth:'20px'}}>[{iconChar[item.icon]}]</span>
+      {all.map((item,i)=>(
+        <div key={i} style={{display:'flex',gap:'8px',marginBottom:'6px',padding:'8px 12px',background:bgs[item.t],borderRadius:'6px',border:'1px solid '+borders[item.t]}}>
+          <span style={{fontSize:'10px',color:colors[item.t],fontWeight:'800',flexShrink:0,fontFamily:'monospace',minWidth:'16px'}}>{item.t==='G'?'OK':item.t==='Y'?'!':'!!'}</span>
           <div>
-            <div style={{fontSize:'12px',color:iconColor[item.icon],fontWeight:'600',marginBottom:'2px'}}>{item.msg}</div>
+            <div style={{fontSize:'12px',color:colors[item.t],fontWeight:'600',marginBottom:'2px'}}>{item.msg}</div>
             <div style={{fontSize:'11px',color:'#444',fontFamily:'monospace'}}>Accion: {item.action}</div>
           </div>
         </div>
       ))}
-      {diag.wins.length===0 && diag.issues.length===0 && (
-        <div style={{fontSize:'11px',color:'#444',fontFamily:'monospace',padding:'8px'}}>Sin datos suficientes para diagnosticar</div>
-      )}
     </div>
   )
 }
@@ -162,14 +168,54 @@ const MetricCard = ({l,v,sub,alert,pos,prev,comparing}) => {
   )
 }
 
-const MiniMetric = ({l,v,alert,pos}) => (
+const MiniMetric = ({l,v,alert,pos,info}) => (
   <div style={{background:'#0d0d12',borderRadius:'6px',padding:'8px 10px',border:'1px solid '+(alert?'rgba(248,113,113,.15)':pos?'rgba(110,231,183,.1)':'transparent')}}>
-    <div style={{fontSize:'9px',color:'#333',fontFamily:'monospace',marginBottom:'3px'}}>{l}</div>
+    <div style={{fontSize:'9px',color:'#333',fontFamily:'monospace',marginBottom:'3px'}}>{l}{info&&<span style={{color:'#2a2a35',marginLeft:'4px'}}>?</span>}</div>
     <div style={{fontSize:'13px',fontWeight:'700',color:alert?'#f87171':pos?'#6ee7b7':'#fff'}}>{v}</div>
   </div>
 )
 
-const ExpandCard = ({ name, sub, badge, row, extra }) => {
+const VideoMetrics = ({ row }) => {
+  if (!row.vid3s && !row.vid25) return null
+  return (
+    <div style={{marginTop:'12px',borderTop:'1px solid #1a1a22',paddingTop:'12px'}}>
+      <div style={{fontSize:'9px',color:'#444',fontFamily:'monospace',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:'10px'}}>Metricas de video</div>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(90px,1fr))',gap:'6px',marginBottom:'10px'}}>
+        <div style={{background:'#0d0d12',borderRadius:'6px',padding:'8px 10px',border:'1px solid '+(row.hookRate>=25?'rgba(110,231,183,.15)':row.hookRate>0&&row.hookRate<15?'rgba(248,113,113,.15)':'transparent')}}>
+          <div style={{fontSize:'9px',color:'#444',fontFamily:'monospace',marginBottom:'3px'}}>Hook Rate</div>
+          <div style={{fontSize:'14px',fontWeight:'800',color:row.hookRate>=25?'#6ee7b7':row.hookRate>0&&row.hookRate<15?'#f87171':'#fff'}}>{row.hookRate>0?row.hookRate.toFixed(1)+'%':'—'}</div>
+          <div style={{fontSize:'9px',color:'#333',fontFamily:'monospace'}}>ref: 25%+ bueno</div>
+        </div>
+        <div style={{background:'#0d0d12',borderRadius:'6px',padding:'8px 10px',border:'1px solid '+(row.holdRate>=40?'rgba(110,231,183,.15)':row.holdRate>0&&row.holdRate<25?'rgba(248,113,113,.15)':'transparent')}}>
+          <div style={{fontSize:'9px',color:'#444',fontFamily:'monospace',marginBottom:'3px'}}>Hold Rate</div>
+          <div style={{fontSize:'14px',fontWeight:'800',color:row.holdRate>=40?'#6ee7b7':row.holdRate>0&&row.holdRate<25?'#f87171':'#fff'}}>{row.holdRate>0?row.holdRate.toFixed(1)+'%':'—'}</div>
+          <div style={{fontSize:'9px',color:'#333',fontFamily:'monospace'}}>ref: 40%+ bueno</div>
+        </div>
+        {row.vid3s>0&&<MiniMetric l='3s views' v={fmtN(row.vid3s)}/>}
+        {row.vid25>0&&<MiniMetric l='25% visto' v={fmtN(row.vid25)}/>}
+        {row.vid50>0&&<MiniMetric l='50% visto' v={fmtN(row.vid50)}/>}
+        {row.vid75>0&&<MiniMetric l='75% visto' v={fmtN(row.vid75)}/>}
+        {row.vid100>0&&<MiniMetric l='Completo' v={fmtN(row.vid100)}/>}
+      </div>
+      {row.vid25>0&&(
+        <div style={{display:'flex',gap:'4px',alignItems:'flex-end',height:'50px'}}>
+          {[{l:'25%',v:row.vid25,c:'#6ee7b7'},{l:'50%',v:row.vid50,c:'#3b82f6'},{l:'75%',v:row.vid75,c:'#f97316'},{l:'100%',v:row.vid100,c:'#f87171'}].map((b,i,arr)=>{
+            const max=arr[0].v||1; const pct=Math.round(b.v/max*100)
+            return (
+              <div key={b.l} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:'2px'}}>
+                <div style={{fontSize:'9px',color:'#fff',fontWeight:'700'}}>{pct}%</div>
+                <div style={{width:'100%',height:Math.max(pct*.3,2)+'px',background:b.c,borderRadius:'2px 2px 0 0',opacity:.8}}></div>
+                <div style={{fontSize:'9px',color:'#444',fontFamily:'monospace'}}>{b.l}</div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
+const ExpandCard = ({ name, sub, badge, row }) => {
   const [open, setOpen] = React.useState(false)
   const qs = qualityScore(row); const ql = qualityLabel(qs)
   return (
@@ -178,9 +224,9 @@ const ExpandCard = ({ name, sub, badge, row, extra }) => {
         <div style={{flex:1,minWidth:0}}>
           <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'2px'}}>
             <div style={{color:'#fff',fontSize:'13px',fontWeight:'700',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{name}</div>
-            {badge && <span style={{fontSize:'9px',fontFamily:'monospace',color:'#666',background:'#18181f',padding:'2px 6px',borderRadius:'3px',flexShrink:0}}>{badge}</span>}
+            {badge&&<span style={{fontSize:'9px',fontFamily:'monospace',color:'#555',background:'#18181f',padding:'2px 6px',borderRadius:'3px',flexShrink:0}}>{badge}</span>}
           </div>
-          {sub && <div style={{color:'#333',fontSize:'10px',fontFamily:'monospace',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{sub}</div>}
+          {sub&&<div style={{color:'#333',fontSize:'10px',fontFamily:'monospace',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{sub}</div>}
         </div>
         <div style={{display:'flex',alignItems:'center',gap:'12px',flexShrink:0}}>
           <div style={{textAlign:'center',background:qs>=75?'rgba(110,231,183,.08)':qs>=50?'rgba(252,211,77,.08)':'rgba(248,113,113,.08)',borderRadius:'8px',padding:'6px 10px',border:'1px solid '+(qs>=75?'rgba(110,231,183,.2)':qs>=50?'rgba(252,211,77,.15)':'rgba(248,113,113,.2)')}}>
@@ -194,7 +240,6 @@ const ExpandCard = ({ name, sub, badge, row, extra }) => {
           <div style={{color:'#444',fontSize:'14px'}}>{open?'▲':'▼'}</div>
         </div>
       </div>
-
       <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(80px,1fr))',gap:'6px',marginTop:'10px'}}>
         {[
           {l:'CTR',v:fmtP(row.ctr),alert:row.ctr<1,pos:row.ctr>=2},
@@ -202,37 +247,21 @@ const ExpandCard = ({ name, sub, badge, row, extra }) => {
           {l:'CPC',v:fmt$(row.cpc)},
           {l:'C/Resultado',v:row.cpr>0?fmt$(row.cpr):'—'},
           {l:'Frecuencia',v:(+row.frequency).toFixed(2),alert:row.frequency>3.5,pos:row.frequency<=2},
+          {l:'Hook Rate',v:row.hookRate>0?row.hookRate.toFixed(1)+'%':'—',pos:row.hookRate>=25,alert:row.hookRate>0&&row.hookRate<15},
+          {l:'Hold Rate',v:row.holdRate>0?row.holdRate.toFixed(1)+'%':'—',pos:row.holdRate>=40,alert:row.holdRate>0&&row.holdRate<25},
           {l:'Alcance',v:fmtN(row.reach)},
           {l:'Impresiones',v:fmtN(row.impressions)},
           {l:'Clics',v:fmtN(row.clicks)},
           {l:'Reacciones',v:fmtN(row.reactions)},
           {l:'Comentarios',v:fmtN(row.comments)},
           {l:'Guardados',v:fmtN(row.saves)},
+          {l:'Shares',v:fmtN(row.shares)},
         ].map(m=><MiniMetric key={m.l} {...m}/>)}
       </div>
-
-      {open && (
+      {open&&(
         <>
           <DiagPanel row={row}/>
-          {row.vid25>0 && (
-            <div style={{marginTop:'12px'}}>
-              <div style={{fontSize:'9px',color:'#444',fontFamily:'monospace',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:'8px'}}>Retencion de video</div>
-              <div style={{display:'flex',gap:'4px',alignItems:'flex-end',height:'60px'}}>
-                {[{l:'25%',v:row.vid25},{l:'50%',v:row.vid50},{l:'75%',v:row.vid75},{l:'100%',v:row.vid100}].map((b,i,arr)=>{
-                  const max=arr[0].v||1; const pct=Math.round(b.v/max*100)
-                  const color=pct>60?'#6ee7b7':pct>30?'#fcd34d':'#f87171'
-                  return (
-                    <div key={b.l} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:'2px'}}>
-                      <div style={{fontSize:'9px',color:'#fff',fontWeight:'700'}}>{pct}%</div>
-                      <div style={{width:'100%',height:Math.max(pct*.4,2)+'px',background:color,borderRadius:'2px 2px 0 0',opacity:.8}}></div>
-                      <div style={{fontSize:'9px',color:'#444',fontFamily:'monospace'}}>{b.l}</div>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          )}
-          {extra}
+          <VideoMetrics row={row}/>
         </>
       )}
     </div>
@@ -243,10 +272,10 @@ const AdScoreCard = ({ ad }) => {
   const [open, setOpen] = React.useState(false)
   const qs = qualityScore(ad); const ql = qualityLabel(qs)
   const diag = diagnoseCampaign(ad)
-  const iconColor = { R:'#f87171', Y:'#fcd34d', G:'#6ee7b7' }
-  const iconBg = { R:'rgba(248,113,113,.04)', Y:'rgba(252,211,77,.04)', G:'rgba(110,231,183,.05)' }
-  const iconBorder = { R:'rgba(248,113,113,.1)', Y:'rgba(252,211,77,.1)', G:'rgba(110,231,183,.15)' }
-  const iconChar = { R:'!', Y:'~', G:'OK' }
+  const all = [...diag.wins,...diag.issues]
+  const colors = { R:'#f87171', Y:'#fcd34d', G:'#6ee7b7' }
+  const bgs = { R:'rgba(248,113,113,.04)', Y:'rgba(252,211,77,.04)', G:'rgba(110,231,183,.05)' }
+  const borders = { R:'rgba(248,113,113,.1)', Y:'rgba(252,211,77,.1)', G:'rgba(110,231,183,.15)' }
   return (
     <div style={{background:'#111116',border:'1px solid '+(qs>=75?'rgba(110,231,183,.2)':qs>=50?'rgba(252,211,77,.15)':'rgba(248,113,113,.2)'),borderRadius:'10px',padding:'16px 20px',marginBottom:'8px'}}>
       <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'10px',flexWrap:'wrap',gap:'8px',cursor:'pointer'}} onClick={()=>setOpen(!open)}>
@@ -273,44 +302,31 @@ const AdScoreCard = ({ ad }) => {
       <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(80px,1fr))',gap:'6px'}}>
         {[
           {l:'CTR',v:fmtP(ad.ctr),alert:ad.ctr<1,pos:ad.ctr>=2},
+          {l:'Hook Rate',v:ad.hookRate>0?ad.hookRate.toFixed(1)+'%':'—',pos:ad.hookRate>=25,alert:ad.hookRate>0&&ad.hookRate<15},
+          {l:'Hold Rate',v:ad.holdRate>0?ad.holdRate.toFixed(1)+'%':'—',pos:ad.holdRate>=40,alert:ad.holdRate>0&&ad.holdRate<25},
           {l:'CPM',v:fmt$(ad.cpm),alert:ad.cpm>150},
           {l:'CPC',v:fmt$(ad.cpc)},
           {l:'C/Resultado',v:ad.cpr>0?fmt$(ad.cpr):'—'},
           {l:'Frecuencia',v:(+ad.frequency).toFixed(2),alert:ad.frequency>3.5,pos:ad.frequency<=2},
           {l:'Alcance',v:fmtN(ad.reach)},
           {l:'Reacciones',v:fmtN(ad.reactions)},
+          {l:'Comentarios',v:fmtN(ad.comments)},
           {l:'Guardados',v:fmtN(ad.saves)},
+          {l:'Shares',v:fmtN(ad.shares)},
         ].map(m=><MiniMetric key={m.l} {...m}/>)}
       </div>
-      {open && (
+      {open&&(
         <div style={{borderTop:'1px solid #1a1a22',paddingTop:'12px',marginTop:'12px'}}>
-          {[...diag.wins,...diag.issues].map((item,i)=>(
-            <div key={i} style={{display:'flex',gap:'8px',marginBottom:'6px',padding:'8px 12px',background:iconBg[item.icon],borderRadius:'6px',border:'1px solid '+iconBorder[item.icon]}}>
-              <span style={{fontSize:'10px',color:iconColor[item.icon],fontWeight:'800',flexShrink:0,fontFamily:'monospace',minWidth:'20px'}}>[{iconChar[item.icon]}]</span>
+          {all.map((item,i)=>(
+            <div key={i} style={{display:'flex',gap:'8px',marginBottom:'6px',padding:'8px 12px',background:bgs[item.t],borderRadius:'6px',border:'1px solid '+borders[item.t]}}>
+              <span style={{fontSize:'10px',color:colors[item.t],fontWeight:'800',flexShrink:0,fontFamily:'monospace',minWidth:'16px'}}>{item.t==='G'?'OK':item.t==='Y'?'!':'!!'}</span>
               <div>
-                <div style={{fontSize:'12px',color:iconColor[item.icon],fontWeight:'600',marginBottom:'2px'}}>{item.msg}</div>
+                <div style={{fontSize:'12px',color:colors[item.t],fontWeight:'600',marginBottom:'2px'}}>{item.msg}</div>
                 <div style={{fontSize:'11px',color:'#444',fontFamily:'monospace'}}>Accion: {item.action}</div>
               </div>
             </div>
           ))}
-          {ad.vid25>0 && (
-            <div style={{marginTop:'12px'}}>
-              <div style={{fontSize:'9px',color:'#444',fontFamily:'monospace',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:'8px'}}>Retencion de video</div>
-              <div style={{display:'flex',gap:'4px',alignItems:'flex-end',height:'60px'}}>
-                {[{l:'25%',v:ad.vid25},{l:'50%',v:ad.vid50},{l:'75%',v:ad.vid75},{l:'100%',v:ad.vid100}].map((b,i,arr)=>{
-                  const max=arr[0].v||1; const pct=Math.round(b.v/max*100)
-                  const color=pct>60?'#6ee7b7':pct>30?'#fcd34d':'#f87171'
-                  return (
-                    <div key={b.l} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:'2px'}}>
-                      <div style={{fontSize:'9px',color:'#fff',fontWeight:'700'}}>{pct}%</div>
-                      <div style={{width:'100%',height:Math.max(pct*.4,2)+'px',background:color,borderRadius:'2px 2px 0 0',opacity:.8}}></div>
-                      <div style={{fontSize:'9px',color:'#444',fontFamily:'monospace'}}>{b.l}</div>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          )}
+          <VideoMetrics row={ad}/>
         </div>
       )}
     </div>
@@ -356,16 +372,12 @@ export default function Reportes() {
   }, [])
 
   useEffect(() => {
-    if (token && (preset !== 'custom' || (customFrom && customTo))) {
-      fetchData()
-    }
+    if (token && (preset !== 'custom' || (customFrom && customTo))) fetchData()
   }, [token, preset, customFrom, customTo, resultType])
 
   useEffect(() => {
-    if (token && activeTab === 'audiencia' && !demographics) {
-      fetchDemographics()
-    }
-  }, [token, activeTab])
+    if (token && activeTab === 'audiencia') fetchDemographics()
+  }, [token, activeTab, preset, customFrom, customTo])
 
   async function fetchData() {
     setLoading(true)
@@ -377,15 +389,16 @@ export default function Reportes() {
       const tr = JSON.stringify({since:range.since,until:range.until})
       const trPrev = JSON.stringify({since:prev.since,until:prev.until})
       const base = 'https://graph.facebook.com/v21.0/'+accountId+'/insights'
-      const fields = 'spend,impressions,reach,frequency,clicks,cpc,cpm,ctr,actions,objective,video_p25_watched_actions,video_p50_watched_actions,video_p75_watched_actions,video_p100_watched_actions'
-      const campFields = 'campaign_name,objective,spend,impressions,reach,frequency,clicks,cpc,cpm,ctr,actions,video_p25_watched_actions,video_p50_watched_actions,video_p75_watched_actions,video_p100_watched_actions'
-      const adsetFields = 'adset_name,campaign_name,spend,impressions,reach,frequency,clicks,cpc,cpm,ctr,actions,video_p25_watched_actions,video_p50_watched_actions,video_p75_watched_actions,video_p100_watched_actions'
-      const adFields = 'ad_name,adset_name,campaign_name,spend,impressions,reach,frequency,clicks,cpc,cpm,ctr,actions,video_p25_watched_actions,video_p50_watched_actions,video_p75_watched_actions,video_p100_watched_actions'
+      const vidFields = 'video_3_sec_watched_actions,video_p25_watched_actions,video_p50_watched_actions,video_p75_watched_actions,video_p100_watched_actions,video_avg_time_watched_actions'
+      const baseFields = 'spend,impressions,reach,frequency,clicks,cpc,cpm,ctr,actions,objective,'+vidFields
+      const campFields = 'campaign_name,objective,spend,impressions,reach,frequency,clicks,cpc,cpm,ctr,actions,'+vidFields
+      const adsetFields = 'adset_name,campaign_name,spend,impressions,reach,frequency,clicks,cpc,cpm,ctr,actions,'+vidFields
+      const adFields = 'ad_name,adset_name,campaign_name,spend,impressions,reach,frequency,clicks,cpc,cpm,ctr,actions,'+vidFields
 
       const [ovR,ovPrevR,dailyR,campR,adsetR,adR] = await Promise.all([
-        fetch(base+'?fields='+fields+'&time_range='+tr+'&access_token='+token),
-        fetch(base+'?fields='+fields+'&time_range='+trPrev+'&access_token='+token),
-        fetch(base+'?fields='+fields+'&time_range='+tr+'&time_increment=1&access_token='+token+'&limit=90'),
+        fetch(base+'?fields='+baseFields+'&time_range='+tr+'&access_token='+token),
+        fetch(base+'?fields='+baseFields+'&time_range='+trPrev+'&access_token='+token),
+        fetch(base+'?fields='+baseFields+'&time_range='+tr+'&time_increment=1&access_token='+token+'&limit=90'),
         fetch(base+'?fields='+campFields+'&level=campaign&time_range='+tr+'&limit=50&access_token='+token),
         fetch(base+'?fields='+adsetFields+'&level=adset&time_range='+tr+'&limit=50&access_token='+token),
         fetch(base+'?fields='+adFields+'&level=ad&time_range='+tr+'&limit=50&access_token='+token)
@@ -410,9 +423,18 @@ export default function Reportes() {
         const type = resultType === 'auto' ? objT.resultTypes[0] : resultType
         const results = getResults(actions, type)
         const spend = parseFloat(d.spend)||0
+        const imp = parseFloat(d.impressions)||0
+        const vid3s = parseFloat(d.video_3_sec_watched_actions?.[0]?.value)||0
+        const vid25 = parseFloat(d.video_p25_watched_actions?.[0]?.value)||0
+        const vid50 = parseFloat(d.video_p50_watched_actions?.[0]?.value)||0
+        const vid75 = parseFloat(d.video_p75_watched_actions?.[0]?.value)||0
+        const vid100 = parseFloat(d.video_p100_watched_actions?.[0]?.value)||0
+        const vidAvg = parseFloat(d.video_avg_time_watched_actions?.[0]?.value)||0
+        const hookRate = imp>0&&vid3s>0 ? (vid3s/imp*100) : 0
+        const holdRate = vid3s>0&&vid100>0 ? (vid100/vid3s*100) : 0
         return {
-          spend, results,
-          impressions:parseFloat(d.impressions)||0,
+          spend, results, hookRate, holdRate,
+          impressions:imp,
           reach:parseFloat(d.reach)||0,
           frequency:parseFloat(d.frequency)||0,
           clicks:parseFloat(d.clicks)||0,
@@ -424,10 +446,8 @@ export default function Reportes() {
           shares:findAction(actions,['post','share']),
           reactions:findAction(actions,['post_reaction','like']),
           saves:findAction(actions,['onsite_conversion.post_save']),
-          vid25:parseFloat(d.video_p25_watched_actions?.[0]?.value)||0,
-          vid50:parseFloat(d.video_p50_watched_actions?.[0]?.value)||0,
-          vid75:parseFloat(d.video_p75_watched_actions?.[0]?.value)||0,
-          vid100:parseFloat(d.video_p100_watched_actions?.[0]?.value)||0,
+          engagementRate: imp>0 ? ((findAction(actions,['post_engagement'])/imp)*100) : 0,
+          vid3s, vid25, vid50, vid75, vid100, vidAvg,
         }
       }
 
@@ -443,28 +463,32 @@ export default function Reportes() {
 
   async function fetchDemographics() {
     setLoadingDemo(true)
+    setDemographics(null)
     try {
       const range = getDateRange(preset, customFrom, customTo) || getDateRange('this_month')
+      if (!range||!range.since||!range.until) { setLoadingDemo(false); return }
       const tr = JSON.stringify({since:range.since,until:range.until})
       const base = 'https://graph.facebook.com/v21.0/'+accountId+'/insights'
-      const fields = 'spend,impressions,clicks,actions'
+      const fields = 'spend,impressions,clicks,actions,reach'
 
-      const [ageR, genderR, countryR, deviceR, platformR] = await Promise.all([
+      const [ageR,genderR,countryR,deviceR,platformR,regionR] = await Promise.all([
         fetch(base+'?fields='+fields+'&breakdowns=age&time_range='+tr+'&access_token='+token+'&limit=100'),
         fetch(base+'?fields='+fields+'&breakdowns=gender&time_range='+tr+'&access_token='+token+'&limit=100'),
-        fetch(base+'?fields='+fields+'&breakdowns=country&time_range='+tr+'&access_token='+token+'&limit=20'),
+        fetch(base+'?fields='+fields+'&breakdowns=country&time_range='+tr+'&access_token='+token+'&limit=50'),
         fetch(base+'?fields='+fields+'&breakdowns=impression_device&time_range='+tr+'&access_token='+token+'&limit=20'),
         fetch(base+'?fields='+fields+'&breakdowns=publisher_platform&time_range='+tr+'&access_token='+token+'&limit=20'),
+        fetch(base+'?fields='+fields+'&breakdowns=region&time_range='+tr+'&access_token='+token+'&limit=20'),
       ])
 
-      const [ageJ,genderJ,countryJ,deviceJ,platformJ] = await Promise.all([ageR.json(),genderR.json(),countryR.json(),deviceR.json(),platformR.json()])
+      const [ageJ,genderJ,countryJ,deviceJ,platformJ,regionJ] = await Promise.all([ageR.json(),genderR.json(),countryR.json(),deviceR.json(),platformR.json(),regionR.json()])
 
       setDemographics({
-        age: (ageJ.data||[]).sort((a,b)=>parseFloat(b.spend)-parseFloat(a.spend)),
-        gender: (genderJ.data||[]),
-        country: (countryJ.data||[]).sort((a,b)=>parseFloat(b.spend)-parseFloat(a.spend)).slice(0,10),
-        device: (deviceJ.data||[]).sort((a,b)=>parseFloat(b.spend)-parseFloat(a.spend)),
-        platform: (platformJ.data||[]).sort((a,b)=>parseFloat(b.spend)-parseFloat(a.spend)),
+        age:(ageJ.data||[]).sort((a,b)=>parseFloat(b.spend)-parseFloat(a.spend)),
+        gender:(genderJ.data||[]),
+        country:(countryJ.data||[]).sort((a,b)=>parseFloat(b.spend)-parseFloat(a.spend)),
+        device:(deviceJ.data||[]).sort((a,b)=>parseFloat(b.spend)-parseFloat(a.spend)),
+        platform:(platformJ.data||[]).sort((a,b)=>parseFloat(b.spend)-parseFloat(a.spend)),
+        region:(regionJ.data||[]).sort((a,b)=>parseFloat(b.spend)-parseFloat(a.spend)).slice(0,15),
       })
     } catch(e){console.error(e)}
     setLoadingDemo(false)
@@ -484,9 +508,7 @@ export default function Reportes() {
   const tabs = ['overview','campanas','conjuntos','anuncios','audiencia']
   const tabLabels = {overview:'Overview',campanas:'Campanas',conjuntos:'Conjuntos',anuncios:'Anuncios',audiencia:'Audiencia'}
   const objInfo = OBJECTIVE_MAP[detectedObjective] || OBJECTIVE_MAP.MULTIPLE
-  const currentTypeLabel = resultType === 'auto' ? 'Auto - '+(RESULT_TYPE_LABELS[objInfo?.resultTypes?.[0]]||'') : RESULT_TYPE_LABELS[resultType] || resultType
-
-  const COLORS = ['#6ee7b7','#3b82f6','#f97316','#a78bfa','#fcd34d','#f87171','#ec4899','#14b8a6','#84cc16','#f59e0b']
+  const currentTypeLabel = resultType==='auto'?'Auto - '+(RESULT_TYPE_LABELS[objInfo?.resultTypes?.[0]]||''):RESULT_TYPE_LABELS[resultType]||resultType
 
   return (
     <main style={{minHeight:'100vh',background:'#0a0a0e',fontFamily:'Inter,sans-serif'}}>
@@ -494,54 +516,46 @@ export default function Reportes() {
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',height:'52px',gap:'8px',flexWrap:'wrap'}}>
           <div style={{display:'flex',alignItems:'center',gap:'10px'}}>
             <button onClick={()=>window.location.href='/dashboard'} style={{background:'transparent',border:'none',color:'#555',cursor:'pointer',fontSize:'18px'}}>←</button>
-            <span style={{fontSize:'16px'}}>📊</span>
+            <span>📊</span>
             <span style={{color:'#fff',fontWeight:'700',fontSize:'14px'}}>{accountName}</span>
-            {detectedObjective && <span style={{fontSize:'10px',color:'#555',fontFamily:'monospace',background:'#18181f',padding:'2px 8px',borderRadius:'4px'}}>{OBJECTIVE_MAP[detectedObjective]?.label||detectedObjective}</span>}
+            {detectedObjective&&<span style={{fontSize:'10px',color:'#555',fontFamily:'monospace',background:'#18181f',padding:'2px 8px',borderRadius:'4px'}}>{OBJECTIVE_MAP[detectedObjective]?.label||detectedObjective}</span>}
           </div>
           <div style={{display:'flex',gap:'4px',flexWrap:'wrap'}}>
             {PRESETS.map(p=>(
-              <button key={p.value} onClick={()=>{setPreset(p.value);setShowCustom(p.value==='custom')}}
+              <button key={p.value} onClick={()=>{setPreset(p.value);setShowCustom(p.value==='custom');if(p.value!=='custom')setDemographics(null)}}
                 style={{padding:'5px 10px',borderRadius:'6px',border:'1px solid',fontSize:'11px',cursor:'pointer',fontFamily:'monospace',borderColor:preset===p.value?'#fff':'#222',background:preset===p.value?'#fff':'transparent',color:preset===p.value?'#0a0a0e':'#555',fontWeight:preset===p.value?'700':'400'}}>
                 {p.label}
               </button>
             ))}
           </div>
           <div style={{display:'flex',gap:'8px',alignItems:'center'}}>
-            <button onClick={()=>setComparing(!comparing)}
-              style={{padding:'5px 12px',borderRadius:'6px',border:'1px solid',fontSize:'11px',cursor:'pointer',fontFamily:'monospace',borderColor:comparing?'#6ee7b7':'#222',background:comparing?'rgba(110,231,183,.1)':'transparent',color:comparing?'#6ee7b7':'#555'}}>
-              {comparing?'Comparando':'Comparar'}
-            </button>
-            <button onClick={exportPDF} style={{padding:'5px 12px',borderRadius:'6px',border:'1px solid #222',background:'transparent',color:'#555',fontSize:'11px',cursor:'pointer',fontFamily:'monospace'}}>
-              PDF
-            </button>
+            <button onClick={()=>setComparing(!comparing)} style={{padding:'5px 12px',borderRadius:'6px',border:'1px solid',fontSize:'11px',cursor:'pointer',fontFamily:'monospace',borderColor:comparing?'#6ee7b7':'#222',background:comparing?'rgba(110,231,183,.1)':'transparent',color:comparing?'#6ee7b7':'#555'}}>{comparing?'Comparando':'Comparar'}</button>
+            <button onClick={exportPDF} style={{padding:'5px 12px',borderRadius:'6px',border:'1px solid #222',background:'transparent',color:'#555',fontSize:'11px',cursor:'pointer',fontFamily:'monospace'}}>PDF</button>
           </div>
         </div>
 
-        {showCustom && (
+        {showCustom&&(
           <div style={{display:'flex',gap:'8px',padding:'6px 0',alignItems:'center'}}>
             <span style={{fontSize:'11px',color:'#444',fontFamily:'monospace'}}>Desde</span>
-            <input type="date" value={customFrom} onChange={e=>setCustomFrom(e.target.value)} style={{background:'#18181f',border:'1px solid #2a2a35',color:'#fff',padding:'4px 8px',borderRadius:'6px',fontSize:'11px',outline:'none'}}/>
+            <input type="date" value={customFrom} onChange={e=>{setCustomFrom(e.target.value);setDemographics(null)}} style={{background:'#18181f',border:'1px solid #2a2a35',color:'#fff',padding:'4px 8px',borderRadius:'6px',fontSize:'11px',outline:'none'}}/>
             <span style={{fontSize:'11px',color:'#444',fontFamily:'monospace'}}>Hasta</span>
-            <input type="date" value={customTo} onChange={e=>setCustomTo(e.target.value)} style={{background:'#18181f',border:'1px solid #2a2a35',color:'#fff',padding:'4px 8px',borderRadius:'6px',fontSize:'11px',outline:'none'}}/>
+            <input type="date" value={customTo} onChange={e=>{setCustomTo(e.target.value);setDemographics(null)}} style={{background:'#18181f',border:'1px solid #2a2a35',color:'#fff',padding:'4px 8px',borderRadius:'6px',fontSize:'11px',outline:'none'}}/>
           </div>
         )}
 
         <div style={{display:'flex',alignItems:'center',gap:'0',borderTop:'1px solid #111',overflowX:'auto'}}>
           <div style={{position:'relative',marginRight:'12px',flexShrink:0,padding:'6px 0'}}>
-            <button onClick={()=>setShowTypeDropdown(!showTypeDropdown)}
-              style={{padding:'5px 12px',borderRadius:'6px',border:'1px solid #a78bfa',background:'rgba(167,139,250,.1)',color:'#a78bfa',fontSize:'11px',cursor:'pointer',fontFamily:'monospace',display:'flex',alignItems:'center',gap:'6px',whiteSpace:'nowrap'}}>
+            <button onClick={()=>setShowTypeDropdown(!showTypeDropdown)} style={{padding:'5px 12px',borderRadius:'6px',border:'1px solid #a78bfa',background:'rgba(167,139,250,.1)',color:'#a78bfa',fontSize:'11px',cursor:'pointer',fontFamily:'monospace',whiteSpace:'nowrap'}}>
               Objetivo: {currentTypeLabel} ▾
             </button>
-            {showTypeDropdown && (
+            {showTypeDropdown&&(
               <div style={{position:'absolute',top:'100%',left:0,background:'#18181f',border:'1px solid #2a2a35',borderRadius:'8px',padding:'6px',zIndex:200,minWidth:'220px',boxShadow:'0 8px 24px rgba(0,0,0,.5)'}}>
-                <div onClick={()=>{setResultType('auto');setShowTypeDropdown(false)}}
-                  style={{padding:'8px 12px',borderRadius:'6px',cursor:'pointer',color:resultType==='auto'?'#a78bfa':'#888',background:resultType==='auto'?'rgba(167,139,250,.1)':'transparent',fontSize:'12px',fontFamily:'monospace',marginBottom:'4px'}}>
+                <div onClick={()=>{setResultType('auto');setShowTypeDropdown(false)}} style={{padding:'8px 12px',borderRadius:'6px',cursor:'pointer',color:resultType==='auto'?'#a78bfa':'#888',background:resultType==='auto'?'rgba(167,139,250,.1)':'transparent',fontSize:'12px',fontFamily:'monospace',marginBottom:'4px'}}>
                   Auto — detectar por objetivo
                 </div>
                 <div style={{height:'1px',background:'#2a2a35',margin:'4px 0'}}></div>
                 {availableTypes.map(t=>(
-                  <div key={t} onClick={()=>{setResultType(t);setShowTypeDropdown(false)}}
-                    style={{padding:'8px 12px',borderRadius:'6px',cursor:'pointer',color:resultType===t?'#a78bfa':'#888',background:resultType===t?'rgba(167,139,250,.1)':'transparent',fontSize:'12px',fontFamily:'monospace'}}>
+                  <div key={t} onClick={()=>{setResultType(t);setShowTypeDropdown(false)}} style={{padding:'8px 12px',borderRadius:'6px',cursor:'pointer',color:resultType===t?'#a78bfa':'#888',background:resultType===t?'rgba(167,139,250,.1)':'transparent',fontSize:'12px',fontFamily:'monospace'}}>
                     {RESULT_TYPE_LABELS[t]}
                   </div>
                 ))}
@@ -550,8 +564,7 @@ export default function Reportes() {
           </div>
           <div style={{flex:1,display:'flex'}}>
             {tabs.map(t=>(
-              <button key={t} onClick={()=>setActiveTab(t)}
-                style={{padding:'8px 14px',fontSize:'10px',fontFamily:'monospace',cursor:'pointer',color:activeTab===t?'#fff':'#444',borderBottom:activeTab===t?'1.5px solid #fff':'1.5px solid transparent',background:'transparent',border:'none',textTransform:'uppercase',letterSpacing:'.07em',whiteSpace:'nowrap'}}>
+              <button key={t} onClick={()=>setActiveTab(t)} style={{padding:'8px 14px',fontSize:'10px',fontFamily:'monospace',cursor:'pointer',color:activeTab===t?'#fff':'#444',borderBottom:activeTab===t?'1.5px solid #fff':'1.5px solid transparent',background:'transparent',border:'none',textTransform:'uppercase',letterSpacing:'.07em',whiteSpace:'nowrap'}}>
                 {tabLabels[t]}
               </button>
             ))}
@@ -559,19 +572,19 @@ export default function Reportes() {
         </div>
       </header>
 
-      {loading && <div style={{textAlign:'center',padding:'80px 0',color:'#444',fontFamily:'monospace',fontSize:'12px'}}>Cargando datos...</div>}
+      {loading&&<div style={{textAlign:'center',padding:'80px 0',color:'#444',fontFamily:'monospace',fontSize:'12px'}}>Cargando datos...</div>}
 
-      {!loading && (
+      {!loading&&(
         <div ref={reportRef} style={{padding:'24px',maxWidth:'1400px',margin:'0 auto'}}>
 
-          {activeTab==='overview' && overview && (
+          {activeTab==='overview'&&overview&&(
             <>
-              {comparing && prevOverview && (
+              {comparing&&prevOverview&&(
                 <div style={{background:'rgba(110,231,183,.05)',border:'1px solid rgba(110,231,183,.15)',borderRadius:'8px',padding:'10px 16px',marginBottom:'16px',fontSize:'11px',color:'#6ee7b7',fontFamily:'monospace'}}>
                   Comparando periodo actual vs periodo anterior
                 </div>
               )}
-              <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(160px,1fr))',gap:'10px',marginBottom:'24px'}}>
+              <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(155px,1fr))',gap:'10px',marginBottom:'24px'}}>
                 <MetricCard l='Importe gastado' v={fmt$(overview.spend)} sub='total ejecutado' prev={prevOverview?.spend} comparing={comparing}/>
                 <MetricCard l='Resultados' v={fmtN(overview.results)} sub='conversiones' pos={overview.results>0} prev={prevOverview?.results} comparing={comparing}/>
                 <MetricCard l='Costo/resultado' v={overview.cpr>0?fmt$(overview.cpr):'—'} sub='eficiencia' prev={prevOverview?.cpr} comparing={comparing}/>
@@ -582,10 +595,15 @@ export default function Reportes() {
                 <MetricCard l='CPC' v={fmt$(overview.cpc)} sub='por clic' prev={prevOverview?.cpc} comparing={comparing}/>
                 <MetricCard l='CPM' v={fmt$(overview.cpm)} sub='por mil imp' prev={prevOverview?.cpm} comparing={comparing}/>
                 <MetricCard l='Clics' v={fmtN(overview.clicks)} sub='trafico' prev={prevOverview?.clicks} comparing={comparing}/>
+                {overview.hookRate>0&&<MetricCard l='Hook Rate' v={overview.hookRate.toFixed(1)+'%'} sub='ref: 25%+ bueno' pos={overview.hookRate>=25} alert={overview.hookRate<15} prev={prevOverview?.hookRate} comparing={comparing}/>}
+                {overview.holdRate>0&&<MetricCard l='Hold Rate' v={overview.holdRate.toFixed(1)+'%'} sub='ref: 40%+ bueno' pos={overview.holdRate>=40} alert={overview.holdRate<25} prev={prevOverview?.holdRate} comparing={comparing}/>}
                 <MetricCard l='Reacciones' v={fmtN(overview.reactions)} sub='likes' prev={prevOverview?.reactions} comparing={comparing}/>
+                <MetricCard l='Comentarios' v={fmtN(overview.comments)} sub='interacciones' prev={prevOverview?.comments} comparing={comparing}/>
                 <MetricCard l='Guardados' v={fmtN(overview.saves)} sub='post saves' prev={prevOverview?.saves} comparing={comparing}/>
+                <MetricCard l='Shares' v={fmtN(overview.shares)} sub='compartidos' prev={prevOverview?.shares} comparing={comparing}/>
               </div>
-              {daily.length>1 && (
+
+              {daily.length>1&&(
                 <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'16px',marginBottom:'24px'}}>
                   <div style={{background:'#111116',border:'1px solid #1a1a22',borderRadius:'10px',padding:'20px'}}>
                     <div style={{fontSize:'10px',color:'#444',fontFamily:'monospace',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:'16px'}}>Spend vs Resultados por dia</div>
@@ -605,32 +623,69 @@ export default function Reportes() {
                       ]}} options={chartOpts(true)}/>
                     </div>
                   </div>
+                  {daily.some(d=>d.hookRate>0)&&(
+                    <div style={{background:'#111116',border:'1px solid #1a1a22',borderRadius:'10px',padding:'20px'}}>
+                      <div style={{fontSize:'10px',color:'#444',fontFamily:'monospace',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:'16px'}}>Hook Rate y Hold Rate por dia</div>
+                      <div style={{height:'200px'}}>
+                        <Line data={{labels:daily.map(d=>d.date.slice(5)),datasets:[
+                          {label:'Hook Rate %',data:daily.map(d=>+d.hookRate.toFixed(2)),borderColor:'#a78bfa',backgroundColor:'rgba(167,139,250,.06)',fill:true,tension:.4,yAxisID:'y',pointRadius:2,borderWidth:2},
+                          {label:'Hold Rate %',data:daily.map(d=>+d.holdRate.toFixed(2)),borderColor:'#ec4899',backgroundColor:'rgba(236,72,153,.06)',fill:true,tension:.4,yAxisID:'y1',pointRadius:2,borderWidth:2}
+                        ]}} options={chartOpts(true)}/>
+                      </div>
+                    </div>
+                  )}
+                  {daily.some(d=>d.frequency>0)&&(
+                    <div style={{background:'#111116',border:'1px solid #1a1a22',borderRadius:'10px',padding:'20px'}}>
+                      <div style={{fontSize:'10px',color:'#444',fontFamily:'monospace',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:'16px'}}>Frecuencia por dia</div>
+                      <div style={{height:'200px'}}>
+                        <Line data={{labels:daily.map(d=>d.date.slice(5)),datasets:[
+                          {label:'Frecuencia',data:daily.map(d=>+d.frequency.toFixed(2)),borderColor:'#fcd34d',backgroundColor:'rgba(252,211,77,.06)',fill:true,tension:.4,pointRadius:2,borderWidth:2,
+                          pointBackgroundColor:daily.map(d=>d.frequency>3.5?'#f87171':d.frequency>2.5?'#fcd34d':'#6ee7b7')}
+                        ]}} options={{...chartOpts(),plugins:{...chartOpts().plugins,annotation:{annotations:{line1:{type:'line',yMin:2,yMax:2,borderColor:'rgba(110,231,183,.4)',borderWidth:1,borderDash:[4,4]},line2:{type:'line',yMin:3.5,yMax:3.5,borderColor:'rgba(248,113,113,.4)',borderWidth:1,borderDash:[4,4]}}}}}}/>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
-              {(overview.vid25>0||overview.vid50>0) && (
+
+              {overview.vid25>0&&(
                 <div style={{background:'#111116',border:'1px solid #1a1a22',borderRadius:'10px',padding:'20px',marginBottom:'24px'}}>
-                  <div style={{fontSize:'10px',color:'#444',fontFamily:'monospace',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:'16px'}}>Embudo de video</div>
+                  <div style={{fontSize:'10px',color:'#444',fontFamily:'monospace',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:'16px'}}>Embudo de video completo</div>
                   <div style={{display:'flex',gap:'8px',alignItems:'flex-end',height:'140px',paddingBottom:'24px'}}>
-                    {[{l:'25%',v:overview.vid25,color:'#6ee7b7'},{l:'50%',v:overview.vid50,color:'#3b82f6'},{l:'75%',v:overview.vid75,color:'#f97316'},{l:'100%',v:overview.vid100,color:'#f87171'}].map((b,i,arr)=>{
-                      const max=arr[0].v||1; const pct=Math.round(b.v/max*100)
+                    {[{l:'3s',v:overview.vid3s,c:'#a78bfa'},{l:'25%',v:overview.vid25,c:'#6ee7b7'},{l:'50%',v:overview.vid50,c:'#3b82f6'},{l:'75%',v:overview.vid75,c:'#f97316'},{l:'100%',v:overview.vid100,c:'#f87171'}].map((b,i,arr)=>{
+                      const max=(arr[0].v||arr[1].v)||1; const pct=Math.round(b.v/max*100)
                       return (
                         <div key={b.l} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:'4px'}}>
                           <div style={{fontSize:'11px',color:'#fff',fontWeight:'700'}}>{fmtN(b.v)}</div>
-                          <div style={{width:'100%',height:Math.max(pct*.8,4)+'px',background:b.color,borderRadius:'4px 4px 0 0',opacity:.8}}></div>
+                          <div style={{width:'100%',height:Math.max(pct*.8,4)+'px',background:b.c,borderRadius:'4px 4px 0 0',opacity:.8}}></div>
                           <div style={{fontSize:'10px',color:'#444',fontFamily:'monospace'}}>{b.l}</div>
-                          <div style={{fontSize:'10px',color:b.color,fontFamily:'monospace',fontWeight:'700'}}>{pct}%</div>
+                          <div style={{fontSize:'10px',color:b.c,fontFamily:'monospace',fontWeight:'700'}}>{pct}%</div>
                         </div>
                       )
                     })}
                   </div>
+                  {overview.hookRate>0&&(
+                    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'12px',marginTop:'12px',borderTop:'1px solid #1a1a22',paddingTop:'12px'}}>
+                      <div style={{textAlign:'center'}}>
+                        <div style={{fontSize:'9px',color:'#555',fontFamily:'monospace',marginBottom:'4px'}}>HOOK RATE (detiene el scroll)</div>
+                        <div style={{fontSize:'22px',fontWeight:'800',color:overview.hookRate>=25?'#6ee7b7':overview.hookRate<15?'#f87171':'#fcd34d'}}>{overview.hookRate.toFixed(1)}%</div>
+                        <div style={{fontSize:'10px',color:'#444',fontFamily:'monospace'}}>benchmark: 25%+ bueno · 35%+ excelente</div>
+                      </div>
+                      <div style={{textAlign:'center'}}>
+                        <div style={{fontSize:'9px',color:'#555',fontFamily:'monospace',marginBottom:'4px'}}>HOLD RATE (termina el video)</div>
+                        <div style={{fontSize:'22px',fontWeight:'800',color:overview.holdRate>=40?'#6ee7b7':overview.holdRate<25?'#f87171':'#fcd34d'}}>{overview.holdRate.toFixed(1)}%</div>
+                        <div style={{fontSize:'10px',color:'#444',fontFamily:'monospace'}}>benchmark: 40%+ bueno · 50%+ excelente</div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </>
           )}
 
-          {activeTab==='campanas' && (
+          {activeTab==='campanas'&&(
             <>
-              {campaigns.length>1 && (
+              {campaigns.length>1&&(
                 <div style={{background:'#111116',border:'1px solid #1a1a22',borderRadius:'10px',padding:'20px',marginBottom:'16px'}}>
                   <div style={{fontSize:'10px',color:'#444',fontFamily:'monospace',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:'16px'}}>CTR por campana</div>
                   <div style={{height:'160px'}}>
@@ -638,35 +693,31 @@ export default function Reportes() {
                   </div>
                 </div>
               )}
-              {campaigns.map((c,i)=>(
-                <ExpandCard key={i} name={c.name} badge={c.objective} row={c}/>
-              ))}
+              {campaigns.map((c,i)=><ExpandCard key={i} name={c.name} badge={c.objective} row={c}/>)}
               {campaigns.length===0&&<div style={{textAlign:'center',padding:'60px 0',color:'#444',fontFamily:'monospace'}}>Sin datos para este periodo</div>}
             </>
           )}
 
-          {activeTab==='conjuntos' && (
+          {activeTab==='conjuntos'&&(
             <>
-              {adsets.length>1 && (
+              {adsets.length>1&&(
                 <div style={{background:'#111116',border:'1px solid #1a1a22',borderRadius:'10px',padding:'20px',marginBottom:'16px'}}>
-                  <div style={{fontSize:'10px',color:'#444',fontFamily:'monospace',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:'16px'}}>Gasto por conjunto</div>
+                  <div style={{fontSize:'10px',color:'#444',fontFamily:'monospace',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:'16px'}}>Gasto por conjunto de anuncios</div>
                   <div style={{height:'160px'}}>
                     <Bar data={{labels:adsets.map(a=>a.name.length>22?a.name.slice(0,22)+'...':a.name),datasets:[{label:'Gastado ($)',data:adsets.map(a=>+a.spend.toFixed(2)),backgroundColor:adsets.map((_,i)=>COLORS[i%COLORS.length]+'80'),borderColor:adsets.map((_,i)=>COLORS[i%COLORS.length]),borderWidth:1,borderRadius:4}]}} options={chartOpts()}/>
                   </div>
                 </div>
               )}
-              {adsets.map((a,i)=>(
-                <ExpandCard key={i} name={a.name} sub={a.campaign} row={a}/>
-              ))}
+              {adsets.map((a,i)=><ExpandCard key={i} name={a.name} sub={a.campaign} row={a}/>)}
               {adsets.length===0&&<div style={{textAlign:'center',padding:'60px 0',color:'#444',fontFamily:'monospace'}}>Sin datos para este periodo</div>}
             </>
           )}
 
-          {activeTab==='anuncios' && (
+          {activeTab==='anuncios'&&(
             <>
-              {ads.length>0 && (
+              {ads.length>0&&(
                 <div style={{background:'rgba(167,139,250,.05)',border:'1px solid rgba(167,139,250,.15)',borderRadius:'8px',padding:'10px 16px',marginBottom:'16px',fontSize:'11px',color:'#a78bfa',fontFamily:'monospace'}}>
-                  Score de creativos — ordenados de mejor a peor. Haz clic para ver el diagnostico detallado.
+                  Score de creativos — ordenados de mejor a peor. Haz clic para ver diagnostico completo y Hook/Hold Rate.
                 </div>
               )}
               {[...ads].sort((a,b)=>qualityScore(b)-qualityScore(a)).map((a,i)=><AdScoreCard key={i} ad={a}/>)}
@@ -674,75 +725,47 @@ export default function Reportes() {
             </>
           )}
 
-          {activeTab==='audiencia' && (
+          {activeTab==='audiencia'&&(
             <>
-              {loadingDemo && <div style={{textAlign:'center',padding:'80px 0',color:'#444',fontFamily:'monospace',fontSize:'12px'}}>Cargando datos demograficos...</div>}
-              {!loadingDemo && !demographics && <div style={{textAlign:'center',padding:'60px 0',color:'#444',fontFamily:'monospace'}}>Sin datos demograficos disponibles</div>}
-              {!loadingDemo && demographics && (
+              {loadingDemo&&<div style={{textAlign:'center',padding:'80px 0',color:'#444',fontFamily:'monospace',fontSize:'12px'}}>Cargando datos demograficos para {preset}...</div>}
+              {!loadingDemo&&!demographics&&<div style={{textAlign:'center',padding:'60px 0',color:'#444',fontFamily:'monospace'}}>Sin datos disponibles</div>}
+              {!loadingDemo&&demographics&&(
                 <>
                   <div style={{background:'rgba(59,130,246,.05)',border:'1px solid rgba(59,130,246,.15)',borderRadius:'8px',padding:'10px 16px',marginBottom:'20px',fontSize:'11px',color:'#60a5fa',fontFamily:'monospace'}}>
-                    Datos demograficos basados en quien VE tus anuncios — puede diferir de tu segmentacion objetivo
+                    Datos demograficos para el periodo seleccionado — muestra quien VE tus anuncios, puede diferir de tu segmentacion objetivo
                   </div>
 
                   <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'16px',marginBottom:'20px'}}>
                     <div style={{background:'#111116',border:'1px solid #1a1a22',borderRadius:'10px',padding:'20px'}}>
                       <div style={{fontSize:'10px',color:'#444',fontFamily:'monospace',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:'16px'}}>Gasto por edad</div>
                       <div style={{height:'200px'}}>
-                        <Bar data={{
-                          labels:demographics.age.map(d=>d.age),
-                          datasets:[{
-                            label:'Gastado ($)',
-                            data:demographics.age.map(d=>parseFloat(d.spend)||0),
-                            backgroundColor:demographics.age.map((_,i)=>COLORS[i%COLORS.length]+'80'),
-                            borderColor:demographics.age.map((_,i)=>COLORS[i%COLORS.length]),
-                            borderWidth:1,borderRadius:4
-                          }]
-                        }} options={chartOpts()}/>
+                        <Bar data={{labels:demographics.age.map(d=>d.age),datasets:[{label:'Gastado ($)',data:demographics.age.map(d=>parseFloat(d.spend)||0),backgroundColor:demographics.age.map((_,i)=>COLORS[i%COLORS.length]+'80'),borderColor:demographics.age.map((_,i)=>COLORS[i%COLORS.length]),borderWidth:1,borderRadius:4}]}} options={chartOpts()}/>
                       </div>
                     </div>
 
                     <div style={{background:'#111116',border:'1px solid #1a1a22',borderRadius:'10px',padding:'20px'}}>
-                      <div style={{fontSize:'10px',color:'#444',fontFamily:'monospace',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:'16px'}}>Distribucion por genero</div>
+                      <div style={{fontSize:'10px',color:'#444',fontFamily:'monospace',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:'16px'}}>CTR por grupo de edad</div>
                       <div style={{height:'200px'}}>
-                        <Doughnut data={{
-                          labels:demographics.gender.map(d=>d.gender==='male'?'Hombre':d.gender==='female'?'Mujer':'Otro'),
-                          datasets:[{
-                            data:demographics.gender.map(d=>parseFloat(d.spend)||0),
-                            backgroundColor:['#3b82f6','#ec4899','#6ee7b7'],
-                            borderWidth:0
-                          }]
-                        }} options={doughnutOpts}/>
+                        <Bar data={{labels:demographics.age.map(d=>d.age),datasets:[{label:'CTR %',data:demographics.age.map(d=>{const imp=parseFloat(d.impressions)||0;const clk=parseFloat(d.clicks)||0;return imp>0?+(clk/imp*100).toFixed(2):0}),backgroundColor:demographics.age.map((_,i)=>COLORS[i%COLORS.length]+'80'),borderColor:demographics.age.map((_,i)=>COLORS[i%COLORS.length]),borderWidth:1,borderRadius:4}]}} options={chartOpts()}/>
                       </div>
                     </div>
                   </div>
 
                   <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'16px',marginBottom:'20px'}}>
                     <div style={{background:'#111116',border:'1px solid #1a1a22',borderRadius:'10px',padding:'20px'}}>
-                      <div style={{fontSize:'10px',color:'#444',fontFamily:'monospace',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:'16px'}}>Top paises por gasto</div>
-                      <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
-                        {demographics.country.slice(0,8).map((c,i)=>{
-                          const max = parseFloat(demographics.country[0]?.spend)||1
-                          const pct = Math.round(parseFloat(c.spend)/max*100)
-                          return (
-                            <div key={i} style={{display:'flex',alignItems:'center',gap:'10px'}}>
-                              <div style={{fontSize:'11px',color:'#888',fontFamily:'monospace',width:'32px',flexShrink:0}}>{c.country}</div>
-                              <div style={{flex:1,height:'6px',background:'#1a1a22',borderRadius:'3px',overflow:'hidden'}}>
-                                <div style={{width:pct+'%',height:'100%',background:COLORS[i%COLORS.length],borderRadius:'3px'}}></div>
-                              </div>
-                              <div style={{fontSize:'11px',color:'#fff',fontFamily:'monospace',width:'70px',textAlign:'right',flexShrink:0}}>{fmt$(c.spend)}</div>
-                            </div>
-                          )
-                        })}
+                      <div style={{fontSize:'10px',color:'#444',fontFamily:'monospace',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:'16px'}}>Distribucion por genero</div>
+                      <div style={{height:'200px'}}>
+                        <Doughnut data={{labels:demographics.gender.map(d=>d.gender==='male'?'Hombre':d.gender==='female'?'Mujer':'Otro'),datasets:[{data:demographics.gender.map(d=>parseFloat(d.spend)||0),backgroundColor:['#3b82f6','#ec4899','#6ee7b7'],borderWidth:0}]}} options={doughnutOpts}/>
                       </div>
                     </div>
 
                     <div style={{background:'#111116',border:'1px solid #1a1a22',borderRadius:'10px',padding:'20px'}}>
                       <div style={{fontSize:'10px',color:'#444',fontFamily:'monospace',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:'16px'}}>Plataforma y dispositivo</div>
-                      <div style={{marginBottom:'16px'}}>
+                      <div style={{marginBottom:'12px'}}>
                         <div style={{fontSize:'9px',color:'#555',fontFamily:'monospace',marginBottom:'8px'}}>Por plataforma</div>
                         {demographics.platform.map((p,i)=>{
-                          const max = parseFloat(demographics.platform[0]?.spend)||1
-                          const pct = Math.round(parseFloat(p.spend)/max*100)
+                          const max=parseFloat(demographics.platform[0]?.spend)||1
+                          const pct=Math.round(parseFloat(p.spend)/max*100)
                           return (
                             <div key={i} style={{display:'flex',alignItems:'center',gap:'10px',marginBottom:'6px'}}>
                               <div style={{fontSize:'11px',color:'#888',fontFamily:'monospace',width:'80px',flexShrink:0,textTransform:'capitalize'}}>{p.publisher_platform}</div>
@@ -757,8 +780,8 @@ export default function Reportes() {
                       <div>
                         <div style={{fontSize:'9px',color:'#555',fontFamily:'monospace',marginBottom:'8px'}}>Por dispositivo</div>
                         {demographics.device.map((d,i)=>{
-                          const max = parseFloat(demographics.device[0]?.spend)||1
-                          const pct = Math.round(parseFloat(d.spend)/max*100)
+                          const max=parseFloat(demographics.device[0]?.spend)||1
+                          const pct=Math.round(parseFloat(d.spend)/max*100)
                           return (
                             <div key={i} style={{display:'flex',alignItems:'center',gap:'10px',marginBottom:'6px'}}>
                               <div style={{fontSize:'11px',color:'#888',fontFamily:'monospace',width:'80px',flexShrink:0,textTransform:'capitalize'}}>{d.impression_device}</div>
@@ -773,45 +796,72 @@ export default function Reportes() {
                     </div>
                   </div>
 
-                  <div style={{background:'#111116',border:'1px solid #1a1a22',borderRadius:'10px',padding:'20px',marginBottom:'20px'}}>
-                    <div style={{fontSize:'10px',color:'#444',fontFamily:'monospace',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:'16px'}}>CTR por grupo de edad</div>
-                    <div style={{height:'180px'}}>
-                      <Bar data={{
-                        labels:demographics.age.map(d=>d.age),
-                        datasets:[{
-                          label:'CTR %',
-                          data:demographics.age.map(d=>{
-                            const imp = parseFloat(d.impressions)||0
-                            const clk = parseFloat(d.clicks)||0
-                            return imp>0?+(clk/imp*100).toFixed(2):0
-                          }),
-                          backgroundColor:demographics.age.map((_,i)=>COLORS[i%COLORS.length]+'80'),
-                          borderColor:demographics.age.map((_,i)=>COLORS[i%COLORS.length]),
-                          borderWidth:1,borderRadius:4
-                        }]
-                      }} options={chartOpts()}/>
+                  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'16px',marginBottom:'20px'}}>
+                    <div style={{background:'#111116',border:'1px solid #1a1a22',borderRadius:'10px',padding:'20px'}}>
+                      <div style={{fontSize:'10px',color:'#444',fontFamily:'monospace',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:'16px'}}>Top paises por gasto</div>
+                      <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+                        {demographics.country.slice(0,10).map((c,i)=>{
+                          const max=parseFloat(demographics.country[0]?.spend)||1
+                          const pct=Math.round(parseFloat(c.spend)/max*100)
+                          const totalSpend=demographics.country.reduce((s,x)=>s+(parseFloat(x.spend)||0),0)
+                          const sharePct=totalSpend>0?Math.round(parseFloat(c.spend)/totalSpend*100):0
+                          return (
+                            <div key={i} style={{display:'flex',alignItems:'center',gap:'10px'}}>
+                              <div style={{fontSize:'11px',color:'#888',fontFamily:'monospace',width:'32px',flexShrink:0}}>{c.country}</div>
+                              <div style={{flex:1,height:'6px',background:'#1a1a22',borderRadius:'3px',overflow:'hidden'}}>
+                                <div style={{width:pct+'%',height:'100%',background:COLORS[i%COLORS.length],borderRadius:'3px'}}></div>
+                              </div>
+                              <div style={{fontSize:'11px',color:'#fff',fontFamily:'monospace',width:'60px',textAlign:'right',flexShrink:0}}>{fmt$(c.spend)}</div>
+                              <div style={{fontSize:'10px',color:'#555',fontFamily:'monospace',width:'30px',textAlign:'right',flexShrink:0}}>{sharePct}%</div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+
+                    <div style={{background:'#111116',border:'1px solid #1a1a22',borderRadius:'10px',padding:'20px'}}>
+                      <div style={{fontSize:'10px',color:'#444',fontFamily:'monospace',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:'16px'}}>Top regiones/estados</div>
+                      <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+                        {demographics.region.slice(0,10).map((r,i)=>{
+                          const max=parseFloat(demographics.region[0]?.spend)||1
+                          const pct=Math.round(parseFloat(r.spend)/max*100)
+                          return (
+                            <div key={i} style={{display:'flex',alignItems:'center',gap:'10px'}}>
+                              <div style={{fontSize:'10px',color:'#888',fontFamily:'monospace',width:'120px',flexShrink:0,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{r.region}</div>
+                              <div style={{flex:1,height:'6px',background:'#1a1a22',borderRadius:'3px',overflow:'hidden'}}>
+                                <div style={{width:pct+'%',height:'100%',background:COLORS[i%COLORS.length],borderRadius:'3px'}}></div>
+                              </div>
+                              <div style={{fontSize:'11px',color:'#fff',fontFamily:'monospace',width:'60px',textAlign:'right',flexShrink:0}}>{fmt$(r.spend)}</div>
+                            </div>
+                          )
+                        })}
+                      </div>
                     </div>
                   </div>
 
                   <div style={{background:'rgba(167,139,250,.05)',border:'1px solid rgba(167,139,250,.15)',borderRadius:'10px',padding:'20px'}}>
                     <div style={{fontSize:'10px',color:'#a78bfa',fontFamily:'monospace',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:'12px'}}>Recomendaciones de audiencia</div>
-                    {(() => {
-                      const recs = []
-                      const topAge = demographics.age[0]
-                      if (topAge) recs.push('El grupo de edad con mayor gasto es '+topAge.age+' — considera crear creativos especificos para este segmento')
-                      const maleSpend = demographics.gender.find(g=>g.gender==='male')
-                      const femaleSpend = demographics.gender.find(g=>g.gender==='female')
-                      if (maleSpend && femaleSpend) {
-                        const maleTotal = parseFloat(maleSpend.spend)||0
-                        const femaleTotal = parseFloat(femaleSpend.spend)||0
-                        const dominant = maleTotal > femaleTotal ? 'hombres' : 'mujeres'
-                        const pct = Math.round(Math.max(maleTotal,femaleTotal)/(maleTotal+femaleTotal)*100)
-                        recs.push('El '+pct+'% del gasto va a '+dominant+' — verifica si esto coincide con tu cliente ideal')
+                    {(()=>{
+                      const recs=[]
+                      const topAge=demographics.age[0]
+                      if(topAge) recs.push('El grupo '+topAge.age+' recibe el mayor gasto ('+fmt$(topAge.spend)+') — crea creativos especificos para este segmento')
+                      const ages=demographics.age
+                      const young=ages.filter(a=>['18-24','25-34'].includes(a.age)).reduce((s,a)=>s+(parseFloat(a.spend)||0),0)
+                      const mature=ages.filter(a=>['45-54','55-64','65+'].includes(a.age)).reduce((s,a)=>s+(parseFloat(a.spend)||0),0)
+                      const totalAge=ages.reduce((s,a)=>s+(parseFloat(a.spend)||0),0)
+                      if(totalAge>0&&mature/totalAge>0.4) recs.push('El '+(Math.round(mature/totalAge*100))+'% del gasto va a mayores de 45 — si no son tu publico objetivo, considera ajustar la segmentacion por edad')
+                      const male=demographics.gender.find(g=>g.gender==='male')
+                      const female=demographics.gender.find(g=>g.gender==='female')
+                      if(male&&female){
+                        const mt=parseFloat(male.spend)||0, ft=parseFloat(female.spend)||0
+                        const dom=mt>ft?'hombres':'mujeres'
+                        const pct=Math.round(Math.max(mt,ft)/(mt+ft)*100)
+                        recs.push('El '+pct+'% del gasto es en '+dom+' — verifica si coincide con tu cliente ideal y considera si debes ajustar')
                       }
-                      const topCountry = demographics.country[0]
-                      if (topCountry) recs.push('Tu mayor gasto es en '+topCountry.country+' — asegurate de que el copy y creativos sean relevantes para esa region')
-                      const topDevice = demographics.device[0]
-                      if (topDevice) recs.push('La mayoria del gasto es en '+topDevice.impression_device+' — optimiza tus creativos para ese formato')
+                      const topRegion=demographics.region[0]
+                      if(topRegion) recs.push('La region con mayor gasto es '+topRegion.region+' ('+fmt$(topRegion.spend)+') — asegurate de que el copy sea relevante para esa zona')
+                      const mobile=demographics.device.find(d=>d.impression_device==='mobile_app'||d.impression_device==='iphone'||d.impression_device==='android_smartphone')
+                      if(mobile) recs.push('La mayoria del trafico es mobile — asegurate de que tus creativos esten optimizados para pantalla vertical y que la landing cargue rapido en celular')
                       return recs.map((rec,i)=>(
                         <div key={i} style={{display:'flex',gap:'8px',marginBottom:'8px',padding:'10px 12px',background:'rgba(167,139,250,.05)',borderRadius:'6px',border:'1px solid rgba(167,139,250,.1)'}}>
                           <span style={{color:'#a78bfa',fontWeight:'800',fontSize:'12px',flexShrink:0}}>→</span>
