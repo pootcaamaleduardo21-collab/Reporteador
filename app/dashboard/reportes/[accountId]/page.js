@@ -962,10 +962,6 @@ export default function Reportes() {
                   </div>
 
 
-                  <div style={{background:'#111116',border:'1px solid #1a1a22',borderRadius:'10px',padding:'20px',marginBottom:'20px'}}>
-                    <div style={{fontSize:'10px',color:'#444',fontFamily:'monospace',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:'16px'}}>Mapa de alcance — donde ven tus anuncios</div>
-                    <MapChart countryData={demographics.country} regionData={demographics.region}/>
-                  </div>
 
                   <div style={{background:'#111116',border:'1px solid #1a1a22',borderRadius:'10px',padding:'20px',marginBottom:'20px'}}>
                     <div style={{fontSize:'10px',color:'#444',fontFamily:'monospace',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:'4px'}}>Mapa de alcance por estado y pais</div>
