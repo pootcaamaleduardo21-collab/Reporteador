@@ -431,6 +431,8 @@ const MapChart = ({ countryData, regionData }) => {
         if (!hasRegion && i===0) { topLat=coords.lat; topLng=coords.lng; topZoom=5 }
       })
 
+      console.log('REGIONS FROM META:', (regionData||[]).map(r=>r.region))
+      console.log('COUNTRIES FROM META:', (countryData||[]).map(c=>c.country))
       setTimeout(()=>map.flyTo([topLat,topLng],topZoom,{duration:1.5}), 500)
     }
     document.head.appendChild(script)
