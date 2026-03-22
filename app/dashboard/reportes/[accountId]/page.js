@@ -484,6 +484,193 @@ const MapChart = ({ countryData, regionData }) => {
 }
 
 
+const REGION_COORDS = {
+  'Ciudad de Mexico':{lat:19.4326,lng:-99.1332},'Distrito Federal':{lat:19.4326,lng:-99.1332},
+  'Jalisco':{lat:20.6597,lng:-103.3496},'Guadalajara':{lat:20.6597,lng:-103.3496},
+  'Nuevo Leon':{lat:25.5922,lng:-99.9962},'Monterrey':{lat:25.6866,lng:-100.3161},
+  'Estado de Mexico':{lat:19.2952,lng:-99.8938},'Mexico State':{lat:19.2952,lng:-99.8938},
+  'Puebla':{lat:19.0414,lng:-98.2063},
+  'Veracruz':{lat:19.1738,lng:-96.1342},
+  'Guanajuato':{lat:21.019,lng:-101.2574},
+  'Chihuahua':{lat:28.6353,lng:-106.0889},
+  'Baja California':{lat:30.8406,lng:-115.2838},
+  'Sonora':{lat:29.2972,lng:-110.3309},
+  'Tamaulipas':{lat:24.2669,lng:-98.8363},
+  'Sinaloa':{lat:25.1721,lng:-107.4795},
+  'Coahuila':{lat:27.0587,lng:-101.7068},
+  'Oaxaca':{lat:17.0732,lng:-96.7266},
+  'Chiapas':{lat:16.7569,lng:-93.1292},
+  'Michoacan':{lat:19.5665,lng:-101.7068},
+  'Guerrero':{lat:17.4392,lng:-99.5451},
+  'Hidalgo':{lat:20.0911,lng:-98.7624},
+  'Morelos':{lat:18.6813,lng:-99.1013},
+  'Tabasco':{lat:17.8409,lng:-92.6189},
+  'Yucatan':{lat:20.7099,lng:-89.0943},
+  'Queretaro':{lat:20.5888,lng:-100.3899},
+  'San Luis Potosi':{lat:22.1565,lng:-100.9855},
+  'Durango':{lat:24.0277,lng:-104.6532},
+  'Zacatecas':{lat:22.7709,lng:-102.5832},
+  'Aguascalientes':{lat:21.8853,lng:-102.2916},
+  'Nayarit':{lat:21.7514,lng:-104.8455},
+  'Tlaxcala':{lat:19.3182,lng:-98.2375},
+  'Colima':{lat:19.2452,lng:-103.7241},
+  'Campeche':{lat:19.8301,lng:-90.5349},
+  'Quintana Roo':{lat:19.1817,lng:-88.4791},
+  'Baja California Sur':{lat:23.7369,lng:-110.7563},
+  'Bogota':{lat:4.711,lng:-74.0721},'Cundinamarca':{lat:4.711,lng:-74.0721},
+  'Antioquia':{lat:6.2442,lng:-75.5812},
+  'Valle del Cauca':{lat:3.4516,lng:-76.532},
+  'Atlantico':{lat:10.6966,lng:-74.8741},
+  'Buenos Aires':{lat:-34.6037,lng:-58.3816},
+  'Cordoba':{lat:-31.4201,lng:-64.1888},
+  'Santa Fe':{lat:-31.6107,lng:-60.6972},
+  'Santiago':{lat:-33.4489,lng:-70.6693},
+  'Lima':{lat:-12.0464,lng:-77.0428},
+  'Sao Paulo':{lat:-23.5505,lng:-46.6333},
+  'Rio de Janeiro':{lat:-22.9068,lng:-43.1729},
+  'Madrid':{lat:40.4168,lng:-3.7038},
+  'Barcelona':{lat:41.3851,lng:2.1734},
+  'Miami':{lat:25.7617,lng:-80.1918},
+  'Los Angeles':{lat:34.0522,lng:-118.2437},
+  'New York':{lat:40.7128,lng:-74.006},
+  'Texas':{lat:31.9686,lng:-99.9018},
+  'California':{lat:36.7783,lng:-119.4179},
+  'Florida':{lat:27.6648,lng:-81.5158},
+  'Guatemala City':{lat:14.6349,lng:-90.5069},
+  'San Jose':{lat:9.9281,lng:-84.0907},
+  'Panama City':{lat:8.9943,lng:-79.5188},
+  'Caracas':{lat:10.4806,lng:-66.9036},
+  'Quito':{lat:-0.1807,lng:-78.4678},
+  'La Paz':{lat:-16.5,lng:-68.15},
+  'Asuncion':{lat:-25.2867,lng:-57.647},
+  'Montevideo':{lat:-34.9011,lng:-56.1645},
+  'Santo Domingo':{lat:18.4861,lng:-69.9312},
+  'San Juan':{lat:18.4655,lng:-66.1057},
+}
+
+const COUNTRY_COORDS = {
+  MX:{lat:23.6345,lng:-102.5528,name:'Mexico'},
+  US:{lat:37.0902,lng:-95.7129,name:'Estados Unidos'},
+  CO:{lat:4.5709,lng:-74.2973,name:'Colombia'},
+  AR:{lat:-38.4161,lng:-63.6167,name:'Argentina'},
+  CL:{lat:-35.6751,lng:-71.543,name:'Chile'},
+  PE:{lat:-9.19,lng:-75.0152,name:'Peru'},
+  ES:{lat:40.4637,lng:-3.7492,name:'Espana'},
+  BR:{lat:-14.235,lng:-51.9253,name:'Brasil'},
+  GT:{lat:15.7835,lng:-90.2308,name:'Guatemala'},
+  EC:{lat:-1.8312,lng:-78.1834,name:'Ecuador'},
+  VE:{lat:6.4238,lng:-66.5897,name:'Venezuela'},
+  BO:{lat:-16.2902,lng:-63.5887,name:'Bolivia'},
+  UY:{lat:-32.5228,lng:-55.7658,name:'Uruguay'},
+  PY:{lat:-23.4425,lng:-58.4438,name:'Paraguay'},
+  CR:{lat:9.7489,lng:-83.7534,name:'Costa Rica'},
+  PA:{lat:8.538,lng:-80.7821,name:'Panama'},
+  HN:{lat:15.2,lng:-86.2419,name:'Honduras'},
+  SV:{lat:13.7942,lng:-88.8965,name:'El Salvador'},
+  DO:{lat:18.7357,lng:-70.1627,name:'Rep. Dominicana'},
+  PR:{lat:18.2208,lng:-66.5901,name:'Puerto Rico'},
+  GB:{lat:55.3781,lng:-3.436,name:'Reino Unido'},
+  CA:{lat:56.1304,lng:-106.3468,name:'Canada'},
+  DE:{lat:51.1657,lng:10.4515,name:'Alemania'},
+  FR:{lat:46.2276,lng:2.2137,name:'Francia'},
+  IT:{lat:41.8719,lng:12.5674,name:'Italia'},
+  PT:{lat:39.3999,lng:-8.2245,name:'Portugal'},
+}
+
+const MapChart = ({ countryData, regionData }) => {
+  const mapRef = React.useRef(null)
+  const mapInstanceRef = React.useRef(null)
+
+  React.useEffect(() => {
+    if (typeof window === 'undefined' || !mapRef.current) return
+    if (mapInstanceRef.current) { mapInstanceRef.current.remove(); mapInstanceRef.current = null }
+
+    const link = document.createElement('link')
+    link.rel = 'stylesheet'
+    link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'
+    document.head.appendChild(link)
+
+    const script = document.createElement('script')
+    script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
+    script.onload = () => {
+      if (!mapRef.current || mapInstanceRef.current) return
+      const L = window.L
+
+      const map = L.map(mapRef.current, { center:[22,-95], zoom:4, zoomControl:true, scrollWheelZoom:true })
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { attribution:'', maxZoom:12 }).addTo(map)
+      mapInstanceRef.current = map
+
+      const style = document.createElement('style')
+      style.textContent = '.dark-popup .leaflet-popup-content-wrapper{background:#18181f;border:1px solid #2a2a35;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,.5);color:#fff}.dark-popup .leaflet-popup-tip{background:#18181f}.leaflet-popup-content{margin:0;padding:0}.leaflet-container{background:#0d0d12;font-family:monospace}'
+      document.head.appendChild(style)
+
+      const totalRegion = (regionData||[]).reduce((s,r)=>s+(parseFloat(r.spend)||0),0)
+      const maxRegion = parseFloat(regionData?.[0]?.spend)||1
+      let topLat=22, topLng=-95, topZoom=4, hasRegion=false
+
+      ;(regionData||[]).forEach((r,i) => {
+        const coords = REGION_COORDS[r.region]
+        if (!coords) return
+        const spend = parseFloat(r.spend)||0
+        const pct = totalRegion>0?Math.round(spend/totalRegion*100):0
+        const size = Math.max(12, Math.min(40, (spend/maxRegion)*40))
+        const color = i===0?'#6ee7b7':i<3?'#3b82f6':i<6?'#f97316':'#a78bfa'
+
+        L.circleMarker([coords.lat, coords.lng], {
+          radius: size, fillColor: color, color: color, weight:2, opacity:.9, fillOpacity:.35
+        }).addTo(map).bindPopup(
+          '<div style="padding:10px;min-width:140px"><div style="font-weight:800;font-size:13px;margin-bottom:6px;color:#fff">'+r.region+'</div><div style="color:#6ee7b7;font-size:12px">$'+spend.toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2})+'</div><div style="color:#888;font-size:11px">'+pct+'% del gasto regional</div></div>',
+          { className: 'dark-popup' }
+        )
+
+        if (i===0) { topLat=coords.lat; topLng=coords.lng; topZoom=6; hasRegion=true }
+      })
+
+      const totalCountry = (countryData||[]).reduce((s,c)=>s+(parseFloat(c.spend)||0),0)
+      const maxCountry = parseFloat(countryData?.[0]?.spend)||1
+
+      ;(countryData||[]).forEach((c,i) => {
+        const coords = COUNTRY_COORDS[c.country]
+        if (!coords) return
+        const spend = parseFloat(c.spend)||0
+        const pct = totalCountry>0?Math.round(spend/totalCountry*100):0
+        const size = Math.max(8, Math.min(25, (spend/maxCountry)*25))
+
+        L.circleMarker([coords.lat, coords.lng], {
+          radius: size, fillColor: '#fcd34d', color: '#fcd34d', weight:1, opacity:.6, fillOpacity:.15
+        }).addTo(map).bindPopup(
+          '<div style="padding:10px;min-width:140px"><div style="font-weight:800;font-size:13px;margin-bottom:6px;color:#fff">'+coords.name+'</div><div style="color:#fcd34d;font-size:12px">$'+spend.toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2})+'</div><div style="color:#888;font-size:11px">'+pct+'% del gasto total</div></div>',
+          { className: 'dark-popup' }
+        )
+
+        if (!hasRegion && i===0) { topLat=coords.lat; topLng=coords.lng; topZoom=5 }
+      })
+
+      setTimeout(()=>map.flyTo([topLat,topLng],topZoom,{duration:1.5}), 500)
+    }
+    document.head.appendChild(script)
+    return () => { if (mapInstanceRef.current) { mapInstanceRef.current.remove(); mapInstanceRef.current=null } }
+  }, [countryData, regionData])
+
+  return (
+    <div style={{position:'relative'}}>
+      <div ref={mapRef} style={{height:'420px',borderRadius:'8px',overflow:'hidden',background:'#0d0d12'}}></div>
+      <div style={{position:'absolute',top:'12px',right:'12px',background:'rgba(10,10,14,.92)',border:'1px solid #2a2a35',borderRadius:'8px',padding:'10px 14px',zIndex:1000}}>
+        <div style={{fontSize:'9px',color:'#555',fontFamily:'monospace',marginBottom:'6px'}}>CAPAS</div>
+        <div style={{display:'flex',alignItems:'center',gap:'6px',marginBottom:'4px'}}>
+          <div style={{width:'10px',height:'10px',borderRadius:'50%',background:'#6ee7b7',opacity:.8}}></div>
+          <span style={{fontSize:'10px',color:'#888',fontFamily:'monospace'}}>Estados/Regiones</span>
+        </div>
+        <div style={{display:'flex',alignItems:'center',gap:'6px'}}>
+          <div style={{width:'10px',height:'10px',borderRadius:'50%',background:'#fcd34d',opacity:.6}}></div>
+          <span style={{fontSize:'10px',color:'#888',fontFamily:'monospace'}}>Paises</span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+
 export default function Reportes() {
   const { accountId } = useParams()
   const [token, setToken] = useState(null)
@@ -994,6 +1181,13 @@ export default function Reportes() {
                     <div style={{fontSize:'10px',color:'#444',fontFamily:'monospace',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:'16px'}}>Mapa de alcance — donde ven tus anuncios</div>
                     <MapChart countryData={demographics.country} regionData={demographics.region}/>
                   </div>
+
+                  <div style={{background:'#111116',border:'1px solid #1a1a22',borderRadius:'10px',padding:'20px',marginBottom:'20px'}}>
+                    <div style={{fontSize:'10px',color:'#444',fontFamily:'monospace',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:'4px'}}>Mapa de alcance por estado y pais</div>
+                    <div style={{fontSize:'10px',color:'#333',fontFamily:'monospace',marginBottom:'16px'}}>Burbujas grandes = estados · Burbujas pequenas = paises · Tamano proporcional al gasto · Haz clic para ver detalle</div>
+                    <MapChart countryData={demographics.country} regionData={demographics.region}/>
+                  </div>
+
                   <div style={{background:'rgba(167,139,250,.05)',border:'1px solid rgba(167,139,250,.15)',borderRadius:'10px',padding:'20px'}}>
                     <div style={{fontSize:'10px',color:'#a78bfa',fontFamily:'monospace',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:'12px'}}>Recomendaciones de audiencia</div>
                     {(()=>{
