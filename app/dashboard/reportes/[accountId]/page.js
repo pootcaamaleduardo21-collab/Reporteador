@@ -366,6 +366,74 @@ const MapChart = ({ countryData, regionData }) => {
   const mapRef = React.useRef(null)
   const mapInstanceRef = React.useRef(null)
 
+  const RC = {
+    'Ciudad de Mexico':{lat:19.4326,lng:-99.1332},'Ciudad de México':{lat:19.4326,lng:-99.1332},
+    'Distrito Federal':{lat:19.4326,lng:-99.1332},'Mexico City':{lat:19.4326,lng:-99.1332},
+    'Estado de Mexico':{lat:19.2952,lng:-99.8938},'State of Mexico':{lat:19.2952,lng:-99.8938},'Mexico State':{lat:19.2952,lng:-99.8938},
+    'Jalisco':{lat:20.6597,lng:-103.3496},'Guadalajara':{lat:20.6597,lng:-103.3496},
+    'Nuevo Leon':{lat:25.5922,lng:-99.9962},'Nuevo León':{lat:25.5922,lng:-99.9962},'Monterrey':{lat:25.6866,lng:-100.3161},
+    'Veracruz':{lat:19.1738,lng:-96.1342},'Veracruz-Llave':{lat:19.1738,lng:-96.1342},
+    'Puebla':{lat:19.0414,lng:-98.2063},
+    'Guanajuato':{lat:21.019,lng:-101.2574},
+    'Chihuahua':{lat:28.6353,lng:-106.0889},
+    'Baja California':{lat:30.8406,lng:-115.2838},
+    'Sonora':{lat:29.2972,lng:-110.3309},
+    'Tamaulipas':{lat:24.2669,lng:-98.8363},
+    'Sinaloa':{lat:25.1721,lng:-107.4795},
+    'Coahuila':{lat:27.0587,lng:-101.7068},'Coahuila de Zaragoza':{lat:27.0587,lng:-101.7068},
+    'Oaxaca':{lat:17.0732,lng:-96.7266},
+    'Chiapas':{lat:16.7569,lng:-93.1292},
+    'Michoacan':{lat:19.5665,lng:-101.7068},'Michoacán':{lat:19.5665,lng:-101.7068},'Michoacán de Ocampo':{lat:19.5665,lng:-101.7068},
+    'Guerrero':{lat:17.4392,lng:-99.5451},
+    'Hidalgo':{lat:20.0911,lng:-98.7624},
+    'Morelos':{lat:18.6813,lng:-99.1013},
+    'Tabasco':{lat:17.8409,lng:-92.6189},
+    'Yucatan':{lat:20.7099,lng:-89.0943},'Yucatán':{lat:20.7099,lng:-89.0943},
+    'Queretaro':{lat:20.5888,lng:-100.3899},'Querétaro':{lat:20.5888,lng:-100.3899},
+    'San Luis Potosi':{lat:22.1565,lng:-100.9855},'San Luis Potosí':{lat:22.1565,lng:-100.9855},
+    'Durango':{lat:24.0277,lng:-104.6532},
+    'Zacatecas':{lat:22.7709,lng:-102.5832},
+    'Aguascalientes':{lat:21.8853,lng:-102.2916},
+    'Nayarit':{lat:21.7514,lng:-104.8455},
+    'Tlaxcala':{lat:19.3182,lng:-98.2375},
+    'Colima':{lat:19.2452,lng:-103.7241},
+    'Campeche':{lat:19.8301,lng:-90.5349},
+    'Quintana Roo':{lat:19.1817,lng:-88.4791},
+    'Baja California Sur':{lat:23.7369,lng:-110.7563},
+    'Bogota':{lat:4.711,lng:-74.0721},'Cundinamarca':{lat:4.711,lng:-74.0721},
+    'Antioquia':{lat:6.2442,lng:-75.5812},
+    'Valle del Cauca':{lat:3.4516,lng:-76.532},
+    'Buenos Aires':{lat:-34.6037,lng:-58.3816},
+    'Santiago':{lat:-33.4489,lng:-70.6693},
+    'Lima':{lat:-12.0464,lng:-77.0428},
+    'Sao Paulo':{lat:-23.5505,lng:-46.6333},
+    'Madrid':{lat:40.4168,lng:-3.7038},
+    'Miami':{lat:25.7617,lng:-80.1918},
+    'Texas':{lat:31.9686,lng:-99.9018},
+    'California':{lat:36.7783,lng:-119.4179},
+    'Florida':{lat:27.6648,lng:-81.5158},
+  }
+
+  const CC = {
+    MX:{lat:23.6345,lng:-102.5528,name:'Mexico'},
+    US:{lat:37.0902,lng:-95.7129,name:'Estados Unidos'},
+    CO:{lat:4.5709,lng:-74.2973,name:'Colombia'},
+    AR:{lat:-38.4161,lng:-63.6167,name:'Argentina'},
+    CL:{lat:-35.6751,lng:-71.543,name:'Chile'},
+    PE:{lat:-9.19,lng:-75.0152,name:'Peru'},
+    ES:{lat:40.4637,lng:-3.7492,name:'Espana'},
+    BR:{lat:-14.235,lng:-51.9253,name:'Brasil'},
+    GT:{lat:15.7835,lng:-90.2308,name:'Guatemala'},
+    EC:{lat:-1.8312,lng:-78.1834,name:'Ecuador'},
+    VE:{lat:6.4238,lng:-66.5897,name:'Venezuela'},
+    DO:{lat:18.7357,lng:-70.1627,name:'Rep. Dominicana'},
+    GB:{lat:55.3781,lng:-3.436,name:'Reino Unido'},
+    CA:{lat:56.1304,lng:-106.3468,name:'Canada'},
+    DE:{lat:51.1657,lng:10.4515,name:'Alemania'},
+    FR:{lat:46.2276,lng:2.2137,name:'Francia'},
+    PT:{lat:39.3999,lng:-8.2245,name:'Portugal'},
+  }
+
   React.useEffect(() => {
     if (typeof window === 'undefined' || !mapRef.current) return
     if (mapInstanceRef.current) { mapInstanceRef.current.remove(); mapInstanceRef.current = null }
@@ -377,8 +445,6 @@ const MapChart = ({ countryData, regionData }) => {
 
     const script = document.createElement('script')
     script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
-    const RC = REGION_COORDS
-    const CC = COUNTRY_COORDS
     script.onload = () => {
       if (!mapRef.current || mapInstanceRef.current) return
       const L = window.L
@@ -388,26 +454,26 @@ const MapChart = ({ countryData, regionData }) => {
       mapInstanceRef.current = map
 
       const style = document.createElement('style')
-      style.textContent = '.dark-popup .leaflet-popup-content-wrapper{background:#18181f;border:1px solid #2a2a35;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,.5);color:#fff}.dark-popup .leaflet-popup-tip{background:#18181f}.leaflet-popup-content{margin:0;padding:0}.leaflet-container{background:#0d0d12;font-family:monospace}'
+      style.textContent = '.dp .leaflet-popup-content-wrapper{background:#18181f;border:1px solid #2a2a35;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,.5);color:#fff}.dp .leaflet-popup-tip{background:#18181f}.leaflet-popup-content{margin:0;padding:0}.leaflet-container{background:#0d0d12}'
       document.head.appendChild(style)
 
       const totalRegion = (regionData||[]).reduce((s,r)=>s+(parseFloat(r.spend)||0),0)
       const maxRegion = parseFloat(regionData?.[0]?.spend)||1
-      let topLat=22, topLng=-95, topZoom=4, hasRegion=false
+      let topLat=22, topLng=-100, topZoom=5, hasRegion=false
 
       ;(regionData||[]).forEach((r,i) => {
         const coords = RC[r.region]
         if (!coords) return
         const spend = parseFloat(r.spend)||0
         const pct = totalRegion>0?Math.round(spend/totalRegion*100):0
-        const size = Math.max(12, Math.min(40, (spend/maxRegion)*40))
+        const size = Math.max(14, Math.min(45, (spend/maxRegion)*45))
         const color = i===0?'#6ee7b7':i<3?'#3b82f6':i<6?'#f97316':'#a78bfa'
 
         L.circleMarker([coords.lat, coords.lng], {
-          radius: size, fillColor: color, color: color, weight:2, opacity:.9, fillOpacity:.35
+          radius: size, fillColor: color, color: color, weight:2, opacity:.9, fillOpacity:.4
         }).addTo(map).bindPopup(
-          '<div style="padding:10px;min-width:140px"><div style="font-weight:800;font-size:13px;margin-bottom:6px;color:#fff">'+r.region+'</div><div style="color:#6ee7b7;font-size:12px">$'+spend.toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2})+'</div><div style="color:#888;font-size:11px">'+pct+'% del gasto regional</div></div>',
-          { className: 'dark-popup' }
+          '<div style="padding:10px;min-width:150px"><div style="font-weight:800;font-size:13px;margin-bottom:6px;color:#fff">'+r.region+'</div><div style="color:#6ee7b7;font-size:13px;font-weight:700">$'+spend.toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2})+'</div><div style="color:#888;font-size:11px;margin-top:4px">'+pct+'% del gasto regional</div></div>',
+          { className: 'dp' }
         )
 
         if (i===0) { topLat=coords.lat; topLng=coords.lng; topZoom=6; hasRegion=true }
@@ -421,19 +487,19 @@ const MapChart = ({ countryData, regionData }) => {
         if (!coords) return
         const spend = parseFloat(c.spend)||0
         const pct = totalCountry>0?Math.round(spend/totalCountry*100):0
-        const size = Math.max(8, Math.min(25, (spend/maxCountry)*25))
+        const size = Math.max(8, Math.min(20, (spend/maxCountry)*20))
 
         L.circleMarker([coords.lat, coords.lng], {
-          radius: size, fillColor: '#fcd34d', color: '#fcd34d', weight:1, opacity:.6, fillOpacity:.15
+          radius: size, fillColor: '#fcd34d', color: '#fcd34d', weight:1, opacity:.6, fillOpacity:.2
         }).addTo(map).bindPopup(
-          '<div style="padding:10px;min-width:140px"><div style="font-weight:800;font-size:13px;margin-bottom:6px;color:#fff">'+coords.name+'</div><div style="color:#fcd34d;font-size:12px">$'+spend.toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2})+'</div><div style="color:#888;font-size:11px">'+pct+'% del gasto total</div></div>',
-          { className: 'dark-popup' }
+          '<div style="padding:10px;min-width:150px"><div style="font-weight:800;font-size:13px;margin-bottom:6px;color:#fff">'+coords.name+'</div><div style="color:#fcd34d;font-size:13px;font-weight:700">$'+spend.toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2})+'</div><div style="color:#888;font-size:11px;margin-top:4px">'+pct+'% del gasto total</div></div>',
+          { className: 'dp' }
         )
 
         if (!hasRegion && i===0) { topLat=coords.lat; topLng=coords.lng; topZoom=5 }
       })
 
-      setTimeout(()=>map.flyTo([topLat,topLng],topZoom,{duration:1.5}), 500)
+      setTimeout(()=>map.flyTo([topLat,topLng],topZoom,{duration:1.5}), 600)
     }
     document.head.appendChild(script)
     return () => { if (mapInstanceRef.current) { mapInstanceRef.current.remove(); mapInstanceRef.current=null } }
