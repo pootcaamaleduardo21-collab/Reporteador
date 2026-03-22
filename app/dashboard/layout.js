@@ -80,37 +80,28 @@ export default function DashboardLayout({ children }) {
     : activeSection === 'instagram' ? 'Instagram Organico'
     : 'Dashboard'
 
-  if (!user) return <div style={{minHeight:'100vh',background:'#0c0c10'}}></div>
+  if (!user) return <div style={{minHeight:'100vh',background:'var(--bg)'}}></div>
 
   return (
-    <div style={{display:'flex',height:'100vh',background:'#0c0c10',fontFamily:'"Plus Jakarta Sans",system-ui,sans-serif',overflow:'hidden'}}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-        ::-webkit-scrollbar{width:4px;height:4px}
-        ::-webkit-scrollbar-track{background:transparent}
-        ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:4px}
-        .nav-hover:hover{background:rgba(255,255,255,.05)!important}
-        .pill-hover:hover{border-color:rgba(255,255,255,.18)!important}
-        .card-hover:hover{border-color:rgba(99,102,241,.3)!important}
-        .btn-hover:hover{background:rgba(255,255,255,.06)!important}
-      `}</style>
+    <div style={{display:'flex',height:'100vh',background:'var(--bg)',fontFamily:'"Plus Jakarta Sans",system-ui,sans-serif',overflow:'hidden'}}>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');`}</style>
 
       {/* SIDEBAR */}
       <aside style={{
         width:sidebarOpen?'210px':'52px',minWidth:sidebarOpen?'210px':'52px',
-        background:'#111116',borderRight:'1px solid rgba(255,255,255,.06)',
+        background:'var(--sidebar)',borderRight:'1px solid var(--border)',
         display:'flex',flexDirection:'column',height:'100vh',
         overflow:'hidden',flexShrink:0,transition:'width .2s ease,min-width .2s ease',
       }}>
         {/* Logo */}
-        <div style={{padding:'12px 10px',display:'flex',alignItems:'center',gap:'10px',borderBottom:'1px solid rgba(255,255,255,.06)',minHeight:'50px',flexShrink:0}}>
+        <div style={{padding:'12px 10px',display:'flex',alignItems:'center',gap:'10px',borderBottom:'1px solid var(--border)',minHeight:'50px',flexShrink:0}}>
           <div style={{width:'28px',height:'28px',borderRadius:'7px',background:'linear-gradient(135deg,#6366f1,#8b5cf6)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'13px',flexShrink:0,cursor:'pointer'}} onClick={()=>navigate('/dashboard')}>⚡</div>
-          {sidebarOpen && <span style={{fontWeight:'800',fontSize:'13px',color:'#fff',whiteSpace:'nowrap',cursor:'pointer'}} onClick={()=>navigate('/dashboard')}>Reporteador</span>}
+          {sidebarOpen && <span style={{fontWeight:'800',fontSize:'13px',color:'var(--text)',whiteSpace:'nowrap',cursor:'pointer'}} onClick={()=>navigate('/dashboard')}>Reporteador</span>}
         </div>
 
         {/* Nav */}
         <nav style={{padding:'6px 5px',flex:1,overflowY:'auto',overflowX:'hidden'}}>
-          {sidebarOpen && <div style={{fontSize:'9px',color:'#333',fontWeight:'600',letterSpacing:'.08em',textTransform:'uppercase',padding:'8px 8px 3px'}}>Principal</div>}
+          {sidebarOpen && <div style={{fontSize:'9px',color:'var(--text4)',fontWeight:'600',letterSpacing:'.08em',textTransform:'uppercase',padding:'8px 8px 3px'}}>Principal</div>}
 
           {[
             {id:'overview',icon:'🏠',label:'Resumen',path:'/dashboard',sub:'Pagado + organico',sub:'Pagado + organico'},
@@ -122,19 +113,19 @@ export default function DashboardLayout({ children }) {
               <span style={{fontSize:'14px',width:'20px',textAlign:'center',flexShrink:0}}>{s.icon}</span>
               {sidebarOpen && <div style={{flex:1,overflow:'hidden'}}>
                 <div style={{fontSize:'11px',fontWeight:'600',color:activeSection===s.id?'#a5b4fc':'#888',whiteSpace:'nowrap'}}>{s.label}</div>
-                {s.sub && <div style={{fontSize:'9px',color:'#333',marginTop:'1px'}}>{s.sub}</div>}
+                {s.sub && <div style={{fontSize:'9px',color:'var(--text4)',marginTop:'1px'}}>{s.sub}</div>}
               </div>}
             </div>
           ))}
 
-          {sidebarOpen && <div style={{fontSize:'9px',color:'#333',fontWeight:'600',letterSpacing:'.08em',textTransform:'uppercase',padding:'10px 8px 3px'}}>Reportes Ads</div>}
+          {sidebarOpen && <div style={{fontSize:'9px',color:'var(--text4)',fontWeight:'600',letterSpacing:'.08em',textTransform:'uppercase',padding:'10px 8px 3px'}}>Reportes Ads</div>}
 
           <div className="nav-hover" onClick={()=>setReportsOpen(!reportsOpen)}
             style={{display:'flex',alignItems:'center',gap:'8px',padding:'7px 8px',borderRadius:'7px',cursor:'pointer',background:'transparent',border:'none',width:'100%'}}>
             <span style={{fontSize:'14px',width:'20px',textAlign:'center',flexShrink:0}}>📈</span>
             {sidebarOpen && <>
               <div style={{flex:1}}><div style={{fontSize:'11px',fontWeight:'600',color:'#666',textAlign:'left'}}>Desglose</div></div>
-              <span style={{fontSize:'10px',color:'#333',transition:'transform .2s',transform:reportsOpen?'rotate(180deg)':'rotate(0deg)'}}>▾</span>
+              <span style={{fontSize:'10px',color:'var(--text4)',transition:'transform .2s',transform:reportsOpen?'rotate(180deg)':'rotate(0deg)'}}>▾</span>
             </>}
           </div>
 
@@ -154,7 +145,7 @@ export default function DashboardLayout({ children }) {
             ))}
           </div>
 
-          {sidebarOpen && <div style={{fontSize:'9px',color:'#333',fontWeight:'600',letterSpacing:'.08em',textTransform:'uppercase',padding:'10px 8px 3px'}}>Config</div>}
+          {sidebarOpen && <div style={{fontSize:'9px',color:'var(--text4)',fontWeight:'600',letterSpacing:'.08em',textTransform:'uppercase',padding:'10px 8px 3px'}}>Config</div>}
           <div className="nav-hover" onClick={()=>navigate('/dashboard/settings')}
             style={{display:'flex',alignItems:'center',gap:'8px',padding:'7px 8px',borderRadius:'7px',cursor:'pointer',background:activeSection==='settings'?'rgba(99,102,241,.14)':'transparent'}}>
             <span style={{fontSize:'14px',width:'20px',textAlign:'center',flexShrink:0}}>⚙️</span>
@@ -163,20 +154,20 @@ export default function DashboardLayout({ children }) {
         </nav>
 
         {/* User */}
-        <div style={{padding:'6px 5px',borderTop:'1px solid rgba(255,255,255,.06)',flexShrink:0}}>
+        <div style={{padding:'6px 5px',borderTop:'1px solid var(--border)',flexShrink:0}}>
           <div style={{display:'flex',alignItems:'center',gap:'8px',padding:'7px 8px',borderRadius:'7px'}}>
             <div style={{width:'24px',height:'24px',borderRadius:'50%',background:'rgba(99,102,241,.15)',border:'1px solid rgba(99,102,241,.3)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'10px',color:'#a5b4fc',fontWeight:'700',flexShrink:0}}>
               {user.email?.[0]?.toUpperCase()}
             </div>
             {sidebarOpen && <div style={{flex:1,minWidth:0}}>
-              <div style={{fontSize:'10px',color:'#444',fontFamily:'monospace',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{user.email}</div>
+              <div style={{fontSize:'10px',color:'var(--text3)',fontFamily:'monospace',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{user.email}</div>
               <div style={{fontSize:'9px',color:'#6366f1',fontWeight:'700',marginTop:'1px'}}>Pro ✦</div>
             </div>}
           </div>
           <div className="nav-hover" onClick={handleLogout}
             style={{display:'flex',alignItems:'center',gap:'8px',padding:'6px 8px',borderRadius:'7px',cursor:'pointer',border:'none',background:'transparent',width:'100%'}}>
             <span style={{fontSize:'13px',width:'20px',textAlign:'center',flexShrink:0}}>🚪</span>
-            {sidebarOpen && <span style={{fontSize:'11px',color:'#444',whiteSpace:'nowrap'}}>Cerrar sesion</span>}
+            {sidebarOpen && <span style={{fontSize:'11px',color:'var(--text3)',whiteSpace:'nowrap'}}>Cerrar sesion</span>}
           </div>
         </div>
       </aside>
@@ -185,15 +176,15 @@ export default function DashboardLayout({ children }) {
       <div style={{flex:1,display:'flex',flexDirection:'column',overflow:'hidden',minWidth:0}}>
 
         {/* TOPBAR */}
-        <header style={{height:'50px',background:'#111116',borderBottom:'1px solid rgba(255,255,255,.06)',display:'flex',alignItems:'center',padding:'0 14px',gap:'10px',flexShrink:0,zIndex:10}}>
+        <header style={{height:'50px',background:'var(--sidebar)',borderBottom:'1px solid var(--border)',display:'flex',alignItems:'center',padding:'0 14px',gap:'10px',flexShrink:0,zIndex:10}}>
           <button className="btn-hover" onClick={()=>setSidebarOpen(!sidebarOpen)}
-            style={{background:'transparent',border:'none',cursor:'pointer',color:'#444',fontSize:'16px',padding:'3px 5px',borderRadius:'5px'}}>☰</button>
+            style={{background:'transparent',border:'none',cursor:'pointer',color:'var(--text3)',fontSize:'16px',padding:'3px 5px',borderRadius:'5px'}}>☰</button>
 
           {/* Breadcrumb */}
           <div style={{flex:1,display:'flex',alignItems:'center',gap:'6px',minWidth:0}}>
-            <span style={{fontSize:'13px',fontWeight:'700',color:'#fff',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{topbarTitle}</span>
+            <span style={{fontSize:'13px',fontWeight:'700',color:'var(--text)',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{topbarTitle}</span>
             {isReportePage && selectedAccount && (
-              <span style={{fontSize:'10px',color:'#333',fontFamily:'monospace',flexShrink:0}}>{selectedAccount.account_id}</span>
+              <span style={{fontSize:'10px',color:'var(--text4)',fontFamily:'monospace',flexShrink:0}}>{selectedAccount.account_id}</span>
             )}
           </div>
 
@@ -211,15 +202,15 @@ export default function DashboardLayout({ children }) {
           {/* Accounts strip toggle */}
           {accounts.length > 0 && (
             <button className="btn-hover" onClick={()=>setStripOpen(!stripOpen)}
-              style={{display:'flex',alignItems:'center',gap:'5px',padding:'4px 9px',borderRadius:'6px',border:'1px solid rgba(255,255,255,.07)',background:stripOpen?'rgba(255,255,255,.05)':'transparent',cursor:'pointer',fontFamily:'inherit',flexShrink:0}}>
+              style={{display:'flex',alignItems:'center',gap:'5px',padding:'4px 9px',borderRadius:'6px',border:'1px solid var(--border)',background:stripOpen?'rgba(255,255,255,.05)':'transparent',cursor:'pointer',fontFamily:'inherit',flexShrink:0}}>
               <span style={{fontSize:'10px',color:'#777',whiteSpace:'nowrap'}}>{accounts.length} cuentas</span>
-              <span style={{fontSize:'10px',color:'#444',transition:'transform .2s',transform:stripOpen?'rotate(180deg)':'rotate(0)'}}>▾</span>
+              <span style={{fontSize:'10px',color:'var(--text3)',transition:'transform .2s',transform:stripOpen?'rotate(180deg)':'rotate(0)'}}>▾</span>
             </button>
           )}
         </header>
 
         {/* ACCOUNTS STRIP */}
-        <div style={{background:'#111116',borderBottom:stripOpen?'1px solid rgba(255,255,255,.06)':'none',overflow:'hidden',maxHeight:stripOpen?'68px':'0',transition:'max-height .25s ease',flexShrink:0}}>
+        <div style={{background:'var(--sidebar)',borderBottom:stripOpen?'1px solid rgba(255,255,255,.06)':'none',overflow:'hidden',maxHeight:stripOpen?'68px':'0',transition:'max-height .25s ease',flexShrink:0}}>
           <div style={{display:'flex',alignItems:'center',gap:'6px',padding:'8px 14px',overflowX:'auto',scrollbarWidth:'none'}}>
             {accounts.map(acc=>(
               <div key={acc.id} className="pill-hover" onClick={()=>selectAccount(acc)}
@@ -227,7 +218,7 @@ export default function DashboardLayout({ children }) {
                 <div style={{width:'6px',height:'6px',borderRadius:'50%',background:acc.is_active?'#6ee7b7':'#f87171',flexShrink:0}}></div>
                 <div>
                   <div style={{fontSize:'11px',fontWeight:'700',color:selectedAccount?.id===acc.id?'#a5b4fc':'#ddd',whiteSpace:'nowrap'}}>{acc.account_name||acc.account_id}</div>
-                  <div style={{fontSize:'9px',color:'#333',fontFamily:'monospace',marginTop:'1px'}}>{acc.account_id}</div>
+                  <div style={{fontSize:'9px',color:'var(--text4)',fontFamily:'monospace',marginTop:'1px'}}>{acc.account_id}</div>
                 </div>
               </div>
             ))}

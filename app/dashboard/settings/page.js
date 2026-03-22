@@ -30,19 +30,10 @@ export default function SettingsPage() {
 
   function handleThemeChange(val) {
     setTheme(val)
-    // Apply immediately
     if (val === 'Claro') {
       document.documentElement.setAttribute('data-theme', 'light')
-      document.body.style.setProperty('background', '#f0f2f5', 'important')
-      document.body.style.setProperty('color', '#0c0c10', 'important')
-      // Update all dark backgrounds
-      document.querySelectorAll('[style*="background: rgb(10, 10, 14)"], [style*="background:#0c0c10"]').forEach(el => {
-        el.style.background = '#f0f2f5'
-      })
     } else {
-      document.documentElement.setAttribute('data-theme', 'dark')
-      document.body.style.setProperty('background', '#0c0c10', 'important')
-      document.body.style.setProperty('color', '#fff', 'important')
+      document.documentElement.removeAttribute('data-theme')
     }
   }
 
@@ -50,7 +41,7 @@ export default function SettingsPage() {
     try {
       localStorage.setItem('reporteador_prefs', JSON.stringify({ theme, language, currency, defaultPeriod }))
     } catch(e) {}
-    handleThemeChange(theme)
+    if (theme === 'Claro') { document.documentElement.setAttribute('data-theme', 'light') } else { document.documentElement.removeAttribute('data-theme') }
     setSaved(true)
     setTimeout(() => setSaved(false), 2500)
   }
