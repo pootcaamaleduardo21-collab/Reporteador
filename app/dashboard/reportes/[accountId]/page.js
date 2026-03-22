@@ -389,7 +389,7 @@ export default function Reportes() {
       const tr = JSON.stringify({since:range.since,until:range.until})
       const trPrev = JSON.stringify({since:prev.since,until:prev.until})
       const base = 'https://graph.facebook.com/v21.0/'+accountId+'/insights'
-      const vidFields = 'video_3_sec_watched_actions,video_p25_watched_actions,video_p50_watched_actions,video_p75_watched_actions,video_p100_watched_actions'
+      const vidFields = 'video_p25_watched_actions,video_p50_watched_actions,video_p75_watched_actions,video_p100_watched_actions'
       const baseFields = 'spend,impressions,reach,frequency,clicks,cpc,cpm,ctr,actions,objective,'+vidFields
       const campFields = 'campaign_name,objective,spend,impressions,reach,frequency,clicks,cpc,cpm,ctr,actions,'+vidFields
       const adsetFields = 'adset_name,campaign_name,spend,impressions,reach,frequency,clicks,cpc,cpm,ctr,actions,'+vidFields
@@ -424,7 +424,7 @@ export default function Reportes() {
         const results = getResults(actions, type)
         const spend = parseFloat(d.spend)||0
         const imp = parseFloat(d.impressions)||0
-        const vid3s = parseFloat(d.video_3_sec_watched_actions?.[0]?.value)||0
+        const vid3s = 0
         const vid25 = parseFloat(d.video_p25_watched_actions?.[0]?.value)||0
         const vid50 = parseFloat(d.video_p50_watched_actions?.[0]?.value)||0
         const vid75 = parseFloat(d.video_p75_watched_actions?.[0]?.value)||0
