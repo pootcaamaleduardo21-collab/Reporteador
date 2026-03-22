@@ -16,90 +16,117 @@ export default function SettingsPage() {
       if (!user) return
       const { data: accs } = await supabase.from('ad_accounts').select('*').eq('user_id', user.id)
       if (accs) setAccounts(accs)
+    }
+    init()
+    // Load saved prefs
+    try {
       const prefs = JSON.parse(localStorage.getItem('reporteador_prefs') || '{}')
-      if (prefs.theme) { setTheme(prefs.theme); applyTheme(prefs.theme) }
+      if (prefs.theme) setTheme(prefs.theme)
       if (prefs.language) setLanguage(prefs.language)
       if (prefs.currency) setCurrency(prefs.currency)
       if (prefs.defaultPeriod) setDefaultPeriod(prefs.defaultPeriod)
-    }
-    init()
+    } catch(e) {}
   }, [])
-
-  function applyTheme(t) {
-    if (t === 'Claro') {
-      document.documentElement.style.setProperty('--bg-override', '#f0f0f5')
-      document.body.style.background = '#f0f0f5'
-      document.body.style.color = '#0c0c10'
-    } else {
-      document.documentElement.style.removeProperty('--bg-override')
-      document.body.style.background = '#0c0c10'
-      document.body.style.color = '#fff'
-    }
-  }
 
   function handleThemeChange(val) {
     setTheme(val)
-    applyTheme(val)
+    // Apply immediately
+    if (val === 'Claro') {
+      document.documentElement.setAttribute('data-theme', 'light')
+      document.body.style.setProperty('background', '#f0f2f5', 'important')
+      document.body.style.setProperty('color', '#0c0c10', 'important')
+      // Update all dark backgrounds
+      document.querySelectorAll('[style*="background: rgb(10, 10, 14)"], [style*="background:#0c0c10"]').forEach(el => {
+        el.style.background = '#f0f2f5'
+      })
+    } else {
+      document.documentElement.setAttribute('data-theme', 'dark')
+      document.body.style.setProperty('background', '#0c0c10', 'important')
+      document.body.style.setProperty('color', '#fff', 'important')
+    }
   }
 
   function savePrefs() {
-    const prefs = { theme, language, currency, defaultPeriod }
-    localStorage.setItem('reporteador_prefs', JSON.stringify(prefs))
-    applyTheme(theme)
+    try {
+      localStorage.setItem('reporteador_prefs', JSON.stringify({ theme, language, currency, defaultPeriod }))
+    } catch(e) {}
+    handleThemeChange(theme)
     setSaved(true)
     setTimeout(() => setSaved(false), 2500)
   }
 
   const sel = {
-    background:'rgba(99,102,241,.1)',
+    background:'rgba(99,102,241,.12)',
     border:'1px solid rgba(99,102,241,.25)',
     color:'#a5b4fc',
-    padding:'6px 10px',
+    padding:'7px 12px',
     borderRadius:'7px',
-    fontSize:'11px',
+    fontSize:'12px',
     outline:'none',
     cursor:'pointer',
     fontFamily:'"Plus Jakarta Sans",sans-serif',
-    minWidth:'110px',
+    minWidth:'120px',
   }
-  const card = {
-    background:'#17171d',
-    border:'1px solid rgba(255,255,255,.07)',
-    borderRadius:'12px',
-    padding:'20px',
-    marginBottom:'14px',
-  }
-  const row = {
-    display:'flex',alignItems:'center',justifyContent:'space-between',
-    padding:'11px 0',borderBottom:'1px solid rgba(255,255,255,.05)',
-  }
+  const card = { background:'#17171d', border:'1px solid rgba(255,255,255,.07)', borderRadius:'12px', padding:'20px', marginBottom:'14px' }
+  const row = { display:'flex', alignItems:'center', justifyContent:'space-between', padding:'11px 0', borderBottom:'1px solid rgba(255,255,255,.05)' }
   const lbl = { fontSize:'12px', color:'#888', fontFamily:'"Plus Jakarta Sans",sans-serif' }
-  const sub = { fontSize:'10px', color:'#333', marginTop:'2px' }
+  const sub = { fontSize:'10px', color:'#444', marginTop:'2px' }
 
   return (
-    <div style={{padding:'20px',maxWidth:'720px',fontFamily:'"Plus Jakarta Sans",sans-serif'}}>
+    <div style={{padding:'20px',maxWidth:'740px',fontFamily:'"Plus Jakarta Sans",sans-serif'}}>
+
+      {/* Live preview banner */}
+      <div style={{background:'rgba(99,102,241,.08)',border:'1px solid rgba(99,102,241,.2)',borderRadius:'9px',padding:'10px 14px',marginBottom:'16px',fontSize:'11px',color:'#a5b4fc',fontFamily:'monospace',display:'flex',alignItems:'center',gap:'8px'}}>
+        <span>💡</span>
+        Los cambios de tema se aplican en tiempo real — guarda para que persistan al recargar
+      </div>
+
       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'14px'}}>
 
         {/* Apariencia */}
         <div style={card}>
           <div style={{fontSize:'13px',fontWeight:'700',color:'#fff',marginBottom:'14px'}}>🎨 Apariencia</div>
+
           <div style={row}>
-            <div><div style={lbl}>Tema</div><div style={sub}>Oscuro o claro</div></div>
-            <select style={sel} value={theme} onChange={e=>handleThemeChange(e.target.value)}>
-              <option>Oscuro</option>
-              <option>Claro</option>
-            </select>
+            <div>
+              <div style={lbl}>Tema</div>
+              <div style={sub}>Cambia entre oscuro y claro</div>
+            </div>
+            <div style={{display:'flex',gap:'8px',alignItems:'center'}}>
+              <button onClick={()=>handleThemeChange('Oscuro')}
+                style={{padding:'6px 12px',borderRadius:'7px',border:'1px solid',fontSize:'11px',cursor:'pointer',fontFamily:'inherit',
+                  borderColor:theme==='Oscuro'?'rgba(99,102,241,.5)':'rgba(255,255,255,.1)',
+                  background:theme==='Oscuro'?'rgba(99,102,241,.15)':'transparent',
+                  color:theme==='Oscuro'?'#a5b4fc':'#555',fontWeight:theme==='Oscuro'?'700':'400'}}>
+                🌙 Oscuro
+              </button>
+              <button onClick={()=>handleThemeChange('Claro')}
+                style={{padding:'6px 12px',borderRadius:'7px',border:'1px solid',fontSize:'11px',cursor:'pointer',fontFamily:'inherit',
+                  borderColor:theme==='Claro'?'rgba(99,102,241,.5)':'rgba(255,255,255,.1)',
+                  background:theme==='Claro'?'rgba(99,102,241,.15)':'transparent',
+                  color:theme==='Claro'?'#a5b4fc':'#555',fontWeight:theme==='Claro'?'700':'400'}}>
+                ☀️ Claro
+              </button>
+            </div>
           </div>
+
           <div style={row}>
-            <div><div style={lbl}>Idioma</div><div style={sub}>Idioma de la interfaz</div></div>
+            <div>
+              <div style={lbl}>Idioma</div>
+              <div style={sub}>Idioma de la interfaz</div>
+            </div>
             <select style={sel} value={language} onChange={e=>setLanguage(e.target.value)}>
               <option>Español</option>
               <option>English</option>
               <option>Português</option>
             </select>
           </div>
+
           <div style={{...row,borderBottom:'none'}}>
-            <div><div style={lbl}>Moneda</div><div style={sub}>Para mostrar gastos</div></div>
+            <div>
+              <div style={lbl}>Moneda</div>
+              <div style={sub}>Para mostrar los gastos</div>
+            </div>
             <select style={sel} value={currency} onChange={e=>setCurrency(e.target.value)}>
               <option>MXN $</option>
               <option>USD $</option>
@@ -109,22 +136,24 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {/* Cuentas */}
+        {/* Cuentas conectadas */}
         <div style={card}>
           <div style={{fontSize:'13px',fontWeight:'700',color:'#fff',marginBottom:'14px'}}>🔗 Cuentas conectadas</div>
-          {accounts.map(acc => (
-            <div key={acc.id} style={{display:'flex',alignItems:'center',gap:'8px',padding:'9px 10px',background:'rgba(255,255,255,.03)',borderRadius:'7px',border:'1px solid rgba(255,255,255,.05)',marginBottom:'5px'}}>
-              <div style={{width:'6px',height:'6px',borderRadius:'50%',background:acc.is_active?'#6ee7b7':'#f87171',flexShrink:0}}></div>
-              <div style={{flex:1,minWidth:0}}>
-                <div style={{fontSize:'11px',fontWeight:'600',color:'#ccc',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{acc.account_name||acc.account_id}</div>
-                <div style={{fontSize:'9px',color:'#333',fontFamily:'monospace'}}>{acc.account_id}</div>
+          <div style={{display:'flex',flexDirection:'column',gap:'5px',marginBottom:'12px'}}>
+            {accounts.map(acc=>(
+              <div key={acc.id} style={{display:'flex',alignItems:'center',gap:'8px',padding:'9px 10px',background:'rgba(255,255,255,.03)',borderRadius:'7px',border:'1px solid rgba(255,255,255,.05)'}}>
+                <div style={{width:'6px',height:'6px',borderRadius:'50%',background:acc.is_active?'#6ee7b7':'#f87171',flexShrink:0}}></div>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontSize:'11px',fontWeight:'600',color:'#ccc',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{acc.account_name||acc.account_id}</div>
+                  <div style={{fontSize:'9px',color:'#333',fontFamily:'monospace'}}>{acc.account_id}</div>
+                </div>
+                <span style={{fontSize:'9px',color:acc.is_active?'#6ee7b7':'#f87171',background:acc.is_active?'rgba(110,231,183,.08)':'rgba(248,113,113,.08)',padding:'2px 7px',borderRadius:'20px',border:'1px solid '+(acc.is_active?'rgba(110,231,183,.2)':'rgba(248,113,113,.2)'),fontFamily:'monospace',flexShrink:0}}>
+                  {acc.is_active?'ACTIVA':'PAUSADA'}
+                </span>
               </div>
-              <span style={{fontSize:'9px',color:acc.is_active?'#6ee7b7':'#f87171',background:acc.is_active?'rgba(110,231,183,.08)':'rgba(248,113,113,.08)',padding:'2px 7px',borderRadius:'20px',border:'1px solid '+(acc.is_active?'rgba(110,231,183,.2)':'rgba(248,113,113,.2)'),fontFamily:'monospace'}}>
-                {acc.is_active?'ACTIVA':'PAUSADA'}
-              </span>
-            </div>
-          ))}
-          <a href="/api/auth/meta" style={{display:'block',textAlign:'center',marginTop:'10px',padding:'9px',borderRadius:'8px',background:'rgba(99,102,241,.1)',border:'1px solid rgba(99,102,241,.2)',color:'#a5b4fc',fontSize:'11px',fontWeight:'600',textDecoration:'none'}}>
+            ))}
+          </div>
+          <a href="/api/auth/meta" style={{display:'block',textAlign:'center',padding:'9px',borderRadius:'8px',background:'rgba(99,102,241,.1)',border:'1px solid rgba(99,102,241,.2)',color:'#a5b4fc',fontSize:'11px',fontWeight:'600',textDecoration:'none'}}>
             🔗 Reconectar Meta
           </a>
         </div>
@@ -133,7 +162,10 @@ export default function SettingsPage() {
         <div style={card}>
           <div style={{fontSize:'13px',fontWeight:'700',color:'#fff',marginBottom:'14px'}}>📊 Preferencias</div>
           <div style={row}>
-            <div><div style={lbl}>Periodo por defecto</div><div style={sub}>Al abrir un reporte</div></div>
+            <div>
+              <div style={lbl}>Periodo por defecto</div>
+              <div style={sub}>Al abrir un reporte</div>
+            </div>
             <select style={sel} value={defaultPeriod} onChange={e=>setDefaultPeriod(e.target.value)}>
               <option>Este mes</option>
               <option>7 dias</option>
@@ -155,30 +187,23 @@ export default function SettingsPage() {
             <span style={{fontSize:'10px',color:'#333',fontFamily:'monospace'}}>v1.0.0</span>
           </div>
           <div style={{...row,borderBottom:'none'}}>
-            <div style={lbl}>Plan</div>
-            <span style={{fontSize:'10px',color:'#6366f1',fontWeight:'700'}}>Pro ✦</span>
+            <div style={lbl}>Plan activo</div>
+            <span style={{fontSize:'11px',color:'#6366f1',fontWeight:'700'}}>Pro ✦</span>
           </div>
         </div>
       </div>
 
-      {/* Save button */}
       <button onClick={savePrefs} style={{
-        marginTop:'4px',padding:'11px 28px',borderRadius:'9px',
-        background: saved ? 'rgba(110,231,183,.15)' : 'linear-gradient(135deg,#6366f1,#8b5cf6)',
-        border: saved ? '1px solid rgba(110,231,183,.3)' : 'none',
-        color: saved ? '#6ee7b7' : '#fff',
+        marginTop:'8px',padding:'11px 28px',borderRadius:'9px',
+        background:saved?'rgba(110,231,183,.15)':'linear-gradient(135deg,#6366f1,#8b5cf6)',
+        border:saved?'1px solid rgba(110,231,183,.3)':'none',
+        color:saved?'#6ee7b7':'#fff',
         fontSize:'12px',fontWeight:'700',cursor:'pointer',
         fontFamily:'"Plus Jakarta Sans",sans-serif',
         transition:'all .2s',
       }}>
-        {saved ? '✓ Cambios guardados' : 'Guardar cambios'}
+        {saved?'✓ Guardado':'Guardar cambios'}
       </button>
-
-      {saved && (
-        <div style={{marginTop:'10px',fontSize:'11px',color:'#444',fontFamily:'monospace'}}>
-          Recarga la pagina para ver todos los cambios aplicados
-        </div>
-      )}
     </div>
   )
 }
