@@ -181,6 +181,10 @@ export default function SettingsPage() {
             <div style={lbl}>Plan activo</div>
             <span style={{fontSize:'11px',color:'#6366f1',fontWeight:'700'}}>Pro ✦</span>
           </div>
+          <div style={{borderTop:'1px solid rgba(255,255,255,.05)',marginTop:'10px',paddingTop:'10px',display:'flex',gap:'16px'}}>
+            <a href="/privacidad" target="_blank" style={{fontSize:'11px',color:'#444',textDecoration:'none'}}>Política de privacidad</a>
+            <a href="/terminos" target="_blank" style={{fontSize:'11px',color:'#444',textDecoration:'none'}}>Términos de uso</a>
+          </div>
         </div>
       </div>
 
