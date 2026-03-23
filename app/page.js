@@ -59,6 +59,12 @@ export default function Landing() {
     <div className={dm.className} style={{fontSize:'15px',lineHeight:'1.6',color:TEXT,background:BG,minHeight:'100vh'}}>
       <style>{`
         @media (max-width: 768px) {
+          .kn-gstats { grid-template-columns: 1fr !important; }
+          .kn-gstats > div { border-right: none !important; border-bottom: 0.5px solid rgba(255,255,255,0.07) !important; }
+          .kn-gpricing { grid-template-columns: 1fr !important; max-width: 100% !important; }
+          .kn-g4 { grid-template-columns: repeat(2,minmax(0,1fr)) !important; }
+          .kn-g2 { grid-template-columns: 1fr !important; }
+          .kn-stat-n { font-size: 36px !important; }
           .kaan-nav-links { display: none !important; }
           .kaan-nav-right { gap: 6px !important; }
           .kaan-nav-right button:first-child { display: none !important; }
@@ -170,7 +176,7 @@ export default function Landing() {
               <div key={t} style={{padding:'6px 14px',borderRadius:6,fontSize:'12px',cursor:'pointer',whiteSpace:'nowrap',background:i===0?ACC:'none',color:i===0?'white':MUTED}}>{t}</div>
             ))}
           </div>
-          <div style={{display:'grid',gridTemplateColumns:'repeat(4,minmax(0,1fr))',gap:10,marginBottom:14}}>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(4,minmax(0,1fr))',gap:10,marginBottom:14}} className='kn-g4'>
             {[
               {label:'Inversión total',val:'$18,450',color:TEXT,badge:'+14% vs mes pasado',pos:true},
               {label:'Conversiones',val:'843',color:ACC2,badge:'+22% vs objetivo',pos:true},
@@ -184,7 +190,7 @@ export default function Landing() {
               </div>
             ))}
           </div>
-          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}} className='kn-g2'>
             <div style={{background:SURF2,borderRadius:9,padding:14}}>
               <div style={{fontSize:'9px',color:MUTED,marginBottom:9,textTransform:'uppercase',letterSpacing:'.06em'}}>Inversión por plataforma — 30 días</div>
               <div style={{display:'flex',alignItems:'flex-end',gap:3,height:52}}>
@@ -212,10 +218,10 @@ export default function Landing() {
 
       {/* STATS */}
       <div style={{padding:'0 40px 80px',maxWidth:1100,margin:'0 auto'}}>
-        <div style={{display:'grid',gridTemplateColumns:'repeat(3,minmax(0,1fr))',border:`0.5px solid ${BOR}`,borderRadius:14,overflow:'hidden'}}>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(3,minmax(0,1fr))',border:`0.5px solid ${BOR}`,borderRadius:14,overflow:'hidden'}} className='kn-gstats'>
           {[{n:'3.2x',l:'más rápido que reportes manuales'},{n:'40%',l:'menos tiempo en análisis semanales'},{n:'∞',l:'cuentas de clientes por workspace'}].map((s,i)=>(
             <div key={s.n} style={{padding:'32px 24px',borderRight:i<2?`0.5px solid ${BOR}`:'none',textAlign:'center'}}>
-              <div style={{fontSize:'52px',fontWeight:700,color:ACC,lineHeight:1,marginBottom:8}}>{s.n}</div>
+              <div className='kn-stat-n' style={{fontSize:'52px',fontWeight:700,color:ACC,lineHeight:1,marginBottom:8}}>{s.n}</div>
               <div style={{fontSize:'14px',color:MUTED}}>{s.l}</div>
             </div>
           ))}
@@ -292,7 +298,7 @@ export default function Landing() {
         <div style={{fontSize:'11px',textTransform:'uppercase',letterSpacing:'.12em',color:ACC,marginBottom:12,fontWeight:600}}>Precios</div>
         <h2 className='kaan-section-title' style={{fontSize:'40px',fontWeight:700,lineHeight:1.15,letterSpacing:'-0.025em',marginBottom:14,color:TEXT}}>Simple y sin sorpresas</h2>
         <p style={{fontSize:'16px',color:MUTED,maxWidth:440,lineHeight:1.75,margin:'0 auto 48px'}}>Empieza gratis y escala cuando lo necesites.</p>
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,maxWidth:700,margin:'0 auto',textAlign:'left'}}>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,maxWidth:700,margin:'0 auto',textAlign:'left'}} className='kn-gpricing'>
           <div style={{background:SURF,border:`0.5px solid ${BOR}`,borderRadius:16,padding:28}}>
             <div style={{fontSize:'13px',color:MUTED,marginBottom:10}}>Free</div>
             <div style={{display:'flex',alignItems:'baseline',gap:4,marginBottom:4}}>
