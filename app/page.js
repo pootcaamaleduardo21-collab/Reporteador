@@ -7,56 +7,75 @@ export default function Home() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [mode, setMode] = useState('login')
 
-  async function handleSubmit(e) {
+  async function handleLogin(e) {
     e.preventDefault()
     setLoading(true)
     setError('')
-    if (mode === 'register') {
-      const { error } = await supabase.auth.signUp({ email, password })
-      if (error) setError(error.message)
-      else setError('Cuenta creada. Ya puedes iniciar sesion.')
-    } else {
-      const { error } = await supabase.auth.signInWithPassword({ email, password })
-      if (error) setError(error.message)
-      else window.location.href = '/dashboard'
-    }
-    setLoading(false)
+    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    if (error) { setError(error.message); setLoading(false); return }
+    window.location.href = '/dashboard'
   }
 
   return (
-    <main style={{minHeight:'100vh',background:'#0a0a0e',display:'flex',alignItems:'center',justifyContent:'center'}}>
-      <div style={{background:'#111116',border:'1px solid #2a2a35',borderRadius:'16px',padding:'48px',width:'100%',maxWidth:'400px'}}>
-        <div style={{marginBottom:'32px',textAlign:'center'}}>
-          <div style={{fontSize:'28px',marginBottom:'8px'}}>📊</div>
-          <h1 style={{color:'#fff',fontSize:'20px',fontWeight:'800',margin:'0 0 6px'}}>Reporteador</h1>
+    <div style={{minHeight:'100vh',background:'#0c0c10',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',fontFamily:'"Plus Jakarta Sans",system-ui,sans-serif',padding:'20px'}}>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');input::placeholder{color:#333}`}</style>
+
+      <div style={{width:'100%',maxWidth:'380px'}}>
+
+        {/* Logo */}
+        <div style={{textAlign:'center',marginBottom:'36px'}}>
+          <div style={{width:'52px',height:'52px',borderRadius:'13px',background:'#6366f1',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 14px'}}>
+            <svg width="30" height="30" viewBox="0 0 26 26" fill="none">
+              <path d="M13 3 L3 21 L13 17 L23 21 Z" fill="white"/>
+              <path d="M13 3 L13 17" stroke="white" strokeWidth="1.2" opacity=".35"/>
+              <circle cx="13" cy="17" r="1.8" fill="#a5b4fc"/>
+            </svg>
+          </div>
+          <div style={{fontSize:'24px',fontWeight:'800',color:'#fff',letterSpacing:'-.4px',marginBottom:'6px'}}>Kaan</div>
+          <div style={{fontSize:'13px',color:'#444'}}>Analytics para traffickers</div>
         </div>
-        <form onSubmit={handleSubmit}>
-          <div style={{marginBottom:'16px'}}>
-            <label style={{display:'block',color:'#888',fontSize:'11px',marginBottom:'8px'}}>EMAIL</label>
-            <input type="email" value={email} onChange={e=>setEmail(e.target.value)} required
-              style={{width:'100%',background:'#18181f',border:'1px solid #2a2a35',color:'#fff',padding:'10px 14px',borderRadius:'8px',fontSize:'14px',outline:'none',boxSizing:'border-box'}}
-              placeholder="tu@email.com"/>
+
+        {/* Form */}
+        <div style={{background:'#111116',border:'1px solid rgba(255,255,255,.07)',borderRadius:'16px',padding:'28px'}}>
+          <form onSubmit={handleLogin}>
+            <div style={{marginBottom:'14px'}}>
+              <label style={{display:'block',fontSize:'11px',color:'#555',fontFamily:'monospace',textTransform:'uppercase',letterSpacing:'.06em',marginBottom:'6px'}}>Email</label>
+              <input type="email" value={email} onChange={e=>setEmail(e.target.value)} required
+                style={{width:'100%',background:'rgba(255,255,255,.04)',border:'1px solid rgba(255,255,255,.08)',borderRadius:'9px',padding:'11px 14px',color:'#fff',fontSize:'13px',outline:'none',fontFamily:'inherit',boxSizing:'border-box'}}/>
+            </div>
+            <div style={{marginBottom:'20px'}}>
+              <label style={{display:'block',fontSize:'11px',color:'#555',fontFamily:'monospace',textTransform:'uppercase',letterSpacing:'.06em',marginBottom:'6px'}}>Password</label>
+              <input type="password" value={password} onChange={e=>setPassword(e.target.value)} required
+                style={{width:'100%',background:'rgba(255,255,255,.04)',border:'1px solid rgba(255,255,255,.08)',borderRadius:'9px',padding:'11px 14px',color:'#fff',fontSize:'13px',outline:'none',fontFamily:'inherit',boxSizing:'border-box'}}/>
+            </div>
+
+            {error && (
+              <div style={{background:'rgba(248,113,113,.1)',border:'1px solid rgba(248,113,113,.2)',borderRadius:'8px',padding:'10px 12px',marginBottom:'14px',fontSize:'12px',color:'#f87171'}}>
+                {error}
+              </div>
+            )}
+
+            <button type="submit" disabled={loading}
+              style={{width:'100%',padding:'12px',borderRadius:'10px',border:'none',cursor:'pointer',fontFamily:'inherit',fontSize:'13px',fontWeight:'700',background:'linear-gradient(135deg,#6366f1,#8b5cf6)',color:'#fff',opacity:loading?.7:1,transition:'opacity .15s'}}>
+              {loading ? 'Iniciando...' : 'Iniciar sesion'}
+            </button>
+          </form>
+
+          <div style={{textAlign:'center',marginTop:'18px',fontSize:'12px',color:'#333'}}>
+            No tienes cuenta?{' '}
+            <a href="/registro" style={{color:'#a5b4fc',textDecoration:'none',fontWeight:'600'}}>Registrate</a>
           </div>
-          <div style={{marginBottom:'24px'}}>
-            <label style={{display:'block',color:'#888',fontSize:'11px',marginBottom:'8px'}}>PASSWORD</label>
-            <input type="password" value={password} onChange={e=>setPassword(e.target.value)} required
-              style={{width:'100%',background:'#18181f',border:'1px solid #2a2a35',color:'#fff',padding:'10px 14px',borderRadius:'8px',fontSize:'14px',outline:'none',boxSizing:'border-box'}}/>
-          </div>
-          {error && <div style={{marginBottom:'16px',padding:'10px 14px',borderRadius:'8px',background:'rgba(248,113,113,.08)',border:'1px solid rgba(248,113,113,.25)',color:'#f87171',fontSize:'12px'}}>{error}</div>}
-          <button type="submit" disabled={loading}
-            style={{width:'100%',background:'#fff',color:'#0a0a0e',border:'none',padding:'12px',borderRadius:'8px',fontSize:'13px',fontWeight:'700',cursor:'pointer'}}>
-            {loading ? 'Cargando...' : mode === 'login' ? 'Iniciar sesion' : 'Crear cuenta'}
-          </button>
-        </form>
-        <p style={{textAlign:'center',marginTop:'24px',color:'#666',fontSize:'12px'}}>
-          {mode === 'login' ? 'No tienes cuenta? ' : 'Ya tienes cuenta? '}
-          <span onClick={()=>{setMode(mode==='login'?'register':'login');setError('')}} style={{color:'#fff',cursor:'pointer',textDecoration:'underline'}}>
-            {mode === 'login' ? 'Registrate' : 'Inicia sesion'}
-          </span>
-        </p>
+        </div>
+
+        <div style={{textAlign:'center',marginTop:'20px'}}>
+          <a href="/planes" style={{fontSize:'12px',color:'#2a2a35',textDecoration:'none'}}>Ver planes →</a>
+        </div>
+
+        <div style={{textAlign:'center',marginTop:'12px',fontSize:'11px',color:'#1a1a22',fontStyle:'italic'}}>
+          Toma decisiones con datos reales, no con intuición.
+        </div>
       </div>
-    </main>
+    </div>
   )
 }
