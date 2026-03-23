@@ -79,7 +79,7 @@ export default function Landing() {
           <span style={{width:5,height:5,borderRadius:'50%',background:ACC2,display:'inline-block',flexShrink:0}}/>
           Analytics para traffickers
         </div>
-        <h1 className={S} style={{fontSize:'44px',fontWeight:800,lineHeight:1.1,letterSpacing:'-0.03em',marginBottom:18,color:TEXT}}>
+        <h1 className={S} style={{fontSize:'30px',fontWeight:800,lineHeight:1.1,letterSpacing:'-0.03em',marginBottom:18,color:TEXT}}>
           Tus campañas,{' '}
           <span style={{color:ACC}}>todas</span>{' '}
           en{' '}
@@ -171,7 +171,7 @@ export default function Landing() {
       {/* FEATURES */}
       <div style={{padding:'56px 32px',maxWidth:1080,margin:'0 auto'}}>
         <div style={{fontSize:'11px',textTransform:'uppercase',letterSpacing:'.1em',color:ACC,marginBottom:10}}>Funciones</div>
-        <h2 className={S} style={{fontSize:'30px',fontWeight:700,lineHeight:1.2,letterSpacing:'-0.025em',marginBottom:12,color:TEXT}}>Todo lo que necesita<br/>un trafficker profesional</h2>
+        <h2 className={S} style={{fontSize:'24px',fontWeight:700,lineHeight:1.2,letterSpacing:'-0.025em',marginBottom:12,color:TEXT}}>Todo lo que necesita<br/>un trafficker profesional</h2>
         <p style={{fontSize:'15px',color:MUTED,maxWidth:520,lineHeight:1.75,marginBottom:36}}>Desde análisis de creativos hasta reportes automáticos — diseñado por media buyers, para media buyers.</p>
         <div style={{display:'grid',gridTemplateColumns:'repeat(3,minmax(0,1fr))',gap:14}}>
           {FEATURES.map(f=>(
@@ -213,7 +213,7 @@ export default function Landing() {
         <div style={{display:'grid',gridTemplateColumns:'repeat(3,minmax(0,1fr))',border:`0.5px solid ${BOR}`,borderRadius:12,overflow:'hidden'}}>
           {[{n:'3.2x',l:'más rápido que reportes manuales'},{n:'40%',l:'menos tiempo en análisis semanales'},{n:'∞',l:'cuentas de clientes por workspace'}].map((s,i)=>(
             <div key={s.n} style={{padding:'24px 20px',borderRight:i<2?`0.5px solid ${BOR}`:'none',textAlign:'center'}}>
-              <div className={S} style={{fontSize:'28px',fontWeight:800,color:ACC}}>{s.n}</div>
+              <div className={S} style={{fontSize:'24px',fontWeight:800,color:ACC}}>{s.n}</div>
               <div style={{fontSize:'13px',color:MUTED,marginTop:4}}>{s.l}</div>
             </div>
           ))}
@@ -223,13 +223,13 @@ export default function Landing() {
       {/* PRICING */}
       <div style={{padding:'0 32px 56px',maxWidth:1080,margin:'0 auto'}}>
         <div style={{fontSize:'11px',textTransform:'uppercase',letterSpacing:'.1em',color:ACC,marginBottom:10}}>Precios</div>
-        <h2 className={S} style={{fontSize:'30px',fontWeight:700,lineHeight:1.2,letterSpacing:'-0.025em',marginBottom:12,color:TEXT}}>Simple y sin sorpresas</h2>
+        <h2 className={S} style={{fontSize:'24px',fontWeight:700,lineHeight:1.2,letterSpacing:'-0.025em',marginBottom:12,color:TEXT}}>Simple y sin sorpresas</h2>
         <p style={{fontSize:'15px',color:MUTED,maxWidth:520,lineHeight:1.75,marginBottom:34}}>Empieza gratis y escala cuando lo necesites.</p>
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:14,maxWidth:660}}>
           <div style={{background:SURF,border:`0.5px solid ${BOR}`,borderRadius:14,padding:24}}>
             <div style={{fontSize:'13px',color:MUTED,marginBottom:9}}>Free</div>
             <div style={{display:'flex',alignItems:'baseline',gap:4}}>
-              <span className={S} style={{fontSize:'32px',fontWeight:800,letterSpacing:'-0.02em',color:TEXT}}><sup style={{fontSize:'14px',fontWeight:400}}>$</sup>0</span>
+              <span className={S} style={{fontSize:'28px',fontWeight:800,letterSpacing:'-0.02em',color:TEXT}}><sup style={{fontSize:'14px',fontWeight:400}}>$</sup>0</span>
               <span style={{fontSize:'13px',color:MUTED}}>/ mes</span>
             </div>
             <hr style={{border:'none',borderTop:`0.5px solid ${BOR}`,margin:'16px 0'}}/>
@@ -244,7 +244,7 @@ export default function Landing() {
             <div style={{position:'absolute',top:16,right:-28,background:ACC,color:'white',fontSize:'9px',padding:'3px 34px',transform:'rotate(35deg)',letterSpacing:'.04em'}}>Más popular</div>
             <div style={{fontSize:'13px',color:MUTED,marginBottom:9}}>Pro</div>
             <div style={{display:'flex',alignItems:'baseline',gap:4}}>
-              <span className={S} style={{fontSize:'32px',fontWeight:800,letterSpacing:'-0.02em',color:TEXT}}><sup style={{fontSize:'14px',fontWeight:400}}>$</sup>29</span>
+              <span className={S} style={{fontSize:'28px',fontWeight:800,letterSpacing:'-0.02em',color:TEXT}}><sup style={{fontSize:'14px',fontWeight:400}}>$</sup>29</span>
               <span style={{fontSize:'13px',color:MUTED}}>/ mes</span>
             </div>
             <hr style={{border:'none',borderTop:`0.5px solid ${BOR}`,margin:'16px 0'}}/>
