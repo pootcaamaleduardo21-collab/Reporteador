@@ -12,6 +12,7 @@ export default function DashboardLayout({ children }) {
   const [stripOpen, setStripOpen] = useState(false)
   const [reportsOpen, setReportsOpen] = useState(true)
   const router = useRouter()
+  const { isPro } = usePlan()
   const pathname = usePathname()
 
   useEffect(() => {
