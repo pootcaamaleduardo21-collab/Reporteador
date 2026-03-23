@@ -237,7 +237,7 @@ export default function DashboardLayout({ children }) {
         </div>
 
         {/* FREE PLAN BANNER */}
-        {!isPro && (
+        {isPro === false && (
           <div style={{background:'rgba(99,102,241,.08)',borderBottom:'1px solid rgba(99,102,241,.15)',padding:'8px 16px',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
             <span style={{fontSize:'11px',color:'#a5b4fc',fontFamily:'monospace'}}>
               Plan Free — acceso limitado a Overview · ultimos 30 dias

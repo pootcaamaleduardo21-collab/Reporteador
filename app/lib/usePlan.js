@@ -21,8 +21,8 @@ export function usePlan() {
     init()
   }, [])
 
-  const isPro = plan === 'pro'
-  const isFree = plan === 'free' || plan === null
+  const isPro = plan === null ? null : plan === 'pro'
+  const isFree = plan === 'free'
 
   return { plan, isPro, isFree, loading }
 }
