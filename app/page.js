@@ -1,633 +1,467 @@
-import Head from 'next/head'
+'use client'
 
-export const metadata = {
-  title: 'Kaan — Analytics para traffickers',
-  description: 'Toma decisiones con datos reales, no con intuición. Reportes completos de Meta Ads con diagnóstico automático, score de creativos y datos demográficos.',
-  keywords: 'meta ads analytics, reportes facebook ads, dashboard campañas, traffickers latam, hook rate, hold rate, score creativos',
-  openGraph: {
-    title: 'Kaan — Analytics para traffickers',
-    description: 'Toma decisiones con datos reales, no con intuición.',
-    type: 'website',
-    url: 'https://kaan.app',
+import { useState } from 'react'
+
+const NAV_LINKS = ['Funciones', 'Plataformas', 'Precios', 'FAQ']
+
+const PLATFORMS_STRIP = [
+  {
+    name: 'Meta Ads',
+    icon: (
+      <svg viewBox="0 0 24 24" width="15" height="15" fill="#1877f2">
+        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+      </svg>
+    ),
   },
+  {
+    name: 'Google Ads',
+    icon: (
+      <svg viewBox="0 0 24 24" width="15" height="15">
+        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
+        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+      </svg>
+    ),
+  },
+  {
+    name: 'TikTok Ads',
+    icon: (
+      <svg viewBox="0 0 24 24" width="15" height="15">
+        <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.27 6.27 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.2 8.2 0 004.79 1.52V6.77a4.85 4.85 0 01-1.02-.08z" fill="#010101" />
+      </svg>
+    ),
+  },
+  {
+    name: 'LinkedIn Ads',
+    icon: (
+      <svg viewBox="0 0 24 24" width="15" height="15" fill="#0a66c2">
+        <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
+      </svg>
+    ),
+  },
+]
+
+const FEATURES = [
+  {
+    color: 'purple',
+    title: 'Dashboard multi-plataforma',
+    desc: 'Meta, Google y TikTok en una sola vista. Compara métricas entre plataformas sin abrir una pestaña más.',
+    tag: 'Multi-canal',
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="#9d8ff5" strokeWidth="1.8" width="17" height="17">
+        <rect x="3" y="3" width="7" height="7" rx="1" />
+        <rect x="14" y="3" width="7" height="7" rx="1" />
+        <rect x="3" y="14" width="7" height="7" rx="1" />
+        <rect x="14" y="14" width="7" height="7" rx="1" />
+      </svg>
+    ),
+  },
+  {
+    color: 'teal',
+    title: 'Análisis de creativos',
+    desc: 'Hook rate, hold rate, CTR y conversión por anuncio. Sabes exactamente qué creativo está jalando y cuál está quemado.',
+    tag: 'Creativos',
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="#5de8b4" strokeWidth="1.8" width="17" height="17">
+        <path d="M15 10l-4 4-2-2" />
+        <circle cx="12" cy="12" r="9" />
+      </svg>
+    ),
+  },
+  {
+    color: 'amber',
+    title: 'Reportes para clientes',
+    desc: 'Genera PDFs con tu branding en un clic. Programa envíos automáticos semanales o mensuales directamente a tu cliente.',
+    tag: 'White-label',
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="#ef9f27" strokeWidth="1.8" width="17" height="17">
+        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+        <polyline points="14 2 14 8 20 8" />
+        <line x1="16" y1="13" x2="8" y2="13" />
+        <line x1="16" y1="17" x2="8" y2="17" />
+      </svg>
+    ),
+  },
+  {
+    color: 'blue',
+    title: 'Segmentación demográfica',
+    desc: 'Rendimiento por edad, género y ubicación en todas las plataformas. Sin exportar a Excel, sin armarlo tú a mano.',
+    tag: 'Audiencias',
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="#85b7eb" strokeWidth="1.8" width="17" height="17">
+        <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+        <circle cx="9" cy="7" r="4" />
+        <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
+      </svg>
+    ),
+  },
+  {
+    color: 'pink',
+    title: 'Alertas inteligentes',
+    desc: 'Te avisamos cuando el CPA sube, el presupuesto se agota o el ROAS cae. Actúa antes de que tu cliente te llame.',
+    tag: 'Automatización',
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="#ed93b1" strokeWidth="1.8" width="17" height="17">
+        <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" />
+        <path d="M13.73 21a2 2 0 01-3.46 0" />
+      </svg>
+    ),
+  },
+  {
+    color: 'green',
+    title: 'Multi-cuenta',
+    desc: 'Gestiona todos tus clientes desde un panel. Cambia entre cuentas al instante sin desconectarte ni volver a hacer login.',
+    tag: 'Agencias',
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="#97c459" strokeWidth="1.8" width="17" height="17">
+        <rect x="2" y="7" width="20" height="14" rx="2" />
+        <path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2" />
+        <line x1="12" y1="12" x2="12" y2="16" />
+        <line x1="10" y1="14" x2="14" y2="14" />
+      </svg>
+    ),
+  },
+]
+
+const FAQS = [
+  {
+    q: '¿Necesito dar acceso completo a mis cuentas de ads?',
+    a: 'No. Kaan se conecta a través de los tokens oficiales de cada plataforma (OAuth). Solo tienes acceso de lectura — Kaan nunca puede pausar campañas, cambiar presupuestos ni hacer modificaciones en tu cuenta.',
+  },
+  {
+    q: '¿Con qué frecuencia se actualizan los datos?',
+    a: 'Los datos se sincronizan cada hora para todas las plataformas activas. Para campañas con alta rotación, también puedes forzar una actualización manual desde el dashboard.',
+  },
+  {
+    q: '¿Puedo manejar las cuentas de varios clientes?',
+    a: 'Sí. Con el plan Pro puedes conectar cuentas ilimitadas y cambiar entre ellas desde el sidebar. Cada cliente tiene su propio espacio y sus datos no se mezclan.',
+  },
+  {
+    q: '¿Los reportes PDF tienen mi branding o el de Kaan?',
+    a: 'Con el plan Pro los reportes son completamente white-label. Puedes agregar el logo de tu agencia, los colores de tu cliente y tu propia firma. Kaan no aparece en ningún lado.',
+  },
+  {
+    q: '¿Puedo cancelar en cualquier momento?',
+    a: 'Sí, sin compromisos ni penalizaciones. Si cancelas, conservas acceso Pro hasta el final del periodo pagado y luego pasas al plan free automáticamente. Tus datos se quedan guardados.',
+  },
+  {
+    q: '¿Qué pasa con mis datos si cancelo?',
+    a: 'Tus datos históricos se conservan 90 días después de cancelar. Puedes exportarlos en cualquier momento antes de que eso pase. No vendemos ni compartimos tus datos con terceros.',
+  },
+]
+
+const CAMPAIGNS = [
+  { color: '#7c6ef5', name: 'META_LEADS_Q1_2026', val: '$6,200', tag: '352 conv', tagColor: 'rgba(124,110,245,.12)', tagText: '#9d8ff5' },
+  { color: '#378add', name: 'GADS_SEARCH_MARCA', val: '$4,810', tag: '241 conv', tagColor: 'rgba(55,138,221,.1)', tagText: '#85b7eb' },
+  { color: '#d4537e', name: 'TIKTOK_VIDEO_FEB', val: '$3,140', tag: '178 conv', tagColor: 'rgba(212,83,126,.1)', tagText: '#ed93b1' },
+  { color: '#ef9f27', name: 'META_RETARGETING_V2', val: '$2,890', tag: '72 conv', tagColor: 'rgba(239,159,39,.1)', tagText: '#fac775' },
+]
+
+const CHECK_ICON = (
+  <svg viewBox="0 0 16 16" fill="none" width="14" height="14" style={{ flexShrink: 0 }}>
+    <circle cx="8" cy="8" r="7" stroke="#5de8b4" strokeWidth="1.2" />
+    <path d="M5 8l2 2 4-4" stroke="#5de8b4" strokeWidth="1.4" />
+  </svg>
+)
+
+const CROSS_ICON = (
+  <svg viewBox="0 0 16 16" fill="none" width="14" height="14" style={{ flexShrink: 0 }}>
+    <circle cx="8" cy="8" r="7" stroke="#333" strokeWidth="1.2" />
+    <path d="M6 6l4 4M10 6l-4 4" stroke="#444" strokeWidth="1.4" />
+  </svg>
+)
+
+const s = {
+  page: { background: '#0a0a0c', color: '#f0f0f2', fontFamily: "'DM Sans', sans-serif", fontSize: '15px', lineHeight: '1.6', minHeight: '100vh' },
+  nav: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 32px', borderBottom: '0.5px solid rgba(255,255,255,0.07)', background: 'rgba(10,10,12,0.94)', backdropFilter: 'blur(10px)', position: 'sticky', top: 0, zIndex: 100 },
+  logo: { display: 'flex', alignItems: 'center', gap: '9px', fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: '17px', color: '#f0f0f2' },
+  logoIcon: { width: 30, height: 30, background: '#7c6ef5', borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center' },
+  navLinks: { display: 'flex', gap: '26px', fontSize: '14px' },
+  navRight: { display: 'flex', gap: '10px', alignItems: 'center' },
+  btnGhost: { background: 'none', border: '0.5px solid rgba(255,255,255,0.07)', color: '#888890', padding: '8px 18px', borderRadius: 8, cursor: 'pointer', fontSize: '13px', fontFamily: "'DM Sans', sans-serif" },
+  btnPrimary: { background: '#7c6ef5', color: 'white', border: 'none', padding: '9px 20px', borderRadius: 8, cursor: 'pointer', fontSize: '13px', fontWeight: 500, fontFamily: "'DM Sans', sans-serif" },
 }
 
-export default function LandingPage() {
+export default function Landing() {
+  const [openFaq, setOpenFaq] = useState(null)
+
   return (
     <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=DM+Serif+Display:ital@0;1&display=swap');
+      <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+      <div style={s.page}>
 
-        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        {/* NAV */}
+        <nav style={s.nav}>
+          <div style={s.logo}>
+            <div style={s.logoIcon}>
+              <svg viewBox="0 0 16 16" fill="none" width="14" height="14">
+                <path d="M8 2L13 8L8 14L3 8Z" fill="white" />
+              </svg>
+            </div>
+            Kaan
+          </div>
+          <div style={s.navLinks}>
+            {NAV_LINKS.map(l => (
+              <a key={l} style={{ color: '#888890', textDecoration: 'none', cursor: 'pointer' }}>{l}</a>
+            ))}
+          </div>
+          <div style={s.navRight}>
+            <button style={s.btnGhost}>Iniciar sesión</button>
+            <button style={s.btnPrimary}>Empezar gratis</button>
+          </div>
+        </nav>
 
-        :root {
-          --bg: #080809;
-          --surface: #0f0f12;
-          --surface2: #16161a;
-          --border: rgba(255,255,255,.07);
-          --border2: rgba(255,255,255,.12);
-          --text: #ffffff;
-          --text2: #888;
-          --text3: #444;
-          --accent: #6366f1;
-          --accent2: #8b5cf6;
-          --accent-light: #a5b4fc;
-          --green: #6ee7b7;
-          --red: #f87171;
-          --orange: #fb923c;
-        }
+        {/* HERO */}
+        <div style={{ padding: '80px 32px 48px', textAlign: 'center', maxWidth: 780, margin: '0 auto' }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: 'rgba(124,110,245,0.09)', border: '0.5px solid rgba(124,110,245,0.25)', color: '#7c6ef5', fontSize: 12, padding: '5px 13px', borderRadius: 20, marginBottom: 26, letterSpacing: '.02em' }}>
+            <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#5de8b4', display: 'inline-block' }} />
+            Analytics para traffickers
+          </div>
+          <h1 style={{ fontFamily: "'Syne', sans-serif", fontSize: 50, fontWeight: 800, lineHeight: 1.1, marginBottom: 18, letterSpacing: '-0.03em' }}>
+            Tus campañas,{' '}
+            <span style={{ color: '#7c6ef5' }}>todas</span>{' '}
+            en{' '}
+            <span style={{ color: '#5de8b4' }}>un solo lugar</span>
+          </h1>
+          <p style={{ fontSize: 16, color: '#888890', maxWidth: 520, margin: '0 auto 32px', lineHeight: 1.75 }}>
+            Conecta tus cuentas de Meta, Google y TikTok. Ve qué está funcionando, qué no, y entrega reportes a tus clientes en minutos — no en horas.
+          </p>
+          <div style={{ display: 'flex', gap: 11, justifyContent: 'center' }}>
+            <button style={{ ...s.btnPrimary, padding: '13px 26px', fontSize: 14, borderRadius: 9, display: 'flex', alignItems: 'center', gap: 7 }}>
+              <svg viewBox="0 0 16 16" fill="none" width="13" height="13"><path d="M8 2L13 8L8 14L3 8Z" fill="white" /></svg>
+              Empezar gratis
+            </button>
+            <button style={{ background: 'none', border: '0.5px solid rgba(255,255,255,0.14)', color: '#f0f0f2', padding: '13px 26px', fontSize: 14, fontWeight: 500, borderRadius: 9, cursor: 'pointer', fontFamily: "'DM Sans', sans-serif" }}>
+              Ver demo
+            </button>
+          </div>
+          <p style={{ marginTop: 13, fontSize: 12, color: '#888890' }}>
+            Sin tarjeta de crédito · <span style={{ color: 'rgba(93,232,180,.75)' }}>Plan free disponible</span>
+          </p>
+        </div>
 
-        html { scroll-behavior: smooth; }
-
-        body {
-          background: var(--bg);
-          color: var(--text);
-          font-family: 'Plus Jakarta Sans', sans-serif;
-          font-size: 15px;
-          line-height: 1.6;
-          -webkit-font-smoothing: antialiased;
-          overflow-x: hidden;
-        }
-
-        .serif { font-family: 'DM Serif Display', serif; }
-
-        /* NAV */
-        nav {
-          position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-          padding: 0 40px;
-          height: 64px;
-          display: flex; align-items: center; justify-content: space-between;
-          background: rgba(8,8,9,.85);
-          backdrop-filter: blur(12px);
-          border-bottom: 1px solid var(--border);
-        }
-        .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
-        .nav-logo-text { font-size: 17px; font-weight: 800; color: var(--text); letter-spacing: -.3px; }
-        .nav-links { display: flex; align-items: center; gap: 32px; }
-        .nav-links a { font-size: 13px; color: var(--text2); text-decoration: none; transition: color .15s; }
-        .nav-links a:hover { color: var(--text); }
-        .nav-cta { display: flex; align-items: center; gap: 10px; }
-        .btn-ghost { font-size: 13px; color: var(--text2); text-decoration: none; padding: 8px 16px; border-radius: 8px; transition: all .15s; border: 1px solid transparent; font-family: inherit; background: transparent; cursor: pointer; }
-        .btn-ghost:hover { color: var(--text); border-color: var(--border2); }
-        .btn-primary { font-size: 13px; font-weight: 700; color: #fff; background: var(--accent); padding: 9px 20px; border-radius: 8px; text-decoration: none; transition: opacity .15s; border: none; font-family: inherit; cursor: pointer; }
-        .btn-primary:hover { opacity: .85; }
-
-        /* HERO */
-        .hero {
-          min-height: 100vh;
-          display: flex; flex-direction: column; align-items: center; justify-content: center;
-          text-align: center;
-          padding: 120px 24px 80px;
-          position: relative;
-          overflow: hidden;
-        }
-        .hero::before {
-          content: '';
-          position: absolute; top: -200px; left: 50%; transform: translateX(-50%);
-          width: 800px; height: 800px;
-          background: radial-gradient(circle, rgba(99,102,241,.12) 0%, transparent 70%);
-          pointer-events: none;
-        }
-        .hero-badge {
-          display: inline-flex; align-items: center; gap: 7px;
-          background: rgba(99,102,241,.1); border: 1px solid rgba(99,102,241,.25);
-          color: var(--accent-light); font-size: 12px; font-weight: 600;
-          padding: 5px 14px; border-radius: 20px; margin-bottom: 32px;
-          letter-spacing: .01em;
-        }
-        .hero-badge-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent-light); }
-        .hero h1 {
-          font-size: clamp(40px, 7vw, 76px);
-          font-weight: 800;
-          line-height: 1.08;
-          letter-spacing: -2px;
-          max-width: 820px;
-          margin-bottom: 24px;
-        }
-        .hero h1 em {
-          font-style: italic;
-          font-family: 'DM Serif Display', serif;
-          font-weight: 400;
-          color: var(--accent-light);
-        }
-        .hero-sub {
-          font-size: clamp(15px, 2vw, 18px);
-          color: var(--text2);
-          max-width: 520px;
-          margin: 0 auto 40px;
-          line-height: 1.7;
-        }
-        .hero-actions { display: flex; align-items: center; gap: 12px; justify-content: center; flex-wrap: wrap; }
-        .btn-hero {
-          font-size: 14px; font-weight: 700; color: #fff;
-          background: linear-gradient(135deg, var(--accent), var(--accent2));
-          padding: 13px 28px; border-radius: 10px; text-decoration: none;
-          transition: opacity .15s; border: none; font-family: inherit; cursor: pointer;
-          display: inline-flex; align-items: center; gap: 8px;
-        }
-        .btn-hero:hover { opacity: .85; }
-        .btn-hero-ghost {
-          font-size: 14px; font-weight: 600; color: var(--text2);
-          background: transparent; border: 1px solid var(--border2);
-          padding: 12px 24px; border-radius: 10px; text-decoration: none;
-          transition: all .15s; font-family: inherit; cursor: pointer;
-        }
-        .btn-hero-ghost:hover { color: var(--text); border-color: rgba(255,255,255,.25); }
-        .hero-note { margin-top: 16px; font-size: 12px; color: var(--text3); }
-
-        /* DASHBOARD PREVIEW */
-        .preview-wrap {
-          max-width: 1100px; margin: 0 auto;
-          padding: 0 24px 100px;
-          position: relative;
-        }
-        .preview-frame {
-          background: var(--surface);
-          border: 1px solid var(--border2);
-          border-radius: 16px;
-          overflow: hidden;
-          position: relative;
-        }
-        .preview-frame::after {
-          content: '';
-          position: absolute; bottom: 0; left: 0; right: 0; height: 120px;
-          background: linear-gradient(to top, var(--bg), transparent);
-          pointer-events: none;
-        }
-        .preview-bar {
-          background: var(--surface2);
-          border-bottom: 1px solid var(--border);
-          padding: 12px 16px;
-          display: flex; align-items: center; gap: 8px;
-        }
-        .dot { width: 10px; height: 10px; border-radius: 50%; }
-        .preview-content { padding: 24px; display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; }
-        .metric-card {
-          background: var(--surface2); border: 1px solid var(--border);
-          border-radius: 10px; padding: 16px;
-        }
-        .metric-label { font-size: 9px; color: var(--text3); font-family: monospace; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 8px; }
-        .metric-val { font-size: 22px; font-weight: 800; }
-        .metric-sub { font-size: 10px; color: var(--text3); margin-top: 4px; }
-
-        /* LOGOS */
-        .logos-section { padding: 40px 24px; text-align: center; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
-        .logos-label { font-size: 12px; color: var(--text3); font-family: monospace; text-transform: uppercase; letter-spacing: .1em; margin-bottom: 24px; }
-        .logos-row { display: flex; align-items: center; justify-content: center; gap: 48px; flex-wrap: wrap; }
-        .logo-item { font-size: 13px; color: var(--text3); font-weight: 600; letter-spacing: .02em; }
-
-        /* FEATURES */
-        .section { padding: 100px 24px; max-width: 1100px; margin: 0 auto; }
-        .section-label { font-size: 11px; color: var(--accent-light); font-weight: 700; text-transform: uppercase; letter-spacing: .1em; margin-bottom: 16px; }
-        .section-title { font-size: clamp(28px, 4vw, 44px); font-weight: 800; letter-spacing: -1px; line-height: 1.1; margin-bottom: 16px; }
-        .section-title em { font-style: italic; font-family: 'DM Serif Display', serif; font-weight: 400; color: var(--accent-light); }
-        .section-sub { font-size: 16px; color: var(--text2); max-width: 480px; line-height: 1.7; margin-bottom: 60px; }
-
-        .features-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; }
-        .feature-card {
-          background: var(--surface); border: 1px solid var(--border);
-          border-radius: 14px; padding: 28px;
-          transition: border-color .2s;
-        }
-        .feature-card:hover { border-color: var(--border2); }
-        .feature-icon {
-          width: 40px; height: 40px; border-radius: 10px;
-          background: rgba(99,102,241,.1); border: 1px solid rgba(99,102,241,.2);
-          display: flex; align-items: center; justify-content: center;
-          margin-bottom: 18px;
-        }
-        .feature-title { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
-        .feature-desc { font-size: 13px; color: var(--text2); line-height: 1.7; }
-        .feature-tag { display: inline-block; font-size: 10px; font-family: monospace; color: var(--accent-light); background: rgba(99,102,241,.1); padding: 2px 8px; border-radius: 4px; margin-top: 12px; }
-
-        /* METRICS HIGHLIGHT */
-        .metrics-section { padding: 100px 24px; background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
-        .metrics-inner { max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center; }
-        .metrics-list { display: flex; flex-direction: column; gap: 20px; }
-        .metric-row {
-          display: flex; align-items: flex-start; gap: 16px;
-          padding: 20px; background: var(--surface2); border: 1px solid var(--border);
-          border-radius: 12px;
-          transition: border-color .15s;
-        }
-        .metric-row:hover { border-color: var(--border2); }
-        .metric-row-icon { width: 36px; height: 36px; border-radius: 8px; background: rgba(99,102,241,.1); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-        .metric-row-title { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
-        .metric-row-desc { font-size: 12px; color: var(--text2); line-height: 1.6; }
-        .metric-row-val { font-size: 11px; font-family: monospace; color: var(--green); margin-top: 4px; }
-
-        /* SOCIAL PROOF */
-        .testimonials { padding: 100px 24px; max-width: 1100px; margin: 0 auto; }
-        .testimonials-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; }
-        .testimonial {
-          background: var(--surface); border: 1px solid var(--border);
-          border-radius: 14px; padding: 24px;
-        }
-        .testimonial-text { font-size: 14px; color: var(--text2); line-height: 1.7; margin-bottom: 20px; font-style: italic; }
-        .testimonial-author { display: flex; align-items: center; gap: 10px; }
-        .testimonial-avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: #fff; flex-shrink: 0; }
-        .testimonial-name { font-size: 13px; font-weight: 700; }
-        .testimonial-role { font-size: 11px; color: var(--text3); }
-
-        /* PRICING */
-        .pricing { padding: 100px 24px; max-width: 800px; margin: 0 auto; text-align: center; }
-        .pricing-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 48px; text-align: left; }
-        .plan {
-          background: var(--surface); border: 1px solid var(--border);
-          border-radius: 16px; padding: 32px;
-          position: relative;
-        }
-        .plan.featured { border-color: rgba(99,102,241,.4); background: rgba(99,102,241,.05); }
-        .plan-badge {
-          position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
-          background: var(--accent); color: #fff; font-size: 11px; font-weight: 700;
-          padding: 3px 14px; border-radius: 20px; white-space: nowrap;
-        }
-        .plan-name { font-size: 13px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 12px; }
-        .plan-price { font-size: 40px; font-weight: 800; letter-spacing: -1px; margin-bottom: 4px; }
-        .plan-period { font-size: 13px; color: var(--text3); margin-bottom: 24px; }
-        .plan-features { display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px; }
-        .plan-feature { display: flex; align-items: flex-start; gap: 10px; font-size: 13px; color: var(--text2); }
-        .check { width: 16px; height: 16px; border-radius: 50%; background: rgba(110,231,183,.15); display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px; }
-
-        /* FAQ */
-        .faq { padding: 100px 24px; max-width: 700px; margin: 0 auto; }
-        .faq-item { border-bottom: 1px solid var(--border); padding: 24px 0; }
-        .faq-q { font-size: 15px; font-weight: 700; margin-bottom: 10px; cursor: pointer; }
-        .faq-a { font-size: 14px; color: var(--text2); line-height: 1.7; }
-
-        /* CTA */
-        .cta-section {
-          padding: 120px 24px; text-align: center;
-          background: var(--surface); border-top: 1px solid var(--border);
-        }
-        .cta-inner { max-width: 600px; margin: 0 auto; }
-
-        /* FOOTER */
-        footer {
-          padding: 48px 40px; border-top: 1px solid var(--border);
-          display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;
-        }
-        .footer-links { display: flex; gap: 24px; }
-        .footer-links a { font-size: 12px; color: var(--text3); text-decoration: none; transition: color .15s; }
-        .footer-links a:hover { color: var(--text2); }
-
-        /* STATS BAR */
-        .stats-bar { display: grid; grid-template-columns: repeat(4,1fr); gap: 1px; background: var(--border); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
-        .stat-item { background: var(--bg); padding: 32px 24px; text-align: center; }
-        .stat-val { font-size: 36px; font-weight: 800; letter-spacing: -1px; color: var(--text); }
-        .stat-label { font-size: 12px; color: var(--text3); margin-top: 4px; }
-
-        @media (max-width: 768px) {
-          nav { padding: 0 20px; }
-          .nav-links { display: none; }
-          .features-grid { grid-template-columns: 1fr; }
-          .metrics-inner { grid-template-columns: 1fr; gap: 40px; }
-          .testimonials-grid { grid-template-columns: 1fr; }
-          .pricing-grid { grid-template-columns: 1fr; }
-          .stats-bar { grid-template-columns: repeat(2,1fr); }
-          footer { flex-direction: column; align-items: flex-start; }
-        }
-      `}</style>
-
-      {/* NAV */}
-      <nav>
-        <a href="/" className="nav-logo">
-          <div style={{width:'32px',height:'32px',borderRadius:'8px',background:'#6366f1',display:'flex',alignItems:'center',justifyContent:'center'}}>
-            <svg width="18" height="18" viewBox="0 0 26 26" fill="none">
-              <path d="M13 3 L3 21 L13 17 L23 21 Z" fill="white"/>
-              <path d="M13 3 L13 17" stroke="white" strokeWidth="1.2" opacity=".35"/>
-              <circle cx="13" cy="17" r="1.8" fill="#a5b4fc"/>
+        {/* PLATFORM STRIP */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '28px 32px', flexWrap: 'wrap' }}>
+          {PLATFORMS_STRIP.map(p => (
+            <div key={p.name} style={{ display: 'flex', alignItems: 'center', gap: 7, background: '#111114', border: '0.5px solid rgba(255,255,255,0.07)', padding: '7px 13px', borderRadius: 20, fontSize: 13, color: '#888890' }}>
+              {p.icon}{p.name}
+            </div>
+          ))}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7, background: 'rgba(124,110,245,0.05)', border: '0.5px solid rgba(124,110,245,0.2)', padding: '7px 13px', borderRadius: 20, fontSize: 13, color: '#7c6ef5' }}>
+            <svg viewBox="0 0 16 16" fill="none" width="13" height="13">
+              <circle cx="3" cy="8" r="1.5" fill="#7c6ef5" />
+              <circle cx="8" cy="8" r="1.5" fill="#7c6ef5" />
+              <circle cx="13" cy="8" r="1.5" fill="#7c6ef5" />
             </svg>
+            más plataformas
           </div>
-          <span className="nav-logo-text">Kaan</span>
-        </a>
-        <div className="nav-links">
-          <a href="#features">Funciones</a>
-          <a href="#metricas">Metricas</a>
-          <a href="#precios">Precios</a>
-          <a href="#faq">FAQ</a>
         </div>
-        <div className="nav-cta">
-          <a href="/registro" className="btn-ghost">Iniciar sesion</a>
-          <a href="/registro" className="btn-primary">Empezar gratis</a>
-        </div>
-      </nav>
 
-      {/* HERO */}
-      <section className="hero">
-        <div className="hero-badge">
-          <div className="hero-badge-dot"></div>
-          Ahora disponible — Analytics para traffickers
-        </div>
-        <h1>
-          Toma decisiones con <em>datos reales</em>,<br/>no con intuicion
-        </h1>
-        <p className="hero-sub">
-          Kaan conecta tus cuentas de Meta Ads y te da reportes completos con diagnostico automatico, score de creativos y datos demograficos. Todo en un solo lugar.
-        </p>
-        <div className="hero-actions">
-          <a href="/registro" className="btn-hero">
-            <svg width="14" height="14" viewBox="0 0 26 26" fill="none"><path d="M13 3 L3 21 L13 17 L23 21 Z" fill="white"/></svg>
-            Empezar gratis
-          </a>
-          <a href="#features" className="btn-hero-ghost">Ver como funciona</a>
-        </div>
-        <p className="hero-note">Sin tarjeta de credito · Plan free disponible</p>
-      </section>
-
-      {/* DASHBOARD PREVIEW */}
-      <div className="preview-wrap">
-        <div className="preview-frame">
-          <div className="preview-bar">
-            <div className="dot" style={{background:'#f87171'}}></div>
-            <div className="dot" style={{background:'#fcd34d'}}></div>
-            <div className="dot" style={{background:'#6ee7b7'}}></div>
-            <span style={{marginLeft:'8px',fontSize:'11px',color:'#333',fontFamily:'monospace'}}>kaan.app/dashboard</span>
+        {/* DASHBOARD MOCKUP */}
+        <div style={{ margin: '0 32px 64px', background: '#111114', border: '0.5px solid rgba(255,255,255,0.07)', borderRadius: 16, overflow: 'hidden' }}>
+          <div style={{ padding: '11px 16px', borderBottom: '0.5px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ display: 'flex', gap: 5 }}>
+              {['#ff5f57', '#febc2e', '#28c840'].map(c => <div key={c} style={{ width: 10, height: 10, borderRadius: '50%', background: c }} />)}
+            </div>
+            <div style={{ flex: 1, background: 'rgba(255,255,255,0.04)', borderRadius: 5, padding: '4px 10px', fontSize: 11, color: '#888890', maxWidth: 220, margin: '0 auto', textAlign: 'center' }}>
+              kaan.app/dashboard
+            </div>
           </div>
-          <div className="preview-content">
-            {[
-              {l:'Importe gastado',v:'$2,647',c:'#fff',s:'total ejecutado'},
-              {l:'Resultados',v:'116',c:'#6ee7b7',s:'conversiones'},
-              {l:'Costo/resultado',v:'$22.82',c:'#fff',s:'eficiencia'},
-              {l:'CTR',v:'4.56%',c:'#6ee7b7',s:'excelente'},
-              {l:'Hook Rate',v:'31.2%',c:'#a5b4fc',s:'solido'},
-              {l:'Hold Rate',v:'44.8%',c:'#6ee7b7',s:'bueno'},
-              {l:'CPM',v:'$98.75',c:'#fff',s:'por mil imp'},
-              {l:'Frecuencia',v:'1.84',c:'#6ee7b7',s:'optima'},
-            ].map((m,i)=>(
-              <div key={i} className="metric-card">
-                <div className="metric-label">{m.l}</div>
-                <div className="metric-val" style={{color:m.c}}>{m.v}</div>
-                <div className="metric-sub">{m.s}</div>
+          <div style={{ padding: 18 }}>
+            <div style={{ display: 'flex', gap: 3, marginBottom: 14, overflowX: 'auto' }}>
+              {['Resumen general', 'Meta Ads', 'Google Ads', 'TikTok', 'Creativos', 'Audiencias'].map((t, i) => (
+                <div key={t} style={{ padding: '6px 13px', borderRadius: 6, fontSize: 12, cursor: 'pointer', whiteSpace: 'nowrap', background: i === 0 ? '#7c6ef5' : 'none', color: i === 0 ? 'white' : '#888890' }}>
+                  {t}
+                </div>
+              ))}
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 9, marginBottom: 13 }}>
+              {[
+                { label: 'Inversión total', val: '$18,450', color: '#f0f0f2', badge: '+14% vs mes pasado', badgePos: true },
+                { label: 'Conversiones', val: '843', color: '#5de8b4', badge: '+22% vs objetivo', badgePos: true },
+                { label: 'Costo / resultado', val: '$21.89', color: '#f0f0f2', badge: 'eficiencia óptima', badgePos: true },
+                { label: 'CTR promedio', val: '3.84%', color: '#9d8ff5', badge: 'todas las plataformas', badgePos: false },
+              ].map(m => (
+                <div key={m.label} style={{ background: '#18181c', borderRadius: 9, padding: 13 }}>
+                  <div style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: '.08em', color: '#888890', marginBottom: 7 }}>{m.label}</div>
+                  <div style={{ fontSize: 21, fontFamily: "'Syne', sans-serif", fontWeight: 700, color: m.color, marginBottom: 3 }}>{m.val}</div>
+                  <span style={{ fontSize: 9, padding: '2px 6px', borderRadius: 3, background: m.badgePos ? 'rgba(93,232,180,0.09)' : 'rgba(255,255,255,0.05)', color: m.badgePos ? '#5de8b4' : '#888890' }}>{m.badge}</span>
+                </div>
+              ))}
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 9 }}>
+              <div style={{ background: '#18181c', borderRadius: 9, padding: 13 }}>
+                <div style={{ fontSize: 9, color: '#888890', marginBottom: 9, textTransform: 'uppercase', letterSpacing: '.06em' }}>Inversión por plataforma — 30 días</div>
+                <div style={{ display: 'flex', alignItems: 'flex-end', gap: 3, height: 48 }}>
+                  {[78, 61, 44, 25, 52, 68, 41, 57, 85, 70, 90, 76].map((h, i) => (
+                    <div key={i} style={{ flex: 1, height: `${h}%`, borderRadius: '2px 2px 0 0', background: ['#7c6ef5', '#378add', '#d4537e', '#0a66c2', '#7c6ef5', '#378add', '#d4537e', '#7c6ef5', '#5de8b4', '#5de8b4', '#5de8b4', '#7c6ef5'][i], opacity: [1, 1, 1, 1, .5, .6, .5, 1, 1, .7, 1, 1][i] }} />
+                  ))}
+                </div>
+              </div>
+              <div style={{ background: '#18181c', borderRadius: 9, padding: 13 }}>
+                <div style={{ fontSize: 9, color: '#888890', marginBottom: 9, textTransform: 'uppercase', letterSpacing: '.06em' }}>Top campañas activas</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                  {CAMPAIGNS.map(c => (
+                    <div key={c.name} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '5px 7px', background: 'rgba(255,255,255,0.025)', borderRadius: 5 }}>
+                      <div style={{ width: 6, height: 6, borderRadius: '50%', background: c.color, flexShrink: 0 }} />
+                      <span style={{ flex: 1, fontSize: 11, fontFamily: 'monospace', color: '#f0f0f2', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name}</span>
+                      <span style={{ fontSize: 11, color: '#888890' }}>{c.val}</span>
+                      <span style={{ fontSize: 9, padding: '2px 5px', borderRadius: 3, background: c.tagColor, color: c.tagText }}>{c.tag}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* FEATURES */}
+        <div style={{ padding: '60px 32px', maxWidth: 1080, margin: '0 auto' }}>
+          <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '.1em', color: '#7c6ef5', marginBottom: 10 }}>Funciones</div>
+          <h2 style={{ fontFamily: "'Syne', sans-serif", fontSize: 32, fontWeight: 700, marginBottom: 12, letterSpacing: '-0.02em' }}>Todo lo que necesita<br />un trafficker profesional</h2>
+          <p style={{ fontSize: 15, color: '#888890', maxWidth: 520, lineHeight: 1.75, marginBottom: 36 }}>Desde análisis de creativos hasta reportes automáticos — diseñado por media buyers, para media buyers.</p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 14 }}>
+            {FEATURES.map(f => (
+              <div key={f.title} style={{ background: '#111114', border: '0.5px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: 20 }}>
+                <div style={{ width: 34, height: 34, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 12, background: { purple: 'rgba(124,110,245,0.12)', teal: 'rgba(93,232,180,0.09)', amber: 'rgba(239,159,39,0.09)', blue: 'rgba(55,138,221,0.1)', pink: 'rgba(212,83,126,0.09)', green: 'rgba(99,153,34,0.09)' }[f.color] }}>
+                  {f.icon}
+                </div>
+                <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 7, color: '#f0f0f2' }}>{f.title}</div>
+                <div style={{ fontSize: 13, color: '#888890', lineHeight: 1.6 }}>{f.desc}</div>
+                <span style={{ display: 'inline-block', marginTop: 9, fontSize: 10, padding: '3px 7px', borderRadius: 4, background: 'rgba(124,110,245,0.09)', color: '#7c6ef5' }}>{f.tag}</span>
               </div>
             ))}
           </div>
         </div>
-      </div>
 
-      {/* STATS BAR */}
-      <div className="stats-bar">
-        {[
-          {v:'5+',l:'Plataformas proximas'},
-          {v:'15+',l:'Metricas por reporte'},
-          {v:'100%',l:'Datos en tiempo real'},
-          {v:'LATAM',l:'Hecho para la region'},
-        ].map((s,i)=>(
-          <div key={i} className="stat-item">
-            <div className="stat-val">{s.v}</div>
-            <div className="stat-label">{s.l}</div>
-          </div>
-        ))}
-      </div>
-
-      {/* FEATURES */}
-      <section id="features" className="section">
-        <div className="section-label">Funciones</div>
-        <h2 className="section-title">Todo lo que un trafficker<br/><em>realmente necesita</em></h2>
-        <p className="section-sub">No mas exportar CSVs ni armar reportes en Excel. Kaan lo hace automaticamente.</p>
-        <div className="features-grid">
-          {[
-            {
-              title:'Score de creativos',
-              desc:'Cada anuncio recibe un score de 0 a 100 basado en Hook Rate, Hold Rate, CTR y CPM. Sabe de un vistazo cuales escalar y cuales pausar.',
-              tag:'hook_rate · hold_rate',
-              icon:(
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a5b4fc" strokeWidth="2" strokeLinecap="round">
-                  <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
-                </svg>
-              ),
-            },
-            {
-              title:'Diagnostico automatico',
-              desc:'Kaan analiza tus campanas y genera recomendaciones accionables: fatiga publicitaria, CTR bajo, CPM alto, presupuesto mal distribuido.',
-              tag:'diagnostico · alertas',
-              icon:(
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a5b4fc" strokeWidth="2" strokeLinecap="round">
-                  <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
-                </svg>
-              ),
-            },
-            {
-              title:'Audiencia demografica',
-              desc:'Ve exactamente quien ve tus anuncios: edad, genero, dispositivo, plataforma. Con mapa interactivo por estado y pais.',
-              tag:'mapa · demografia',
-              icon:(
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a5b4fc" strokeWidth="2" strokeLinecap="round">
-                  <circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/>
-                </svg>
-              ),
-            },
-            {
-              title:'Comparacion de periodos',
-              desc:'Compara cualquier periodo contra el anterior con deltas porcentuales. Detecta tendencias y cambios de rendimiento al instante.',
-              tag:'periodo · delta %',
-              icon:(
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a5b4fc" strokeWidth="2" strokeLinecap="round">
-                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-                </svg>
-              ),
-            },
-            {
-              title:'Exportacion PDF',
-              desc:'Genera reportes profesionales en PDF con un clic. Listos para entregar a tus clientes con tu branding.',
-              tag:'pdf · reportes',
-              icon:(
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a5b4fc" strokeWidth="2" strokeLinecap="round">
-                  <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/>
-                </svg>
-              ),
-            },
-            {
-              title:'Multi-cuenta',
-              desc:'Gestiona todas tus cuentas de clientes desde un solo lugar. Cambia entre cuentas en un clic sin cerrar sesion.',
-              tag:'agencias · multi-cuenta',
-              icon:(
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a5b4fc" strokeWidth="2" strokeLinecap="round">
-                  <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/>
-                </svg>
-              ),
-            },
-          ].map((f,i)=>(
-            <div key={i} className="feature-card">
-              <div className="feature-icon">{f.icon}</div>
-              <div className="feature-title">{f.title}</div>
-              <div className="feature-desc">{f.desc}</div>
-              <div className="feature-tag">{f.tag}</div>
+        {/* PLATFORMS */}
+        <div style={{ padding: '44px 32px', background: '#111114', borderTop: '0.5px solid rgba(255,255,255,0.07)', borderBottom: '0.5px solid rgba(255,255,255,0.07)' }}>
+          <div style={{ maxWidth: 860, margin: '0 auto' }}>
+            <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '.1em', color: '#7c6ef5', marginBottom: 10, textAlign: 'center' }}>Integraciones</div>
+            <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 26, fontWeight: 700, letterSpacing: '-.02em', color: '#f0f0f2', textAlign: 'center' }}>Conecta donde ya estás invirtiendo</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0, 1fr))', gap: 10, marginTop: 28 }}>
+              {[
+                { name: 'Meta Ads', status: 'Disponible', icon: <svg viewBox="0 0 24 24" width="28" height="28" fill="#1877f2"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" /></svg> },
+                { name: 'Google Ads', status: 'Disponible', icon: <svg viewBox="0 0 24 24" width="28" height="28"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" /><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" /><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" /><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" /></svg> },
+                { name: 'TikTok Ads', status: 'Disponible', icon: <svg viewBox="0 0 24 24" width="28" height="28"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.27 6.27 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.2 8.2 0 004.79 1.52V6.77a4.85 4.85 0 01-1.02-.08z" fill="#010101" /></svg> },
+                { name: 'LinkedIn Ads', status: 'Próximamente', icon: <svg viewBox="0 0 24 24" width="28" height="28" fill="#0a66c2"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" /></svg> },
+                { name: 'Más plataformas', status: 'En camino', icon: <svg viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5" width="28" height="28"><circle cx="12" cy="12" r="9" /><line x1="12" y1="8" x2="12" y2="16" /><line x1="8" y1="12" x2="16" y2="12" /></svg>, dashed: true },
+              ].map(p => (
+                <div key={p.name} style={{ background: '#18181c', border: `0.5px ${p.dashed ? 'dashed' : 'solid'} rgba(255,255,255,0.07)`, borderRadius: 10, padding: '16px 10px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 7 }}>
+                  {p.icon}
+                  <div style={{ fontSize: 12, color: '#888890' }}>{p.name}</div>
+                  <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 10, background: p.status === 'Disponible' ? 'rgba(93,232,180,0.08)' : 'rgba(255,255,255,0.05)', color: p.status === 'Disponible' ? '#5de8b4' : '#888890' }}>{p.status}</span>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-      </section>
-
-      {/* METRICS HIGHLIGHT */}
-      <section id="metricas" className="metrics-section">
-        <div className="metrics-inner">
-          <div>
-            <div className="section-label">Metricas que importan</div>
-            <h2 className="section-title" style={{marginBottom:'16px'}}>Las metricas que los<br/><em>traffickers usan</em></h2>
-            <p style={{fontSize:'15px',color:'var(--text2)',lineHeight:'1.7'}}>
-              Kaan va mas alla de impresiones y clics. Te da las metricas reales que determinan si un creativo escala o se pausa.
-            </p>
           </div>
-          <div className="metrics-list">
+        </div>
+
+        {/* STATS */}
+        <div style={{ padding: '60px 32px', maxWidth: 1080, margin: '0 auto' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', border: '0.5px solid rgba(255,255,255,0.07)', borderRadius: 12, overflow: 'hidden' }}>
             {[
-              {title:'Hook Rate',desc:'Porcentaje de personas que vieron al menos 3 segundos de tu video. Por debajo de 25% es una senal de alarma.',val:'Benchmark: 25%+ bueno · 35%+ excelente'},
-              {title:'Hold Rate',desc:'De los que vieron 3 segundos, cuantos vieron el video completo. Mide la calidad del contenido.',val:'Benchmark: 40%+ bueno'},
-              {title:'Score creativo',desc:'Puntuacion de 0 a 100 por anuncio combinando todas las metricas clave en un solo numero.',val:'0-49 pausar · 50-74 optimizar · 75+ escalar'},
-              {title:'Frecuencia',desc:'Cuantas veces ve tu anuncio la misma persona. Alta frecuencia = fatiga publicitaria.',val:'Alerta automatica si supera 3.5'},
-            ].map((m,i)=>(
-              <div key={i} className="metric-row">
-                <div className="metric-row-icon">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a5b4fc" strokeWidth="2.5" strokeLinecap="round">
-                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+              { n: '3.2x', l: 'más rápido que reportes manuales' },
+              { n: '40%', l: 'menos tiempo en análisis semanales' },
+              { n: '∞', l: 'cuentas de clientes por workspace' },
+            ].map((s, i) => (
+              <div key={s.n} style={{ padding: '26px 22px', borderRight: i < 2 ? '0.5px solid rgba(255,255,255,0.07)' : 'none', textAlign: 'center' }}>
+                <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 30, fontWeight: 800, color: '#7c6ef5' }}>{s.n}</div>
+                <div style={{ fontSize: 13, color: '#888890', marginTop: 4 }}>{s.l}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* PRICING */}
+        <div style={{ padding: '0 32px 60px', maxWidth: 1080, margin: '0 auto' }}>
+          <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '.1em', color: '#7c6ef5', marginBottom: 10 }}>Precios</div>
+          <h2 style={{ fontFamily: "'Syne', sans-serif", fontSize: 32, fontWeight: 700, marginBottom: 12, letterSpacing: '-0.02em' }}>Simple y sin sorpresas</h2>
+          <p style={{ fontSize: 15, color: '#888890', maxWidth: 520, lineHeight: 1.75, marginBottom: 36 }}>Empieza gratis y escala cuando lo necesites.</p>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, maxWidth: 680 }}>
+            <div style={{ background: '#111114', border: '0.5px solid rgba(255,255,255,0.07)', borderRadius: 14, padding: 26 }}>
+              <div style={{ fontSize: 13, color: '#888890', marginBottom: 9 }}>Free</div>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
+                <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 34, fontWeight: 800, letterSpacing: '-0.02em' }}><sup style={{ fontSize: 15, fontWeight: 400 }}>$</sup>0</div>
+                <div style={{ fontSize: 13, color: '#888890' }}>/ mes</div>
+              </div>
+              <hr style={{ border: 'none', borderTop: '0.5px solid rgba(255,255,255,0.07)', margin: '18px 0' }} />
+              <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 9 }}>
+                {[
+                  { text: '1 cuenta conectada', yes: true },
+                  { text: 'Dashboard multi-métrica', yes: true },
+                  { text: 'Historial 30 días', yes: true },
+                  { text: 'Reportes PDF', yes: false },
+                  { text: 'Alertas', yes: false },
+                  { text: 'Multi-cuenta', yes: false },
+                ].map(f => (
+                  <li key={f.text} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: f.yes ? '#f0f0f2' : '#888890' }}>
+                    {f.yes ? CHECK_ICON : CROSS_ICON}{f.text}
+                  </li>
+                ))}
+              </ul>
+              <button style={{ width: '100%', marginTop: 20, padding: 11, borderRadius: 8, fontSize: 14, cursor: 'pointer', fontFamily: "'DM Sans', sans-serif", fontWeight: 500, background: 'none', border: '0.5px solid rgba(255,255,255,0.07)', color: '#f0f0f2' }}>
+                Empezar gratis
+              </button>
+            </div>
+            <div style={{ background: '#111114', border: '0.5px solid rgba(124,110,245,0.38)', borderRadius: 14, padding: 26, overflow: 'hidden', position: 'relative' }}>
+              <div style={{ position: 'absolute', top: 16, right: -28, background: '#7c6ef5', color: 'white', fontSize: 9, padding: '3px 34px', transform: 'rotate(35deg)', letterSpacing: '.04em' }}>Más popular</div>
+              <div style={{ fontSize: 13, color: '#888890', marginBottom: 9 }}>Pro</div>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
+                <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 34, fontWeight: 800, letterSpacing: '-0.02em' }}><sup style={{ fontSize: 15, fontWeight: 400 }}>$</sup>29</div>
+                <div style={{ fontSize: 13, color: '#888890' }}>/ mes</div>
+              </div>
+              <hr style={{ border: 'none', borderTop: '0.5px solid rgba(255,255,255,0.07)', margin: '18px 0' }} />
+              <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 9 }}>
+                {['Cuentas ilimitadas', 'Todas las plataformas', 'Historial 12 meses', 'Reportes PDF white-label', 'Alertas inteligentes', 'Soporte prioritario'].map(f => (
+                  <li key={f} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#f0f0f2' }}>
+                    {CHECK_ICON}{f}
+                  </li>
+                ))}
+              </ul>
+              <button style={{ width: '100%', marginTop: 20, padding: 11, borderRadius: 8, fontSize: 14, cursor: 'pointer', fontFamily: "'DM Sans', sans-serif", fontWeight: 500, background: '#7c6ef5', color: 'white', border: 'none' }}>
+                Empezar con Pro
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* FAQ */}
+        <div style={{ padding: '60px 32px', maxWidth: 720, margin: '0 auto' }}>
+          <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '.1em', color: '#7c6ef5', marginBottom: 10, textAlign: 'center' }}>FAQ</div>
+          <h2 style={{ fontFamily: "'Syne', sans-serif", fontSize: 32, fontWeight: 700, letterSpacing: '-0.02em', textAlign: 'center', marginBottom: 36 }}>Preguntas frecuentes</h2>
+          <div>
+            {FAQS.map((faq, i) => (
+              <div key={i} style={{ borderBottom: '0.5px solid rgba(255,255,255,0.07)' }}>
+                <div
+                  onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                  style={{ padding: '18px 0', fontSize: 15, fontWeight: 500, color: '#f0f0f2', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}
+                >
+                  {faq.q}
+                  <svg viewBox="0 0 16 16" fill="none" width="16" height="16" style={{ flexShrink: 0, transform: openFaq === i ? 'rotate(180deg)' : 'none', transition: 'transform .2s' }}>
+                    <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.5" />
                   </svg>
                 </div>
-                <div>
-                  <div className="metric-row-title">{m.title}</div>
-                  <div className="metric-row-desc">{m.desc}</div>
-                  <div className="metric-row-val">{m.val}</div>
-                </div>
+                {openFaq === i && (
+                  <div style={{ fontSize: 14, color: '#888890', lineHeight: 1.7, paddingBottom: 16 }}>{faq.a}</div>
+                )}
               </div>
             ))}
           </div>
         </div>
-      </section>
 
-      {/* TESTIMONIALS */}
-      <section className="testimonials">
-        <div style={{textAlign:'center',marginBottom:'48px'}}>
-          <div className="section-label">Testimonios</div>
-          <h2 className="section-title">Lo que dicen los<br/><em>traffickers que lo usan</em></h2>
-        </div>
-        <div className="testimonials-grid">
-          {[
-            {text:'"Antes tardaba 2 horas en armar un reporte para cada cliente. Con Kaan lo tengo en 5 minutos y se ve mucho mas profesional."',name:'Carlos M.',role:'Media Buyer · CDMX',init:'CM'},
-            {text:'"El score de creativos me cambio la vida. Ya no tengo que adivinar cual anuncio escalar, el numero me lo dice directo."',name:'Andrea R.',role:'Performance Manager · Bogota',init:'AR'},
-            {text:'"Por fin una herramienta hecha para LATAM. Entiende MXN, tiene los benchmarks correctos y el soporte responde rapido."',name:'Luis T.',role:'Trafficker Freelance · MTY',init:'LT'},
-          ].map((t,i)=>(
-            <div key={i} className="testimonial">
-              <p className="testimonial-text">{t.text}</p>
-              <div className="testimonial-author">
-                <div className="testimonial-avatar">{t.init}</div>
-                <div>
-                  <div className="testimonial-name">{t.name}</div>
-                  <div className="testimonial-role">{t.role}</div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* PRICING */}
-      <section id="precios" className="pricing">
-        <div className="section-label" style={{textAlign:'center'}}>Precios</div>
-        <h2 className="section-title">Simple y sin sorpresas</h2>
-        <p style={{color:'var(--text2)',marginTop:'12px'}}>Empieza gratis, actualiza cuando estes listo.</p>
-        <div className="pricing-grid">
-          <div className="plan">
-            <div className="plan-name">Free</div>
-            <div className="plan-price">$0</div>
-            <div className="plan-period">para siempre</div>
-            <div className="plan-features">
-              {['1 cuenta de Meta Ads','Overview de metricas principales','Ultimos 30 dias de datos','Acceso a la plataforma'].map((f,i)=>(
-                <div key={i} className="plan-feature">
-                  <div className="check">
-                    <svg width="8" height="8" viewBox="0 0 12 12" fill="none" stroke="#6ee7b7" strokeWidth="2" strokeLinecap="round"><polyline points="2 6 5 9 10 3"/></svg>
-                  </div>
-                  {f}
-                </div>
-              ))}
-            </div>
-            <a href="/registro" className="btn-hero-ghost" style={{display:'block',textAlign:'center',padding:'12px',borderRadius:'10px',textDecoration:'none'}}>Empezar gratis</a>
-          </div>
-          <div className="plan featured">
-            <div className="plan-badge">MAS POPULAR</div>
-            <div className="plan-name" style={{color:'#a5b4fc'}}>Pro</div>
-            <div className="plan-price">$297</div>
-            <div className="plan-period">MXN / mes · cancela cuando quieras</div>
-            <div className="plan-features">
-              {[
-                'Cuentas ilimitadas de Meta Ads',
-                'Score de creativos + diagnostico',
-                'Datos demograficos y mapa',
-                'Comparacion de periodos',
-                'Exportacion PDF profesional',
-                'Facebook e Instagram organico',
-                'Datos historicos hasta 12 meses',
-                'Soporte prioritario',
-              ].map((f,i)=>(
-                <div key={i} className="plan-feature">
-                  <div className="check">
-                    <svg width="8" height="8" viewBox="0 0 12 12" fill="none" stroke="#6ee7b7" strokeWidth="2" strokeLinecap="round"><polyline points="2 6 5 9 10 3"/></svg>
-                  </div>
-                  {f}
-                </div>
-              ))}
-            </div>
-            <a href="/registro?plan=pro" className="btn-hero" style={{display:'block',textAlign:'center',padding:'13px',borderRadius:'10px',textDecoration:'none'}}>Comenzar Pro</a>
+        {/* FOOTER */}
+        <div style={{ padding: '28px 32px', borderTop: '0.5px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ fontSize: 13, color: '#888890' }}>© 2026 Kaan · Todos los derechos reservados</div>
+          <div style={{ display: 'flex', gap: 18, fontSize: 13 }}>
+            {['Privacidad', 'Términos', 'Contacto'].map(l => (
+              <a key={l} style={{ color: '#888890', cursor: 'pointer', textDecoration: 'none' }}>{l}</a>
+            ))}
           </div>
         </div>
-      </section>
 
-      {/* FAQ */}
-      <section id="faq" className="faq">
-        <div style={{textAlign:'center',marginBottom:'48px'}}>
-          <div className="section-label">FAQ</div>
-          <h2 className="section-title">Preguntas frecuentes</h2>
-        </div>
-        {[
-          {q:'¿Necesito dar acceso a mi cuenta de Meta Ads?',a:'Si, Kaan se conecta via OAuth oficial de Meta. En ningun momento manejamos tus credenciales — el acceso se autentica directamente con Meta y tu puedes revocarlo en cualquier momento.'},
-          {q:'¿Los datos son en tiempo real?',a:'Si. Cada vez que abres un reporte, Kaan consulta directamente la API de Meta y te muestra los datos mas recientes disponibles.'},
-          {q:'¿Funciona para agencias con multiples clientes?',a:'Absolutamente. El plan Pro permite cuentas ilimitadas. Puedes conectar todas las cuentas de tus clientes y cambiar entre ellas con un clic.'},
-          {q:'¿Que pasa si cancelo mi suscripcion?',a:'Puedes cancelar en cualquier momento desde Ajustes. Tu cuenta pasa automaticamente al plan Free y conservas acceso a tus datos historicos.'},
-          {q:'¿Esta disponible para Google Ads o TikTok?',a:'Por ahora solo Meta Ads (Facebook e Instagram). Google Ads, TikTok, YouTube y X Ads estan en el roadmap para proximas versiones.'},
-          {q:'¿En que moneda se cobra?',a:'En MXN para usuarios de Mexico. Si necesitas factura o pago en USD, contactanos por soporte.'},
-        ].map((f,i)=>(
-          <div key={i} className="faq-item">
-            <div className="faq-q">{f.q}</div>
-            <div className="faq-a">{f.a}</div>
-          </div>
-        ))}
-      </section>
-
-      {/* CTA */}
-      <section className="cta-section">
-        <div className="cta-inner">
-          <div className="section-label" style={{textAlign:'center'}}>Empieza hoy</div>
-          <h2 className="section-title" style={{fontSize:'clamp(28px,5vw,52px)',marginBottom:'20px'}}>
-            Deja de adivinar.<br/><em>Empieza a escalar.</em>
-          </h2>
-          <p style={{color:'var(--text2)',fontSize:'16px',marginBottom:'36px',lineHeight:'1.7'}}>
-            Conecta tu cuenta de Meta Ads en menos de 2 minutos y ve exactamente que esta funcionando y que no.
-          </p>
-          <a href="/registro" className="btn-hero" style={{fontSize:'15px',padding:'14px 32px'}}>
-            <svg width="14" height="14" viewBox="0 0 26 26" fill="none"><path d="M13 3 L3 21 L13 17 L23 21 Z" fill="white"/></svg>
-            Crear cuenta gratis
-          </a>
-          <p style={{marginTop:'14px',fontSize:'12px',color:'var(--text3)'}}>Sin tarjeta de credito · Plan free para siempre</p>
-        </div>
-      </section>
-
-      {/* FOOTER */}
-      <footer>
-        <a href="/" className="nav-logo" style={{textDecoration:'none'}}>
-          <div style={{width:'28px',height:'28px',borderRadius:'7px',background:'#6366f1',display:'flex',alignItems:'center',justifyContent:'center'}}>
-            <svg width="16" height="16" viewBox="0 0 26 26" fill="none">
-              <path d="M13 3 L3 21 L13 17 L23 21 Z" fill="white"/>
-            </svg>
-          </div>
-          <span style={{fontSize:'14px',fontWeight:'700',color:'#fff',letterSpacing:'-.2px'}}>Kaan</span>
-        </a>
-        <div className="footer-links">
-          <a href="#features">Funciones</a>
-          <a href="#precios">Precios</a>
-          <a href="/privacidad">Privacidad</a>
-          <a href="/terminos">Terminos</a>
-          <a href="/registro">Registro</a>
-        </div>
-        <div style={{fontSize:'12px',color:'var(--text3)'}}>© 2026 Kaan · Analytics para traffickers</div>
-      </footer>
+      </div>
     </>
   )
 }
