@@ -530,7 +530,7 @@ export default function Reportes() {
   const { accountId } = useParams()
   const searchParams = useSearchParams()
   const { isPro, loading: planLoading } = usePlan()
-  const PRESETS = isPro ? ALL_PRESETS : ALL_PRESETS.filter(p => !['today','yesterday','last_7d','custom'].includes(p.value))
+  const PRESETS = isPro === false ? ALL_PRESETS.filter(p => !['today','yesterday','last_7d','custom'].includes(p.value)) : ALL_PRESETS
   const [token, setToken] = useState(null)
   const [preset, setPreset] = useState('this_month')
   const [customFrom, setCustomFrom] = useState('')
@@ -829,7 +829,7 @@ export default function Reportes() {
           )}
 
           {activeTab==='campanas'&&(
-            !isPro ? <ProGate feature="El desglose de campanas"/> :
+            !isPro ? <ProGate feature="el desglose de campanas" type="campanas"/> :
 
             <>
               {campaigns.length>1&&(
@@ -846,7 +846,7 @@ export default function Reportes() {
           )}
 
           {activeTab==='conjuntos'&&(
-            !isPro ? <ProGate feature="El desglose de conjuntos"/> :
+            !isPro ? <ProGate feature="el desglose de conjuntos" type="conjuntos"/> :
 
             <>
               {adsets.length>1&&(
@@ -863,7 +863,7 @@ export default function Reportes() {
           )}
 
           {activeTab==='anuncios'&&(
-            !isPro ? <ProGate feature="El score de creativos y anuncios"/> :
+            !isPro ? <ProGate feature="el score de creativos" type="anuncios"/> :
 
             <>
               {ads.length>0&&(
@@ -877,7 +877,7 @@ export default function Reportes() {
           )}
 
           {activeTab==='audiencia'&&(
-            !isPro ? <ProGate feature="Los datos demograficos y mapa de audiencia"/> :
+            !isPro ? <ProGate feature="los datos demograficos" type="audiencia"/> :
 
             <>
               {loadingDemo&&<div style={{textAlign:'center',padding:'80px 0',color:'#444',fontFamily:'monospace',fontSize:'12px'}}>Cargando datos demograficos para {preset}...</div>}
