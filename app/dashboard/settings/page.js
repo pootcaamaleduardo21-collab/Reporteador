@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
+import { usePlan } from '../../lib/usePlan'
 
 export default function SettingsPage() {
   const [accounts, setAccounts] = useState([])
@@ -9,6 +10,7 @@ export default function SettingsPage() {
   const [currency, setCurrency] = useState('MXN $')
   const [defaultPeriod, setDefaultPeriod] = useState('Este mes')
   const [saved, setSaved] = useState(false)
+  const { plan, isPro } = usePlan()
 
   useEffect(() => {
     async function init() {
@@ -179,8 +181,15 @@ export default function SettingsPage() {
           </div>
           <div style={{...row,borderBottom:'none'}}>
             <div style={lbl}>Plan activo</div>
-            <span style={{fontSize:'11px',color:'#6366f1',fontWeight:'700'}}>Pro ✦</span>
+            <span style={{fontSize:'11px',color:isPro?'#6366f1':'#888',fontWeight:'700'}}>{isPro?'Pro ✦':'Free'}</span>
           </div>
+          {!isPro && (
+            <div style={{borderTop:'1px solid rgba(255,255,255,.05)',marginTop:'10px',paddingTop:'10px'}}>
+              <a href="/planes" style={{display:'block',textAlign:'center',padding:'9px',borderRadius:'8px',background:'linear-gradient(135deg,#6366f1,#8b5cf6)',color:'#fff',fontSize:'11px',fontWeight:'700',textDecoration:'none',marginBottom:'10px'}}>
+                Actualizar a Pro →
+              </a>
+            </div>
+          )}
           <div style={{borderTop:'1px solid rgba(255,255,255,.05)',marginTop:'10px',paddingTop:'10px',display:'flex',gap:'16px'}}>
             <a href="/privacidad" target="_blank" style={{fontSize:'11px',color:'#444',textDecoration:'none'}}>Política de privacidad</a>
             <a href="/terminos" target="_blank" style={{fontSize:'11px',color:'#444',textDecoration:'none'}}>Términos de uso</a>
