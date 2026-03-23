@@ -84,7 +84,7 @@ export default function PlanesPage() {
       <div style={{textAlign:'center',marginBottom:'48px'}}>
         <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:'10px',marginBottom:'24px'}}>
           <div style={{width:'36px',height:'36px',borderRadius:'9px',background:'linear-gradient(135deg,#6366f1,#8b5cf6)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'16px'}}>⚡</div>
-          <span style={{color:'#fff',fontWeight:'800',fontSize:'18px'}}>Reporteador</span>
+          <span style={{color:'#fff',fontWeight:'800',fontSize:'18px'}}>Kaan</span>
         </div>
         <h1 style={{fontSize:'36px',fontWeight:'800',color:'#fff',marginBottom:'12px',letterSpacing:'-.5px'}}>
           Elige tu plan

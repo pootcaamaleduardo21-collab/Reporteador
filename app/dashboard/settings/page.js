@@ -22,7 +22,7 @@ export default function SettingsPage() {
     init()
     // Load saved prefs
     try {
-      const prefs = JSON.parse(localStorage.getItem('reporteador_prefs') || '{}')
+      const prefs = JSON.parse(localStorage.getItem('kaan_prefs') || '{}')
       if (prefs.theme) setTheme(prefs.theme)
       if (prefs.language) setLanguage(prefs.language)
       if (prefs.currency) setCurrency(prefs.currency)
@@ -41,7 +41,7 @@ export default function SettingsPage() {
 
   function savePrefs() {
     try {
-      localStorage.setItem('reporteador_prefs', JSON.stringify({ theme, language, currency, defaultPeriod }))
+      localStorage.setItem('kaan_prefs', JSON.stringify({ theme, language, currency, defaultPeriod }))
     } catch(e) {}
     if (theme === 'Claro') { document.documentElement.setAttribute('data-theme', 'light') } else { document.documentElement.removeAttribute('data-theme') }
     setSaved(true)
@@ -176,7 +176,7 @@ export default function SettingsPage() {
         <div style={card}>
           <div style={{fontSize:'13px',fontWeight:'700',color:'#fff',marginBottom:'14px'}}>ℹ️ Acerca de</div>
           <div style={row}>
-            <div style={lbl}>Reporteador Ads</div>
+            <div style={lbl}>Kaan</div>
             <span style={{fontSize:'10px',color:'#333',fontFamily:'monospace'}}>v1.0.0</span>
           </div>
           <div style={{...row,borderBottom:'none'}}>

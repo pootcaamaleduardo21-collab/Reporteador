@@ -17,7 +17,7 @@ export default function DashboardLayout({ children }) {
 
   useEffect(() => {
     // Apply saved theme on load
-    const prefs = JSON.parse(localStorage.getItem('reporteador_prefs') || '{}')
+    const prefs = JSON.parse(localStorage.getItem('kaan_prefs') || '{}')
     if (prefs.theme === 'Claro') {
       document.body.style.background = '#f0f0f5'
       document.body.style.color = '#0c0c10'
@@ -98,7 +98,7 @@ export default function DashboardLayout({ children }) {
         {/* Logo */}
         <div style={{padding:'12px 10px',display:'flex',alignItems:'center',gap:'10px',borderBottom:'1px solid var(--border)',minHeight:'50px',flexShrink:0}}>
           <div style={{width:'28px',height:'28px',borderRadius:'7px',background:'linear-gradient(135deg,#6366f1,#8b5cf6)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'13px',flexShrink:0,cursor:'pointer'}} onClick={()=>navigate('/dashboard')}>⚡</div>
-          {sidebarOpen && <span style={{fontWeight:'800',fontSize:'13px',color:'var(--text)',whiteSpace:'nowrap',cursor:'pointer'}} onClick={()=>navigate('/dashboard')}>Reporteador</span>}
+          {sidebarOpen && <span style={{fontWeight:'800',fontSize:'13px',color:'var(--text)',whiteSpace:'nowrap',cursor:'pointer'}} onClick={()=>navigate('/dashboard')}>Kaan</span>}
         </div>
 
         {/* Nav */}

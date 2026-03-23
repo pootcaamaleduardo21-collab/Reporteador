@@ -1,21 +1,21 @@
 import { Metadata } from 'next'
 
 export const metadata = {
-  title: 'Política de Privacidad — Reporteador',
+  title: 'Política de Privacidad — Kaan',
 }
 
 export default function PrivacidadPage() {
   return (
     <div style={{maxWidth:'800px',margin:'0 auto',padding:'60px 24px',fontFamily:'"Plus Jakarta Sans",system-ui,sans-serif',color:'#ccc',lineHeight:'1.8'}}>
       <div style={{marginBottom:'40px'}}>
-        <a href="/" style={{color:'#6366f1',textDecoration:'none',fontSize:'13px'}}>← Reporteador</a>
+        <a href="/" style={{color:'#6366f1',textDecoration:'none',fontSize:'13px'}}>← Kaan</a>
       </div>
       <h1 style={{color:'#fff',fontSize:'28px',fontWeight:'800',marginBottom:'8px'}}>Política de Privacidad</h1>
       <p style={{color:'#555',fontSize:'13px',marginBottom:'40px'}}>Última actualización: 23 de marzo de 2026</p>
 
       <section style={{marginBottom:'32px'}}>
         <h2 style={{color:'#fff',fontSize:'18px',fontWeight:'700',marginBottom:'12px'}}>1. Información que recopilamos</h2>
-        <p style={{fontSize:'14px',marginBottom:'12px'}}>Reporteador recopila la siguiente información cuando conectas tu cuenta de Meta Ads:</p>
+        <p style={{fontSize:'14px',marginBottom:'12px'}}>Kaan recopila la siguiente información cuando conectas tu cuenta de Meta Ads:</p>
         <ul style={{paddingLeft:'20px',fontSize:'14px'}}>
           <li style={{marginBottom:'8px'}}>Tokens de acceso de Meta Ads (cifrados y almacenados de forma segura)</li>
           <li style={{marginBottom:'8px'}}>IDs de cuentas publicitarias</li>
@@ -71,7 +71,7 @@ export default function PrivacidadPage() {
 
       <section style={{marginBottom:'32px'}}>
         <h2 style={{color:'#fff',fontSize:'18px',fontWeight:'700',marginBottom:'12px'}}>7. Contacto</h2>
-        <p style={{fontSize:'14px'}}>Para cualquier pregunta sobre esta política de privacidad, contáctanos en: <a href="mailto:privacidad@reporteador.app" style={{color:'#6366f1'}}>privacidad@reporteador.app</a></p>
+        <p style={{fontSize:'14px'}}>Para cualquier pregunta sobre esta política de privacidad, contáctanos en: <a href="mailto:privacidad@kaan.app" style={{color:'#6366f1'}}>privacidad@kaan.app</a></p>
       </section>
     </div>
   )

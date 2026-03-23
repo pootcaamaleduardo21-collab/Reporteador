@@ -8,8 +8,16 @@ const jakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata = {
-  title: "Reporteador Ads",
-  description: "Dashboard de Meta Ads para traffickers y agencias",
+  title: "Kaan — Analytics para traffickers",
+  description: "Toma decisiones con datos reales, no con intuición.",
+  icons: {
+    icon: '/favicon.svg',
+  },
+  openGraph: {
+    title: "Kaan",
+    description: "Toma decisiones con datos reales, no con intuición.",
+    siteName: "Kaan",
+  },
 };
 
 export default function RootLayout({ children }) {

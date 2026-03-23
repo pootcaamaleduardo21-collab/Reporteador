@@ -68,7 +68,7 @@ export default function RegistroPage() {
         {/* Logo */}
         <div style={{textAlign:'center',marginBottom:'32px'}}>
           <div style={{width:'44px',height:'44px',borderRadius:'12px',background:'linear-gradient(135deg,#6366f1,#8b5cf6)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'20px',margin:'0 auto 12px'}}>⚡</div>
-          <h1 style={{color:'#fff',fontSize:'22px',fontWeight:'800',marginBottom:'6px'}}>Reporteador</h1>
+          <h1 style={{color:'#fff',fontSize:'22px',fontWeight:'800',marginBottom:'6px'}}>Kaan</h1>
           <p style={{color:'#555',fontSize:'13px'}}>{mode==='registro'?'Crea tu cuenta gratis':'Bienvenido de vuelta'}</p>
         </div>
 
