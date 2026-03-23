@@ -106,7 +106,7 @@ export default function Landing() {
             {LOGO}
             Empezar gratis
           </button>
-          <button style={{background:'none',border:`0.5px solid rgba(255,255,255,0.14)`,color:TEXT,padding:'14px 28px',fontSize:'15px',fontWeight:500,borderRadius:10,cursor:'pointer'}}>Ver demo</button>
+          <button onClick={()=>document.getElementById('demo').scrollIntoView({behavior:'smooth'})} style={{background:'none',border:`0.5px solid rgba(255,255,255,0.14)`,color:TEXT,padding:'14px 28px',fontSize:'15px',fontWeight:500,borderRadius:10,cursor:'pointer'}}>Ver demo</button>
         </div>
         <p style={{marginTop:14,fontSize:'12px',color:MUTED}}>Sin tarjeta de crédito · <span style={{color:'rgba(93,232,180,.75)'}}>Plan free disponible</span></p>
       </div>
@@ -128,7 +128,7 @@ export default function Landing() {
       </div>
 
       {/* DASHBOARD MOCKUP */}
-      <div style={{margin:'0 40px 80px',background:SURF,border:`0.5px solid ${BOR}`,borderRadius:16,overflow:'hidden'}}>
+      <div id="demo" style={{margin:'0 40px 80px',background:SURF,border:`0.5px solid ${BOR}`,borderRadius:16,overflow:'hidden'}}>
         <div style={{padding:'11px 16px',borderBottom:`0.5px solid ${BOR}`,display:'flex',alignItems:'center',gap:8}}>
           <div style={{display:'flex',gap:5}}>
             {['#ff5f57','#febc2e','#28c840'].map(c=><div key={c} style={{width:10,height:10,borderRadius:'50%',background:c}}/>)}
@@ -320,7 +320,7 @@ export default function Landing() {
         <p style={{fontSize:'16px',color:MUTED,maxWidth:460,margin:'0 auto 36px',lineHeight:1.7}}>Únete a los traffickers que ya toman mejores decisiones con datos en tiempo real.</p>
         <div style={{display:'flex',gap:12,justifyContent:'center',flexWrap:'wrap'}}>
           <button onClick={()=>router.push('/registro')} style={{background:ACC,color:'white',border:'none',padding:'14px 32px',fontSize:'15px',fontWeight:600,borderRadius:10,display:'flex',alignItems:'center',gap:8,cursor:'pointer'}}>
-            {LOGO} Empezar gratis — es gratis
+            {LOGO} Empezar gratis
           </button>
         </div>
         <p style={{marginTop:14,fontSize:'12px',color:MUTED}}>Sin tarjeta de crédito · Cancela cuando quieras</p>
