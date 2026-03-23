@@ -716,6 +716,64 @@ export default function Reportes() {
   return (
     <div style={{background:'#0a0a0e',fontFamily:'Inter,sans-serif',minHeight:'100%'}}>
 
+      {/* DATE + OBJECTIVE BAR */}
+      <div style={{background:'#111116',borderBottom:'1px solid #1a1a22',padding:'8px 24px',display:'flex',alignItems:'center',gap:'8px',flexWrap:'wrap',position:'sticky',top:0,zIndex:50}}>
+        {/* Objective selector */}
+        <div style={{position:'relative',flexShrink:0}}>
+          <button onClick={()=>setShowTypeDropdown(!showTypeDropdown)}
+            style={{padding:'5px 12px',borderRadius:'6px',border:'1px solid #a78bfa',background:'rgba(167,139,250,.1)',color:'#a78bfa',fontSize:'11px',cursor:'pointer',fontFamily:'monospace',whiteSpace:'nowrap'}}>
+            Objetivo: {resultType==='auto'?'Auto - '+(OBJECTIVE_MAP[detectedObjective]?.resultTypes?.[0]||''):RESULT_TYPE_LABELS[resultType]||resultType} ▾
+          </button>
+          {showTypeDropdown&&(
+            <div style={{position:'absolute',top:'100%',left:0,background:'#18181f',border:'1px solid #2a2a35',borderRadius:'8px',padding:'6px',zIndex:200,minWidth:'200px',boxShadow:'0 8px 24px rgba(0,0,0,.5)'}}>
+              <div onClick={()=>{setResultType('auto');setShowTypeDropdown(false)}} style={{padding:'7px 10px',borderRadius:'5px',cursor:'pointer',color:resultType==='auto'?'#a78bfa':'#888',background:resultType==='auto'?'rgba(167,139,250,.1)':'transparent',fontSize:'11px',fontFamily:'monospace',marginBottom:'3px'}}>Auto — detectar por objetivo</div>
+              <div style={{height:'1px',background:'#2a2a35',margin:'3px 0'}}></div>
+              {availableTypes.map(t=>(
+                <div key={t} onClick={()=>{setResultType(t);setShowTypeDropdown(false)}} style={{padding:'7px 10px',borderRadius:'5px',cursor:'pointer',color:resultType===t?'#a78bfa':'#888',background:resultType===t?'rgba(167,139,250,.1)':'transparent',fontSize:'11px',fontFamily:'monospace'}}>
+                  {RESULT_TYPE_LABELS[t]}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Date presets */}
+        <div style={{display:'flex',gap:'3px',flexWrap:'wrap'}}>
+          {PRESETS.map(p=>(
+            <button key={p.value} onClick={()=>{setPreset(p.value);setShowCustom(p.value==='custom');if(p.value!=='custom')setDemographics(null)}}
+              style={{padding:'5px 9px',borderRadius:'5px',border:'1px solid',fontSize:'10px',cursor:'pointer',fontFamily:'monospace',
+                borderColor:preset===p.value?'#fff':'#222',
+                background:preset===p.value?'#fff':'transparent',
+                color:preset===p.value?'#0a0a0e':'#555',
+                fontWeight:preset===p.value?'700':'400'}}>
+              {p.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Compare + PDF */}
+        <div style={{marginLeft:'auto',display:'flex',gap:'6px'}}>
+          <button onClick={()=>setComparing(!comparing)}
+            style={{padding:'5px 10px',borderRadius:'5px',border:'1px solid',fontSize:'10px',cursor:'pointer',fontFamily:'monospace',
+              borderColor:comparing?'#6ee7b7':'#222',background:comparing?'rgba(110,231,183,.1)':'transparent',color:comparing?'#6ee7b7':'#555'}}>
+            {comparing?'Comparando':'Comparar'}
+          </button>
+          <button onClick={exportPDF}
+            style={{padding:'5px 10px',borderRadius:'5px',border:'1px solid #222',background:'transparent',color:'#555',fontSize:'10px',cursor:'pointer',fontFamily:'monospace'}}>
+            PDF
+          </button>
+        </div>
+      </div>
+
+      {/* Custom date inputs */}
+      {showCustom&&(
+        <div style={{background:'#111116',borderBottom:'1px solid #1a1a22',padding:'6px 24px',display:'flex',gap:'8px',alignItems:'center'}}>
+          <span style={{fontSize:'11px',color:'#444',fontFamily:'monospace'}}>Desde</span>
+          <input type="date" value={customFrom} onChange={e=>{setCustomFrom(e.target.value);setDemographics(null)}} style={{background:'#18181f',border:'1px solid #2a2a35',color:'#fff',padding:'4px 8px',borderRadius:'6px',fontSize:'11px',outline:'none'}}/>
+          <span style={{fontSize:'11px',color:'#444',fontFamily:'monospace'}}>Hasta</span>
+          <input type="date" value={customTo} onChange={e=>{setCustomTo(e.target.value);setDemographics(null)}} style={{background:'#18181f',border:'1px solid #2a2a35',color:'#fff',padding:'4px 8px',borderRadius:'6px',fontSize:'11px',outline:'none'}}/>
+        </div>
+      )}
 
       {loading&&<div style={{textAlign:'center',padding:'80px 0',color:'#444',fontFamily:'monospace',fontSize:'12px'}}>Cargando datos...</div>}
 
