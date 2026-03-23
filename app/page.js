@@ -57,6 +57,35 @@ export default function Landing() {
 
   return (
     <div className={dm.className} style={{fontSize:'15px',lineHeight:'1.6',color:TEXT,background:BG,minHeight:'100vh'}}>
+      <style>{`
+        @media (max-width: 768px) {
+          .kaan-nav-links { display: none !important; }
+          .kaan-nav-right { gap: 6px !important; }
+          .kaan-nav-right button:first-child { display: none !important; }
+          .kaan-hero h1 { font-size: 36px !important; }
+          .kaan-hero p { font-size: 15px !important; }
+          .kaan-grid-3 { grid-template-columns: 1fr !important; }
+          .kaan-grid-4 { grid-template-columns: repeat(2, minmax(0,1fr)) !important; }
+          .kaan-grid-2 { grid-template-columns: 1fr !important; }
+          .kaan-grid-5 { grid-template-columns: repeat(2, minmax(0,1fr)) !important; }
+          .kaan-grid-stats { grid-template-columns: 1fr !important; }
+          .kaan-grid-stats > div { border-right: none !important; border-bottom: 0.5px solid rgba(255,255,255,0.07) !important; }
+          .kaan-section { padding: 48px 20px !important; }
+          .kaan-mockup { margin: 0 16px 48px !important; }
+          .kaan-cta { margin: 0 16px 48px !important; padding: 40px 24px !important; }
+          .kaan-cta h2 { font-size: 28px !important; }
+          .kaan-hero-btns { flex-direction: column !important; align-items: center !important; }
+          .kaan-hero-btns button { width: 100% !important; max-width: 320px !important; justify-content: center !important; }
+          .kaan-platforms { padding: 0 20px 32px !important; }
+          .kaan-pricing { max-width: 100% !important; }
+          .kaan-section-title { font-size: 28px !important; }
+          .kaan-footer { flex-direction: column !important; gap: 16px !important; text-align: center !important; }
+        }
+        @media (max-width: 480px) {
+          .kaan-grid-4 { grid-template-columns: 1fr !important; }
+          .kaan-grid-5 { grid-template-columns: 1fr !important; }
+        }
+      `}</style>
 
       {/* NAV */}
       <nav style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'16px 40px',borderBottom:`0.5px solid ${BOR}`,background:'rgba(10,10,12,0.94)',backdropFilter:'blur(12px)',position:'sticky',top:0,zIndex:100}}>
@@ -64,19 +93,19 @@ export default function Landing() {
           <div style={{width:30,height:30,background:ACC,borderRadius:7,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>{LOGO}</div>
           Kaan
         </div>
-        <div style={{display:'flex',gap:28,fontSize:'14px'}}>
+        <div className='kaan-nav-links' style={{display:'flex',gap:28,fontSize:'14px'}}>
           {['Funciones','Plataformas','Precios','FAQ'].map(l=>(
             <span key={l} style={{color:MUTED,cursor:'pointer'}}>{l}</span>
           ))}
         </div>
-        <div style={{display:'flex',gap:10,alignItems:'center'}}>
+        <div className='kaan-nav-right' style={{display:'flex',gap:10,alignItems:'center'}}>
           <button onClick={()=>router.push('/registro')} style={{background:'none',border:`0.5px solid ${BOR}`,color:MUTED,padding:'8px 18px',borderRadius:8,fontSize:'13px',cursor:'pointer'}}>Iniciar sesión</button>
           <button onClick={()=>router.push('/registro')} style={{background:ACC,color:'white',border:'none',padding:'9px 20px',borderRadius:8,fontSize:'13px',fontWeight:500,cursor:'pointer'}}>Empezar gratis</button>
         </div>
       </nav>
 
       {/* HERO */}
-      <div style={{padding:'96px 40px 64px',textAlign:'center',maxWidth:860,margin:'0 auto'}}>
+      <div className='kaan-hero' style={{padding:'96px 40px 64px',textAlign:'center',maxWidth:860,margin:'0 auto'}}>
         <div style={{display:'inline-flex',alignItems:'center',gap:7,background:'rgba(124,110,245,0.09)',border:`0.5px solid rgba(124,110,245,0.25)`,color:ACC,fontSize:'12px',padding:'5px 14px',borderRadius:20,marginBottom:28,letterSpacing:'.04em',fontWeight:500}}>
           <span style={{width:5,height:5,borderRadius:'50%',background:ACC2,display:'inline-block',flexShrink:0}}/>
           Analytics para traffickers
@@ -101,7 +130,7 @@ export default function Landing() {
           <span style={{fontSize:'13px',color:MUTED}}><span style={{color:TEXT,fontWeight:500}}>+120 traffickers</span> ya usan Kaan</span>
         </div>
 
-        <div style={{display:'flex',gap:12,justifyContent:'center',flexWrap:'wrap'}}>
+        <div className='kaan-hero-btns' style={{display:'flex',gap:12,justifyContent:'center',flexWrap:'wrap'}}>
           <button onClick={()=>router.push('/registro')} style={{background:ACC,color:'white',border:'none',padding:'14px 28px',fontSize:'15px',fontWeight:600,borderRadius:10,display:'flex',alignItems:'center',gap:8,cursor:'pointer'}}>
             {LOGO}
             Empezar gratis
@@ -112,7 +141,7 @@ export default function Landing() {
       </div>
 
       {/* PLATFORM STRIP */}
-      <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:8,padding:'0 40px 40px',flexWrap:'wrap'}}>
+      <div className='kaan-platforms' style={{display:'flex',alignItems:'center',justifyContent:'center',gap:8,padding:'0 40px 40px',flexWrap:'wrap'}}>
         {[
           {name:'Meta Ads',icon:<svg viewBox="0 0 24 24" width="15" height="15" fill="#1877f2"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>},
           {name:'Google Ads',icon:<svg viewBox="0 0 24 24" width="15" height="15"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>},
@@ -128,7 +157,7 @@ export default function Landing() {
       </div>
 
       {/* DASHBOARD MOCKUP */}
-      <div id="demo" style={{margin:'0 40px 80px',background:SURF,border:`0.5px solid ${BOR}`,borderRadius:16,overflow:'hidden'}}>
+      <div id="demo" className="kaan-mockup" style={{margin:'0 40px 80px',background:SURF,border:`0.5px solid ${BOR}`,borderRadius:16,overflow:'hidden'}}>
         <div style={{padding:'11px 16px',borderBottom:`0.5px solid ${BOR}`,display:'flex',alignItems:'center',gap:8}}>
           <div style={{display:'flex',gap:5}}>
             {['#ff5f57','#febc2e','#28c840'].map(c=><div key={c} style={{width:10,height:10,borderRadius:'50%',background:c}}/>)}
@@ -194,11 +223,11 @@ export default function Landing() {
       </div>
 
       {/* FEATURES */}
-      <div style={{padding:'0 40px 80px',maxWidth:1100,margin:'0 auto',textAlign:'center'}}>
+      <div style={{padding:'0 40px 80px',maxWidth:1100,margin:'0 auto',textAlign:'center'}} className='kaan-section'>
         <div style={{fontSize:'11px',textTransform:'uppercase',letterSpacing:'.12em',color:ACC,marginBottom:12,fontWeight:600}}>Funciones</div>
-        <h2 style={{fontSize:'40px',fontWeight:700,lineHeight:1.15,letterSpacing:'-0.025em',marginBottom:14,color:TEXT}}>Todo lo que necesita<br/>un trafficker profesional</h2>
+        <h2 className='kaan-section-title' style={{fontSize:'40px',fontWeight:700,lineHeight:1.15,letterSpacing:'-0.025em',marginBottom:14,color:TEXT}}>Todo lo que necesita<br/>un trafficker profesional</h2>
         <p style={{fontSize:'16px',color:MUTED,maxWidth:520,lineHeight:1.75,margin:'0 auto 48px'}}>Desde análisis de creativos hasta reportes automáticos — diseñado por media buyers, para media buyers.</p>
-        <div style={{display:'grid',gridTemplateColumns:'repeat(3,minmax(0,1fr))',gap:16,textAlign:'left'}}>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(3,minmax(0,1fr))',gap:16,textAlign:'left'}} className='kaan-grid-3'>
           {FEATURES.map(f=>(
             <div key={f.title} style={{background:SURF,border:`0.5px solid ${BOR}`,borderRadius:14,padding:24}}>
               <div style={{width:38,height:38,borderRadius:10,display:'flex',alignItems:'center',justifyContent:'center',marginBottom:14,background:f.bg}}>{f.icon}</div>
@@ -213,8 +242,8 @@ export default function Landing() {
       {/* TESTIMONIALS */}
       <div style={{padding:'0 40px 80px',maxWidth:1100,margin:'0 auto',textAlign:'center'}}>
         <div style={{fontSize:'11px',textTransform:'uppercase',letterSpacing:'.12em',color:ACC,marginBottom:12,fontWeight:600}}>Testimonios</div>
-        <h2 style={{fontSize:'40px',fontWeight:700,lineHeight:1.15,letterSpacing:'-0.025em',marginBottom:48,color:TEXT}}>Lo que dicen los traffickers</h2>
-        <div style={{display:'grid',gridTemplateColumns:'repeat(3,minmax(0,1fr))',gap:16,textAlign:'left'}}>
+        <h2 className='kaan-section-title' style={{fontSize:'40px',fontWeight:700,lineHeight:1.15,letterSpacing:'-0.025em',marginBottom:48,color:TEXT}}>Lo que dicen los traffickers</h2>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(3,minmax(0,1fr))',gap:16,textAlign:'left'}} className='kaan-grid-3'>
           {TESTIMONIALS.map(t=>(
             <div key={t.name} style={{background:SURF,border:`0.5px solid ${BOR}`,borderRadius:14,padding:24,display:'flex',flexDirection:'column',gap:16}}>
               <div style={{display:'flex',gap:2}}>
@@ -261,7 +290,7 @@ export default function Landing() {
       {/* PRICING */}
       <div style={{padding:'80px 40px',maxWidth:1100,margin:'0 auto',textAlign:'center'}}>
         <div style={{fontSize:'11px',textTransform:'uppercase',letterSpacing:'.12em',color:ACC,marginBottom:12,fontWeight:600}}>Precios</div>
-        <h2 style={{fontSize:'40px',fontWeight:700,lineHeight:1.15,letterSpacing:'-0.025em',marginBottom:14,color:TEXT}}>Simple y sin sorpresas</h2>
+        <h2 className='kaan-section-title' style={{fontSize:'40px',fontWeight:700,lineHeight:1.15,letterSpacing:'-0.025em',marginBottom:14,color:TEXT}}>Simple y sin sorpresas</h2>
         <p style={{fontSize:'16px',color:MUTED,maxWidth:440,lineHeight:1.75,margin:'0 auto 48px'}}>Empieza gratis y escala cuando lo necesites.</p>
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,maxWidth:700,margin:'0 auto',textAlign:'left'}}>
           <div style={{background:SURF,border:`0.5px solid ${BOR}`,borderRadius:16,padding:28}}>
@@ -314,7 +343,7 @@ export default function Landing() {
       </div>
 
       {/* CTA FINAL */}
-      <div style={{margin:'0 40px 80px',background:SURF,border:`0.5px solid rgba(124,110,245,0.3)`,borderRadius:20,padding:'64px 40px',textAlign:'center'}}>
+      <div className='kaan-cta' style={{margin:'0 40px 80px',background:SURF,border:`0.5px solid rgba(124,110,245,0.3)`,borderRadius:20,padding:'64px 40px',textAlign:'center'}}>
         <div style={{fontSize:'11px',textTransform:'uppercase',letterSpacing:'.12em',color:ACC,marginBottom:16,fontWeight:600}}>Empieza hoy</div>
         <h2 style={{fontSize:'40px',fontWeight:700,lineHeight:1.15,letterSpacing:'-0.025em',marginBottom:14,color:TEXT}}>¿Listo para dejar de perder tiempo<br/>en reportes manuales?</h2>
         <p style={{fontSize:'16px',color:MUTED,maxWidth:460,margin:'0 auto 36px',lineHeight:1.7}}>Únete a los traffickers que ya toman mejores decisiones con datos en tiempo real.</p>
@@ -327,7 +356,7 @@ export default function Landing() {
       </div>
 
       {/* FOOTER */}
-      <div style={{padding:'28px 40px',borderTop:`0.5px solid ${BOR}`,display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:12}}>
+      <div className='kaan-footer' style={{padding:'28px 40px',borderTop:`0.5px solid ${BOR}`,display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:12}}>
         <div style={{display:'flex',alignItems:'center',gap:8}}>
           <div style={{width:26,height:26,background:ACC,borderRadius:6,display:'flex',alignItems:'center',justifyContent:'center'}}>{LOGO}</div>
           <span style={{fontSize:'13px',color:MUTED}}>© 2026 Kaan · Todos los derechos reservados</span>
