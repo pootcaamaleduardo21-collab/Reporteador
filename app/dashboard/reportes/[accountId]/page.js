@@ -8,7 +8,7 @@ import { Line, Bar, Doughnut } from 'react-chartjs-2'
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, ArcElement, Title, Tooltip, Legend, Filler } from 'chart.js'
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, ArcElement, Title, Tooltip, Legend, Filler)
 
-const PRESETS = [
+const ALL_PRESETS = [
   { label: 'Hoy', value: 'today' },
   { label: 'Ayer', value: 'yesterday' },
   { label: '7 dias', value: 'last_7d' },
@@ -530,6 +530,7 @@ export default function Reportes() {
   const { accountId } = useParams()
   const searchParams = useSearchParams()
   const { isPro, loading: planLoading } = usePlan()
+  const PRESETS = isPro ? ALL_PRESETS : ALL_PRESETS.filter(p => !['today','yesterday','last_7d','custom'].includes(p.value))
   const [token, setToken] = useState(null)
   const [preset, setPreset] = useState('this_month')
   const [customFrom, setCustomFrom] = useState('')
