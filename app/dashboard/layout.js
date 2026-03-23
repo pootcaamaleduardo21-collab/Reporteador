@@ -163,7 +163,7 @@ export default function DashboardLayout({ children }) {
             </div>
             {sidebarOpen && <div style={{flex:1,minWidth:0}}>
               <div style={{fontSize:'10px',color:'var(--text3)',fontFamily:'monospace',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{user.email}</div>
-              <div style={{fontSize:'9px',color:'#6366f1',fontWeight:'700',marginTop:'1px'}}>Pro ✦</div>
+              <div style={{fontSize:'9px',color:isPro?'#6366f1':'#555',fontWeight:'700',marginTop:'1px'}}>{isPro===null?'':isPro?'Pro ✦':'Free'}</div>
             </div>}
           </div>
           <div className="nav-hover" onClick={handleLogout}
