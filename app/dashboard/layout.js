@@ -97,7 +97,7 @@ export default function DashboardLayout({ children }) {
       }}>
         {/* Logo */}
         <div style={{padding:'12px 10px',display:'flex',alignItems:'center',gap:'10px',borderBottom:'1px solid var(--border)',minHeight:'50px',flexShrink:0}}>
-          <div style={{width:'28px',height:'28px',borderRadius:'7px',background:'linear-gradient(135deg,#6366f1,#8b5cf6)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'13px',flexShrink:0,cursor:'pointer'}} onClick={()=>navigate('/dashboard')}>⚡</div>
+          <div style={{width:'28px',height:'28px',borderRadius:'7px',background:'linear-gradient(135deg,#6366f1,#8b5cf6)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'13px',flexShrink:0,cursor:'pointer'}} onClick={()=>navigate('/dashboard')}><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="16" height="16"><path d="M16 4 L4 26 L16 21 L28 26 Z" fill="white"/><path d="M16 4 L16 21" stroke="white" strokeWidth="1.5" opacity=".35"/><circle cx="16" cy="21" r="2.2" fill="#a5b4fc"/></svg></div>
           {sidebarOpen && <span style={{fontWeight:'800',fontSize:'13px',color:'var(--text)',whiteSpace:'nowrap',cursor:'pointer'}} onClick={()=>navigate('/dashboard')}>Kaan</span>}
         </div>
 

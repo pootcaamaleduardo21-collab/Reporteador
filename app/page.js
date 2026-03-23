@@ -55,7 +55,7 @@ export default function Landing() {
       <nav style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'18px 32px',borderBottom:`0.5px solid ${BOR}`,background:'rgba(10,10,12,0.94)',backdropFilter:'blur(10px)',position:'sticky',top:0,zIndex:100}}>
         <div onClick={()=>router.push('/')} style={{display:'flex',alignItems:'center',gap:9,fontWeight:700,fontSize:'17px',color:TEXT,cursor:'pointer'}}>
           <div style={{width:30,height:30,background:ACC,borderRadius:7,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
-            <svg viewBox="0 0 16 16" fill="none" width="14" height="14"><path d="M8 2L13 8L8 14L3 8Z" fill="white"/></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="18" height="18"><path d="M16 4 L4 26 L16 21 L28 26 Z" fill="white"/><path d="M16 4 L16 21" stroke="white" strokeWidth="1.5" opacity=".35"/><circle cx="16" cy="21" r="2.2" fill="#a5b4fc"/></svg>
           </div>
           Kaan
         </div>
@@ -87,7 +87,7 @@ export default function Landing() {
         </p>
         <div style={{display:'flex',gap:11,justifyContent:'center',flexWrap:'wrap'}}>
           <button onClick={()=>router.push('/registro')} style={{background:ACC,color:'white',border:'none',padding:'12px 24px',fontSize:'14px',fontWeight:500,borderRadius:9,display:'flex',alignItems:'center',gap:7,cursor:'pointer'}}>
-            <svg viewBox="0 0 16 16" fill="none" width="13" height="13"><path d="M8 2L13 8L8 14L3 8Z" fill="white"/></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="14" height="14"><path d="M16 4 L4 26 L16 21 L28 26 Z" fill="white"/><path d="M16 4 L16 21" stroke="white" strokeWidth="1.5" opacity=".35"/><circle cx="16" cy="21" r="2.2" fill="#a5b4fc"/></svg>
             Empezar gratis
           </button>
           <button style={{background:'none',border:`0.5px solid rgba(255,255,255,0.14)`,color:TEXT,padding:'12px 24px',fontSize:'14px',fontWeight:500,borderRadius:9,cursor:'pointer'}}>Ver demo</button>

@@ -83,7 +83,7 @@ export default function PlanesPage() {
       {/* Header */}
       <div style={{textAlign:'center',marginBottom:'48px'}}>
         <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:'10px',marginBottom:'24px'}}>
-          <div style={{width:'36px',height:'36px',borderRadius:'9px',background:'linear-gradient(135deg,#6366f1,#8b5cf6)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'16px'}}>⚡</div>
+          <div style={{width:'36px',height:'36px',borderRadius:'9px',background:'linear-gradient(135deg,#6366f1,#8b5cf6)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'16px'}}><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="16" height="16"><path d="M16 4 L4 26 L16 21 L28 26 Z" fill="white"/><path d="M16 4 L16 21" stroke="white" strokeWidth="1.5" opacity=".35"/><circle cx="16" cy="21" r="2.2" fill="#a5b4fc"/></svg></div>
           <span style={{color:'#fff',fontWeight:'800',fontSize:'18px'}}>Kaan</span>
         </div>
         <h1 style={{fontSize:'36px',fontWeight:'800',color:'#fff',marginBottom:'12px',letterSpacing:'-.5px'}}>

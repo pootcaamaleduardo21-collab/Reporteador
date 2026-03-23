@@ -67,7 +67,7 @@ export default function RegistroPage() {
       <div style={{width:'100%',maxWidth:'380px'}}>
         {/* Logo */}
         <div style={{textAlign:'center',marginBottom:'32px'}}>
-          <div style={{width:'44px',height:'44px',borderRadius:'12px',background:'linear-gradient(135deg,#6366f1,#8b5cf6)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'20px',margin:'0 auto 12px'}}>⚡</div>
+          <div style={{width:'44px',height:'44px',borderRadius:'12px',background:'linear-gradient(135deg,#6366f1,#8b5cf6)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'20px',margin:'0 auto 12px'}}><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="16" height="16"><path d="M16 4 L4 26 L16 21 L28 26 Z" fill="white"/><path d="M16 4 L16 21" stroke="white" strokeWidth="1.5" opacity=".35"/><circle cx="16" cy="21" r="2.2" fill="#a5b4fc"/></svg></div>
           <h1 style={{color:'#fff',fontSize:'22px',fontWeight:'800',marginBottom:'6px'}}>Kaan</h1>
           <p style={{color:'#555',fontSize:'13px'}}>{mode==='registro'?'Crea tu cuenta gratis':'Bienvenido de vuelta'}</p>
         </div>
