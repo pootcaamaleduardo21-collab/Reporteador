@@ -190,16 +190,7 @@ export default function DashboardLayout({ children }) {
             )}
           </div>
 
-          {/* Date buttons — only on report pages */}
-          {isReportePage && (
-            <div style={{display:'flex',gap:'2px'}}>
-              {['Hoy','7d','Mes','30d'].map((d,i)=>(
-                <button key={d} style={{padding:'4px 8px',borderRadius:'5px',border:'1px solid',fontSize:'10px',cursor:'pointer',fontFamily:'inherit',borderColor:i===2?'rgba(99,102,241,.3)':'rgba(255,255,255,.07)',background:i===2?'rgba(99,102,241,.14)':'transparent',color:i===2?'#a5b4fc':'#444',fontWeight:i===2?'600':'400'}}>
-                  {d}
-                </button>
-              ))}
-            </div>
-          )}
+
 
           {/* Accounts strip toggle */}
           {accounts.length > 0 && (
