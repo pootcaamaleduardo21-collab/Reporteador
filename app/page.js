@@ -188,8 +188,15 @@ export default function Landing() {
 
   return (
     <>
-      <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
-      <div style={s.page}>
+      <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet" />
+      <style>{`
+        #kaan-landing * { box-sizing: border-box; margin: 0; padding: 0; }
+        #kaan-landing { font-family: 'DM Sans', sans-serif !important; font-size: 15px !important; line-height: 1.6 !important; color: #f0f0f2 !important; background: #0a0a0c !important; }
+        #kaan-landing h1, #kaan-landing h2 { font-family: 'Syne', sans-serif !important; color: #f0f0f2 !important; }
+        #kaan-landing a { text-decoration: none; }
+        #kaan-landing button { font-family: 'DM Sans', sans-serif !important; }
+      `}</style>
+      <div id="kaan-landing" style={s.page}>
 
         {/* NAV */}
         <nav style={s.nav}>
@@ -218,7 +225,7 @@ export default function Landing() {
             <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#5de8b4', display: 'inline-block' }} />
             Analytics para traffickers
           </div>
-          <h1 style={{ fontFamily: "'Syne', sans-serif", fontSize: 50, fontWeight: 800, lineHeight: 1.1, marginBottom: 18, letterSpacing: '-0.03em' }}>
+          <h1 style={{ fontFamily: "'Syne', sans-serif", fontSize: '50px', fontWeight: 800, lineHeight: 1.1, marginBottom: 18, letterSpacing: '-0.03em' }}>
             Tus campañas,{' '}
             <span style={{ color: '#7c6ef5' }}>todas</span>{' '}
             en{' '}
@@ -461,7 +468,7 @@ export default function Landing() {
           </div>
         </div>
 
-      </div>
+      </div>{/* #kaan-landing */}
     </>
   )
 }
