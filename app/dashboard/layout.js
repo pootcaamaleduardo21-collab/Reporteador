@@ -214,7 +214,8 @@ export default function DashboardLayout({ children }) {
         {/* ACCOUNTS STRIP */}
         <div style={{background:'var(--sidebar)',borderBottom:stripOpen?'1px solid rgba(255,255,255,.06)':'none',overflow:'hidden',maxHeight:stripOpen?'68px':'0',transition:'max-height .25s ease',flexShrink:0}}>
           <div style={{display:'flex',alignItems:'center',gap:'6px',padding:'8px 14px',overflowX:'auto',scrollbarWidth:'none'}}>
-            {accounts.map(acc=>(
+            {(isPro ? accounts : accounts.slice(0,1)).map(acc=>(
+
               <div key={acc.id} className="pill-hover" onClick={()=>selectAccount(acc)}
                 style={{display:'flex',alignItems:'center',gap:'7px',padding:'6px 11px',background:selectedAccount?.id===acc.id?'rgba(99,102,241,.14)':'rgba(255,255,255,.04)',border:'1px solid '+(selectedAccount?.id===acc.id?'rgba(99,102,241,.3)':'rgba(255,255,255,.07)'),borderRadius:'8px',cursor:'pointer',flexShrink:0}}>
                 <div style={{width:'6px',height:'6px',borderRadius:'50%',background:acc.is_active?'#6ee7b7':'#f87171',flexShrink:0}}></div>
@@ -227,6 +228,11 @@ export default function DashboardLayout({ children }) {
             <a href="/api/auth/meta" style={{display:'flex',alignItems:'center',gap:'5px',padding:'6px 10px',background:'rgba(99,102,241,.08)',border:'1px solid rgba(99,102,241,.2)',borderRadius:'8px',textDecoration:'none',flexShrink:0}}>
               <span style={{fontSize:'10px',color:'#a5b4fc',fontWeight:'600',whiteSpace:'nowrap'}}>🔗 Reconectar</span>
             </a>
+            {!isPro && accounts.length > 1 && (
+              <a href="/planes" style={{display:'flex',alignItems:'center',gap:'5px',padding:'6px 10px',background:'rgba(252,211,77,.06)',border:'1px solid rgba(252,211,77,.15)',borderRadius:'8px',textDecoration:'none',flexShrink:0}}>
+                <span style={{fontSize:'10px',color:'#fcd34d',fontWeight:'600',whiteSpace:'nowrap'}}>🔒 +{accounts.length-1} cuentas en Pro</span>
+              </a>
+            )}
           </div>
         </div>
 
