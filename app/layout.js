@@ -10,9 +10,7 @@ const jakarta = Plus_Jakarta_Sans({
 export const metadata = {
   title: "Kaan — Analytics para traffickers",
   description: "Toma decisiones con datos reales, no con intuición.",
-  icons: {
-    icon: '/favicon.svg',
-  },
+  icons: { icon: '/favicon.svg' },
   openGraph: {
     title: "Kaan",
     description: "Toma decisiones con datos reales, no con intuición.",
@@ -22,8 +20,8 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="es" className={jakarta.variable}>
-      <body>{children}</body>
+    <html lang="es">
+      <body className={jakarta.variable}>{children}</body>
     </html>
   );
 }
