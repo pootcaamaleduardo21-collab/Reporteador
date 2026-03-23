@@ -2,10 +2,9 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Syne, DM_Sans } from 'next/font/google'
+import { DM_Sans } from 'next/font/google'
 
-const syne = Syne({ subsets: ['latin'], weight: ['700', '800'], display: 'swap' })
-const dm = DM_Sans({ subsets: ['latin'], weight: ['400', '500'], display: 'swap' })
+const dm = DM_Sans({ subsets: ['latin'], weight: ['400', '500', '700'], display: 'swap' })
 
 const ACC = '#7c6ef5'
 const ACC2 = '#5de8b4'
@@ -48,15 +47,13 @@ export default function Landing() {
   const [openFaq, setOpenFaq] = useState(null)
   const router = useRouter()
 
-  const S = syne.className
-  const D = dm.className
 
   return (
-    <div className={D} style={{fontSize:'15px',lineHeight:'1.6',color:TEXT,background:BG,minHeight:'100vh'}}>
+    <div className={dm.className} style={{fontSize:'15px',lineHeight:'1.6',color:TEXT,background:BG,minHeight:'100vh'}}>
 
       {/* NAV */}
       <nav style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'18px 32px',borderBottom:`0.5px solid ${BOR}`,background:'rgba(10,10,12,0.94)',backdropFilter:'blur(10px)',position:'sticky',top:0,zIndex:100}}>
-        <div className={S} onClick={()=>router.push('/')} style={{display:'flex',alignItems:'center',gap:9,fontWeight:700,fontSize:'17px',color:TEXT,cursor:'pointer'}}>
+        <div onClick={()=>router.push('/')} style={{display:'flex',alignItems:'center',gap:9,fontWeight:700,fontSize:'17px',color:TEXT,cursor:'pointer'}}>
           <div style={{width:30,height:30,background:ACC,borderRadius:7,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
             <svg viewBox="0 0 16 16" fill="none" width="14" height="14"><path d="M8 2L13 8L8 14L3 8Z" fill="white"/></svg>
           </div>
@@ -79,7 +76,7 @@ export default function Landing() {
           <span style={{width:5,height:5,borderRadius:'50%',background:ACC2,display:'inline-block',flexShrink:0}}/>
           Analytics para traffickers
         </div>
-        <h1 className={S} style={{fontSize:'30px',fontWeight:800,lineHeight:1.1,letterSpacing:'-0.03em',marginBottom:18,color:TEXT}}>
+        <h1 style={{fontSize:'30px',fontWeight:800,lineHeight:1.1,letterSpacing:'-0.03em',marginBottom:18,color:TEXT}}>
           Tus campañas,{' '}
           <span style={{color:ACC}}>todas</span>{' '}
           en{' '}
@@ -137,7 +134,7 @@ export default function Landing() {
             ].map(m=>(
               <div key={m.label} style={{background:SURF2,borderRadius:9,padding:13}}>
                 <div style={{fontSize:'9px',textTransform:'uppercase',letterSpacing:'.08em',color:MUTED,marginBottom:7}}>{m.label}</div>
-                <div className={S} style={{fontSize:'20px',fontWeight:700,color:m.color,marginBottom:3}}>{m.val}</div>
+                <div style={{fontSize:'20px',fontWeight:700,color:m.color,marginBottom:3}}>{m.val}</div>
                 <span style={{fontSize:'9px',padding:'2px 6px',borderRadius:3,background:m.pos?'rgba(93,232,180,0.09)':'rgba(255,255,255,0.05)',color:m.pos?ACC2:MUTED}}>{m.badge}</span>
               </div>
             ))}
@@ -171,13 +168,13 @@ export default function Landing() {
       {/* FEATURES */}
       <div style={{padding:'56px 32px',maxWidth:1080,margin:'0 auto'}}>
         <div style={{fontSize:'11px',textTransform:'uppercase',letterSpacing:'.1em',color:ACC,marginBottom:10}}>Funciones</div>
-        <h2 className={S} style={{fontSize:'24px',fontWeight:700,lineHeight:1.2,letterSpacing:'-0.025em',marginBottom:12,color:TEXT}}>Todo lo que necesita<br/>un trafficker profesional</h2>
+        <h2 style={{fontSize:'24px',fontWeight:700,lineHeight:1.2,letterSpacing:'-0.025em',marginBottom:12,color:TEXT}}>Todo lo que necesita<br/>un trafficker profesional</h2>
         <p style={{fontSize:'15px',color:MUTED,maxWidth:520,lineHeight:1.75,marginBottom:36}}>Desde análisis de creativos hasta reportes automáticos — diseñado por media buyers, para media buyers.</p>
         <div style={{display:'grid',gridTemplateColumns:'repeat(3,minmax(0,1fr))',gap:14}}>
           {FEATURES.map(f=>(
             <div key={f.title} style={{background:SURF,border:`0.5px solid ${BOR}`,borderRadius:12,padding:20}}>
               <div style={{width:34,height:34,borderRadius:8,display:'flex',alignItems:'center',justifyContent:'center',marginBottom:12,background:f.bg}}>{f.icon}</div>
-              <div className={S} style={{fontSize:'14px',fontWeight:600,marginBottom:7,color:TEXT}}>{f.title}</div>
+              <div style={{fontSize:'14px',fontWeight:600,marginBottom:7,color:TEXT}}>{f.title}</div>
               <div style={{fontSize:'13px',color:MUTED,lineHeight:1.6}}>{f.desc}</div>
               <span style={{display:'inline-block',marginTop:9,fontSize:'10px',padding:'3px 7px',borderRadius:4,background:'rgba(124,110,245,0.09)',color:ACC}}>{f.tag}</span>
             </div>
@@ -189,7 +186,7 @@ export default function Landing() {
       <div style={{padding:'44px 32px',background:SURF,borderTop:`0.5px solid ${BOR}`,borderBottom:`0.5px solid ${BOR}`}}>
         <div style={{maxWidth:860,margin:'0 auto'}}>
           <div style={{fontSize:'11px',textTransform:'uppercase',letterSpacing:'.1em',color:ACC,marginBottom:10,textAlign:'center'}}>Integraciones</div>
-          <h2 className={S} style={{fontSize:'24px',fontWeight:700,letterSpacing:'-.02em',color:TEXT,textAlign:'center',marginBottom:0}}>Conecta donde ya estás invirtiendo</h2>
+          <h2 style={{fontSize:'24px',fontWeight:700,letterSpacing:'-.02em',color:TEXT,textAlign:'center',marginBottom:0}}>Conecta donde ya estás invirtiendo</h2>
           <div style={{display:'grid',gridTemplateColumns:'repeat(5,minmax(0,1fr))',gap:10,marginTop:26}}>
             {[
               {name:'Meta Ads',status:'Disponible',icon:<svg viewBox="0 0 24 24" width="26" height="26" fill="#1877f2"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>},
@@ -213,7 +210,7 @@ export default function Landing() {
         <div style={{display:'grid',gridTemplateColumns:'repeat(3,minmax(0,1fr))',border:`0.5px solid ${BOR}`,borderRadius:12,overflow:'hidden'}}>
           {[{n:'3.2x',l:'más rápido que reportes manuales'},{n:'40%',l:'menos tiempo en análisis semanales'},{n:'∞',l:'cuentas de clientes por workspace'}].map((s,i)=>(
             <div key={s.n} style={{padding:'24px 20px',borderRight:i<2?`0.5px solid ${BOR}`:'none',textAlign:'center'}}>
-              <div className={S} style={{fontSize:'24px',fontWeight:800,color:ACC}}>{s.n}</div>
+              <div style={{fontSize:'24px',fontWeight:800,color:ACC}}>{s.n}</div>
               <div style={{fontSize:'13px',color:MUTED,marginTop:4}}>{s.l}</div>
             </div>
           ))}
@@ -223,13 +220,13 @@ export default function Landing() {
       {/* PRICING */}
       <div style={{padding:'0 32px 56px',maxWidth:1080,margin:'0 auto'}}>
         <div style={{fontSize:'11px',textTransform:'uppercase',letterSpacing:'.1em',color:ACC,marginBottom:10}}>Precios</div>
-        <h2 className={S} style={{fontSize:'24px',fontWeight:700,lineHeight:1.2,letterSpacing:'-0.025em',marginBottom:12,color:TEXT}}>Simple y sin sorpresas</h2>
+        <h2 style={{fontSize:'24px',fontWeight:700,lineHeight:1.2,letterSpacing:'-0.025em',marginBottom:12,color:TEXT}}>Simple y sin sorpresas</h2>
         <p style={{fontSize:'15px',color:MUTED,maxWidth:520,lineHeight:1.75,marginBottom:34}}>Empieza gratis y escala cuando lo necesites.</p>
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:14,maxWidth:660}}>
           <div style={{background:SURF,border:`0.5px solid ${BOR}`,borderRadius:14,padding:24}}>
             <div style={{fontSize:'13px',color:MUTED,marginBottom:9}}>Free</div>
             <div style={{display:'flex',alignItems:'baseline',gap:4}}>
-              <span className={S} style={{fontSize:'28px',fontWeight:800,letterSpacing:'-0.02em',color:TEXT}}><sup style={{fontSize:'14px',fontWeight:400}}>$</sup>0</span>
+              <span style={{fontSize:'28px',fontWeight:800,letterSpacing:'-0.02em',color:TEXT}}><sup style={{fontSize:'14px',fontWeight:400}}>$</sup>0</span>
               <span style={{fontSize:'13px',color:MUTED}}>/ mes</span>
             </div>
             <hr style={{border:'none',borderTop:`0.5px solid ${BOR}`,margin:'16px 0'}}/>
@@ -244,7 +241,7 @@ export default function Landing() {
             <div style={{position:'absolute',top:16,right:-28,background:ACC,color:'white',fontSize:'9px',padding:'3px 34px',transform:'rotate(35deg)',letterSpacing:'.04em'}}>Más popular</div>
             <div style={{fontSize:'13px',color:MUTED,marginBottom:9}}>Pro</div>
             <div style={{display:'flex',alignItems:'baseline',gap:4}}>
-              <span className={S} style={{fontSize:'28px',fontWeight:800,letterSpacing:'-0.02em',color:TEXT}}><sup style={{fontSize:'14px',fontWeight:400}}>$</sup>29</span>
+              <span style={{fontSize:'28px',fontWeight:800,letterSpacing:'-0.02em',color:TEXT}}><sup style={{fontSize:'14px',fontWeight:400}}>$</sup>29</span>
               <span style={{fontSize:'13px',color:MUTED}}>/ mes</span>
             </div>
             <hr style={{border:'none',borderTop:`0.5px solid ${BOR}`,margin:'16px 0'}}/>
@@ -261,7 +258,7 @@ export default function Landing() {
       {/* FAQ */}
       <div style={{padding:'56px 32px',maxWidth:700,margin:'0 auto'}}>
         <div style={{fontSize:'11px',textTransform:'uppercase',letterSpacing:'.1em',color:ACC,marginBottom:10,textAlign:'center'}}>FAQ</div>
-        <h2 className={S} style={{fontSize:'30px',fontWeight:700,lineHeight:1.2,letterSpacing:'-0.025em',textAlign:'center',marginBottom:34,color:TEXT}}>Preguntas frecuentes</h2>
+        <h2 style={{fontSize:'30px',fontWeight:700,lineHeight:1.2,letterSpacing:'-0.025em',textAlign:'center',marginBottom:34,color:TEXT}}>Preguntas frecuentes</h2>
         <div>
           {FAQS.map((faq,i)=>(
             <div key={i} style={{borderBottom:`0.5px solid ${BOR}`}}>
