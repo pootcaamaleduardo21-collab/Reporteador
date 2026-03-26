@@ -131,12 +131,13 @@ export default function DashboardLayout({ children }) {
             </>}
           </div>
 
-          <div style={{overflow:'hidden',maxHeight:reportsOpen&&sidebarOpen?'300px':'0',transition:'max-height .25s ease'}}>
+          <div style={{overflow:'hidden',maxHeight:reportsOpen&&sidebarOpen?'400px':'0',transition:'max-height .25s ease'}}>
             {[
               {id:'campanas',icon:'💹',label:'Campanas',tab:'campanas'},
               {id:'conjuntos',icon:'🎯',label:'Conjuntos',tab:'conjuntos'},
               {id:'anuncios',icon:'🎨',label:'Anuncios',tab:'anuncios'},
               {id:'audiencia',icon:'👥',label:'Audiencia',tab:'audiencia'},
+              {id:'google-ads',icon:'🔍',label:'Google Ads',tab:'google-ads'},
             ].map(r=>(
               <div key={r.id} className="nav-hover"
                 onClick={()=>{ if(selectedAccount) navigate('/dashboard/reportes/'+selectedAccount.account_id+'?tab='+r.tab); else alert('Selecciona una cuenta primero') }}
