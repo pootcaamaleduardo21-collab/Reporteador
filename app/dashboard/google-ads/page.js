@@ -43,8 +43,20 @@ export default function GoogleAdsPage() {
   };
 
   const handleConnect = () => {
-    window.location.href = '/api/oauth/google-ads/login';
-  };
+  const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+  const redirectUri = `${window.location.origin}/api/oauth/google-ads/callback`;
+  const scopes = 'https://www.googleapis.com/auth/adwords';
+  
+  const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
+    `client_id=${clientId}&` +
+    `redirect_uri=${encodeURIComponent(redirectUri)}&` +
+    `response_type=code&` +
+    `scope=${encodeURIComponent(scopes)}&` +
+    `access_type=offline&` +
+    `prompt=consent`;
+  
+  window.location.href = authUrl;
+};
 
   if (loading) {
     return (
