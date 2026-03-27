@@ -255,7 +255,24 @@ export default function InstagramPage() {
 
       {loading && <div style={{textAlign:'center',padding:'60px',color:'#333',fontFamily:'monospace',fontSize:'12px'}}>Cargando datos de Instagram...</div>}
 
-      {!loading && !activeIg && <div style={{textAlign:'center',padding:'60px',color:'#333',fontFamily:'monospace'}}>No se encontraron cuentas de Instagram Business</div>}
+      {!loading && !activeIg && (
+        <div style={{background:'#17171d',border:'1px solid rgba(255,255,255,.07)',borderRadius:'12px',padding:'40px',textAlign:'center',maxWidth:'520px',margin:'20px auto'}}>
+          <div style={{width:'56px',height:'56px',borderRadius:'14px',background:'linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:'24px',margin:'0 auto 16px'}}>◉</div>
+          <h2 style={{fontSize:'16px',fontWeight:'800',color:'#fff',marginBottom:'8px'}}>No se encontraron cuentas de Instagram Business</h2>
+          <p style={{fontSize:'12px',color:'#666',lineHeight:'1.7',marginBottom:'20px',maxWidth:'380px',margin:'0 auto 20px'}}>
+            Para ver métricas orgánicas de Instagram necesitas una <strong style={{color:'#aaa'}}>cuenta de Instagram Business o Creator</strong> vinculada a una Página de Facebook que administres.
+          </p>
+          <div style={{background:'rgba(225,48,108,.06)',border:'1px solid rgba(225,48,108,.15)',borderRadius:'8px',padding:'12px 16px',marginBottom:'20px',fontSize:'11px',color:'#999',textAlign:'left',lineHeight:'1.7'}}>
+            <strong style={{color:'#e1306c'}}>Pasos para conectar:</strong><br/>
+            1. Ve a Instagram → Configuración → Cuenta → Cambiar a cuenta profesional<br/>
+            2. Vincula tu cuenta a una Página de Facebook<br/>
+            3. Reconecta Meta Ads aquí abajo
+          </div>
+          <a href="/api/auth/meta" style={{display:'inline-flex',alignItems:'center',gap:'8px',padding:'10px 20px',borderRadius:'8px',background:'linear-gradient(135deg,#f09433,#bc1888)',color:'#fff',fontSize:'12px',fontWeight:'700',textDecoration:'none'}}>
+            🔗 Reconectar con Meta
+          </a>
+        </div>
+      )}
 
       {!loading && activeIg && (
         <>

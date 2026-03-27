@@ -280,49 +280,45 @@ export default function DashboardLayout({ children }) {
           <div style={{flex:1,display:'flex',alignItems:'center',gap:'6px',minWidth:0}}>
             <span style={{fontSize:'13px',fontWeight:'700',color:'var(--text)',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{topbarTitle}</span>
             {isReportePage && selectedAccount && (
-              <span style={{fontSize:'10px',color:'var(--text4)',fontFamily:'monospace',flexShrink:0}}>{selectedAccount.account_id}</span>
+              <span style={{fontSize:'10px',color:'var(--text4)',background:'rgba(255,255,255,.05)',padding:'2px 7px',borderRadius:'4px',fontFamily:'monospace',flexShrink:0}}>{selectedAccount.platform==='meta_ads'?'Meta':selectedAccount.platform==='google_ads'?'Google':selectedAccount.platform==='tiktok_ads'?'TikTok':'Ads'}</span>
             )}
           </div>
 
-
-
-          {/* Accounts strip toggle */}
-          {accounts.length > 0 && (
+          {/* Active account pill (only on reports pages) */}
+          {isReportePage && accounts.length > 1 && (
             <button className="btn-hover" onClick={()=>setStripOpen(!stripOpen)}
-              style={{display:'flex',alignItems:'center',gap:'5px',padding:'4px 9px',borderRadius:'6px',border:'1px solid var(--border)',background:stripOpen?'rgba(255,255,255,.05)':'transparent',cursor:'pointer',fontFamily:'inherit',flexShrink:0}}>
-              <span style={{fontSize:'10px',color:'#777',whiteSpace:'nowrap'}}>{accounts.length} cuentas</span>
-              <span style={{fontSize:'10px',color:'var(--text3)',transition:'transform .2s',transform:stripOpen?'rotate(180deg)':'rotate(0)'}}>▾</span>
+              style={{display:'flex',alignItems:'center',gap:'6px',padding:'5px 10px',borderRadius:'7px',border:'1px solid var(--border)',background:stripOpen?'rgba(255,255,255,.06)':'transparent',cursor:'pointer',fontFamily:'inherit',flexShrink:0}}>
+              <div style={{width:'6px',height:'6px',borderRadius:'50%',background:selectedAccount?.is_active?'#6ee7b7':'#f87171',flexShrink:0}}></div>
+              <span style={{fontSize:'11px',color:'var(--text3)',whiteSpace:'nowrap',maxWidth:'140px',overflow:'hidden',textOverflow:'ellipsis'}}>{selectedAccount?.account_name||selectedAccount?.account_id||'Cuenta'}</span>
+              <span style={{fontSize:'9px',color:'var(--text4)',transition:'transform .2s',transform:stripOpen?'rotate(180deg)':'rotate(0)'}}>▾</span>
             </button>
           )}
 
           {/* Platforms button */}
           <button className="btn-hover" onClick={()=>navigate('/dashboard/platforms')}
-            style={{display:'flex',alignItems:'center',gap:'5px',padding:'4px 9px',borderRadius:'6px',border:'1px solid rgba(99,102,241,.3)',background:'rgba(99,102,241,.08)',cursor:'pointer',fontFamily:'inherit',flexShrink:0}}>
-            <span style={{fontSize:'12px',fontWeight:'bold'}}>+</span>
-            <span style={{fontSize:'10px',color:'#a5b4fc',whiteSpace:'nowrap'}}>Plataformas</span>
+            style={{display:'flex',alignItems:'center',gap:'5px',padding:'5px 10px',borderRadius:'7px',border:'1px solid rgba(99,102,241,.3)',background:'rgba(99,102,241,.08)',cursor:'pointer',fontFamily:'inherit',flexShrink:0}}>
+            <span style={{fontSize:'13px',fontWeight:'bold',color:'#a5b4fc',lineHeight:1}}>+</span>
+            <span style={{fontSize:'11px',color:'#a5b4fc',whiteSpace:'nowrap'}}>Plataformas</span>
           </button>
         </header>
 
-        {/* ACCOUNTS STRIP */}
-        <div style={{background:'var(--sidebar)',borderBottom:stripOpen?'1px solid rgba(255,255,255,.06)':'none',overflow:'hidden',maxHeight:stripOpen?'68px':'0',transition:'max-height .25s ease',flexShrink:0}}>
+        {/* ACCOUNTS STRIP - account switcher for reports pages */}
+        <div style={{background:'var(--sidebar)',borderBottom:stripOpen?'1px solid rgba(255,255,255,.06)':'none',overflow:'hidden',maxHeight:stripOpen?'72px':'0',transition:'max-height .25s ease',flexShrink:0}}>
           <div style={{display:'flex',alignItems:'center',gap:'6px',padding:'8px 14px',overflowX:'auto',scrollbarWidth:'none'}}>
+            <span style={{fontSize:'9px',color:'var(--text4)',fontFamily:'monospace',whiteSpace:'nowrap',flexShrink:0}}>CAMBIAR CUENTA:</span>
             {(isPro ? accounts : accounts.slice(0,1)).map(acc=>(
-
               <div key={acc.id} className="pill-hover" onClick={()=>selectAccount(acc)}
-                style={{display:'flex',alignItems:'center',gap:'7px',padding:'6px 11px',background:selectedAccount?.id===acc.id?'rgba(99,102,241,.14)':'rgba(255,255,255,.04)',border:'1px solid '+(selectedAccount?.id===acc.id?'rgba(99,102,241,.3)':'rgba(255,255,255,.07)'),borderRadius:'8px',cursor:'pointer',flexShrink:0}}>
+                style={{display:'flex',alignItems:'center',gap:'7px',padding:'6px 11px',background:selectedAccount?.id===acc.id?'rgba(99,102,241,.14)':'rgba(255,255,255,.04)',border:'1px solid '+(selectedAccount?.id===acc.id?'rgba(99,102,241,.3)':'rgba(255,255,255,.07)'),borderRadius:'8px',cursor:'pointer',flexShrink:0,transition:'all .15s'}}>
                 <div style={{width:'6px',height:'6px',borderRadius:'50%',background:acc.is_active?'#6ee7b7':'#f87171',flexShrink:0}}></div>
                 <div>
                   <div style={{fontSize:'11px',fontWeight:'700',color:selectedAccount?.id===acc.id?'#a5b4fc':'#ddd',whiteSpace:'nowrap'}}>{acc.account_name||acc.account_id}</div>
-                  <div style={{fontSize:'9px',color:'var(--text4)',fontFamily:'monospace',marginTop:'1px'}}>{acc.account_id}</div>
+                  <div style={{fontSize:'9px',color:'var(--text4)',marginTop:'1px'}}>{acc.platform==='meta_ads'?'Meta Ads':acc.platform==='google_ads'?'Google Ads':acc.platform==='tiktok_ads'?'TikTok Ads':acc.platform}</div>
                 </div>
               </div>
             ))}
-            <a href="/api/auth/meta" style={{display:'flex',alignItems:'center',gap:'5px',padding:'6px 10px',background:'rgba(99,102,241,.08)',border:'1px solid rgba(99,102,241,.2)',borderRadius:'8px',textDecoration:'none',flexShrink:0}}>
-              <span style={{fontSize:'10px',color:'#a5b4fc',fontWeight:'600',whiteSpace:'nowrap'}}>↻ Reconectar</span>
-            </a>
             {!isPro && accounts.length > 1 && (
               <a href="/planes" style={{display:'flex',alignItems:'center',gap:'5px',padding:'6px 10px',background:'rgba(252,211,77,.06)',border:'1px solid rgba(252,211,77,.15)',borderRadius:'8px',textDecoration:'none',flexShrink:0}}>
-                <span style={{fontSize:'10px',color:'#fcd34d',fontWeight:'600',whiteSpace:'nowrap'}}>🔒 +{accounts.length-1} cuentas en Pro</span>
+                <span style={{fontSize:'10px',color:'#fcd34d',fontWeight:'600',whiteSpace:'nowrap'}}>🔒 +{accounts.length-1} en Pro</span>
               </a>
             )}
           </div>

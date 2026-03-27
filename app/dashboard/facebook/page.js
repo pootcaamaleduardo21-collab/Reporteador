@@ -274,7 +274,23 @@ export default function FacebookPage() {
 
       {loading && <div style={{textAlign:'center',padding:'60px',color:'#333',fontFamily:'monospace',fontSize:'12px'}}>Cargando datos de Facebook...</div>}
 
-      {!loading && !activePage && <div style={{textAlign:'center',padding:'60px',color:'#333',fontFamily:'monospace'}}>No se encontraron paginas</div>}
+      {!loading && !activePage && (
+        <div style={{background:'#17171d',border:'1px solid rgba(255,255,255,.07)',borderRadius:'12px',padding:'40px',textAlign:'center',maxWidth:'520px',margin:'20px auto'}}>
+          <div style={{width:'56px',height:'56px',borderRadius:'14px',background:'#1877f2',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:'26px',fontWeight:'800',margin:'0 auto 16px'}}>f</div>
+          <h2 style={{fontSize:'16px',fontWeight:'800',color:'#fff',marginBottom:'8px'}}>No se encontraron páginas de Facebook</h2>
+          <p style={{fontSize:'12px',color:'#666',lineHeight:'1.7',marginBottom:'20px',maxWidth:'360px',margin:'0 auto 20px'}}>
+            Para ver métricas orgánicas necesitas tener una <strong style={{color:'#aaa'}}>Página de Facebook</strong> y conectarla con permisos de administrador. Si ya tienes una, reconecta tu cuenta para darle acceso.
+          </p>
+          <div style={{display:'flex',flexDirection:'column',gap:'8px',alignItems:'center'}}>
+            <a href="/api/auth/meta" style={{display:'inline-flex',alignItems:'center',gap:'8px',padding:'10px 20px',borderRadius:'8px',background:'#1877f2',color:'#fff',fontSize:'12px',fontWeight:'700',textDecoration:'none'}}>
+              🔗 Reconectar con Facebook
+            </a>
+            <div style={{fontSize:'10px',color:'#333',marginTop:'4px'}}>
+              Asegúrate de ser administrador de al menos una Página de Facebook
+            </div>
+          </div>
+        </div>
+      )}
 
       {!loading && activePage && (
         <>

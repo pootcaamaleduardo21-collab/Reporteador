@@ -10,6 +10,7 @@ export default function SettingsPage() {
   const [currency, setCurrency] = useState('MXN $')
   const [defaultPeriod, setDefaultPeriod] = useState('Este mes')
   const [saved, setSaved] = useState(false)
+  const [cancelLoading, setCancelLoading] = useState(false)
   const { plan, isPro } = usePlan()
 
   useEffect(() => {
@@ -48,6 +49,23 @@ export default function SettingsPage() {
     setTimeout(() => setSaved(false), 2500)
   }
 
+  async function handleCancelSubscription() {
+    setCancelLoading(true)
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      const res = await fetch('/api/stripe/portal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id }),
+      })
+      const j = await res.json()
+      if (j.url) { window.location.href = j.url }
+      else { alert('No se pudo abrir el portal. Verifica que tengas una suscripción activa.') }
+    } catch(e) { alert('Error al abrir el portal. Intenta de nuevo.') }
+    setCancelLoading(false)
+  }
+
   const sel = {
     background:'rgba(99,102,241,.12)',
     border:'1px solid rgba(99,102,241,.25)',
@@ -68,10 +86,15 @@ export default function SettingsPage() {
   return (
     <div style={{padding:'20px',maxWidth:'740px',fontFamily:'"Plus Jakarta Sans",sans-serif'}}>
 
+      <div style={{marginBottom:'20px'}}>
+        <h1 style={{fontSize:'18px',fontWeight:'800',color:'var(--text)',margin:'0 0 4px'}}>Ajustes</h1>
+        <p style={{fontSize:'12px',color:'var(--text4)',margin:0}}>Personaliza tu experiencia en Kaan</p>
+      </div>
+
       {/* Live preview banner */}
       <div style={{background:'rgba(99,102,241,.08)',border:'1px solid rgba(99,102,241,.2)',borderRadius:'9px',padding:'10px 14px',marginBottom:'16px',fontSize:'11px',color:'#a5b4fc',fontFamily:'monospace',display:'flex',alignItems:'center',gap:'8px'}}>
         <span>💡</span>
-        Los cambios de tema se aplican en tiempo real — guarda para que persistan al recargar
+        El tema se aplica en tiempo real · Presiona <strong>Guardar cambios</strong> para que persistan al recargar
       </div>
 
       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'14px'}}>
@@ -188,6 +211,17 @@ export default function SettingsPage() {
               <a href="/planes" style={{display:'block',textAlign:'center',padding:'9px',borderRadius:'8px',background:'linear-gradient(135deg,#6366f1,#8b5cf6)',color:'#fff',fontSize:'11px',fontWeight:'700',textDecoration:'none',marginBottom:'10px'}}>
                 Actualizar a Pro →
               </a>
+            </div>
+          )}
+          {isPro && (
+            <div style={{borderTop:'1px solid rgba(255,255,255,.05)',marginTop:'10px',paddingTop:'10px'}}>
+              <button onClick={handleCancelSubscription} disabled={cancelLoading}
+                style={{display:'block',width:'100%',textAlign:'center',padding:'9px',borderRadius:'8px',background:'transparent',border:'1px solid rgba(248,113,113,.25)',color:'#f87171',fontSize:'11px',fontWeight:'600',cursor:'pointer',fontFamily:'inherit',opacity:cancelLoading?0.6:1}}>
+                {cancelLoading ? 'Redirigiendo...' : '⚠ Cancelar suscripción'}
+              </button>
+              <div style={{fontSize:'10px',color:'#333',textAlign:'center',marginTop:'6px'}}>
+                Se abrirá el portal de facturación de Stripe
+              </div>
             </div>
           )}
           <div style={{borderTop:'1px solid rgba(255,255,255,.05)',marginTop:'10px',paddingTop:'10px',display:'flex',gap:'16px'}}>
