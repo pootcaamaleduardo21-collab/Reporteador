@@ -156,24 +156,32 @@ const DiagPanel = ({ row }) => {
   )
 }
 
-const MetricCard = ({l,v,sub,alert,pos,prev,comparing}) => {
+const MetricCard = ({l,v,sub,alert,pos,prev,comparing,help}) => {
   const d = (comparing && prev!=null) ? delta(parseFloat(String(v).replace(/[^0-9.-]/g,''))||0, prev) : null
   return (
-    <div style={{background:'#111116',border:'1px solid '+(alert?'rgba(248,113,113,.25)':pos?'rgba(110,231,183,.2)':'#1a1a22'),borderRadius:'10px',padding:'16px'}}>
-      <div style={{fontSize:'9px',color:'#444',fontFamily:'monospace',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:'8px'}}>{l}</div>
-      <div style={{fontSize:'22px',fontWeight:'800',color:alert?'#f87171':pos?'#6ee7b7':'#fff',marginBottom:'4px'}}>{v}</div>
-      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-        <div style={{fontSize:'10px',color:'#333',fontFamily:'monospace'}}>{sub}</div>
-        {d && <div style={{fontSize:'10px',fontFamily:'monospace',color:d.up?'#6ee7b7':'#f87171',fontWeight:'700'}}>{d.up?'+':''}{d.pct}%</div>}
+    <div className="metric-card" style={{background:'var(--sidebar)',border:'1px solid '+(alert?'rgba(248,113,113,.3)':pos?'rgba(110,231,183,.25)':'var(--border)'),borderRadius:'10px',padding:'16px',position:'relative',transition:'border-color .15s'}}>
+      <div style={{display:'flex',alignItems:'center',gap:'4px',marginBottom:'8px'}}>
+        <div style={{fontSize:'10px',color:'var(--text4)',textTransform:'uppercase',letterSpacing:'.07em',fontWeight:'600'}}>{l}</div>
+        {help&&<div style={{width:'14px',height:'14px',borderRadius:'50%',background:'rgba(255,255,255,.06)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'8px',color:'var(--text4)',cursor:'help',flexShrink:0,border:'1px solid rgba(255,255,255,.08)'}}>?</div>}
+      </div>
+      {help&&(
+        <div className="metric-help" style={{position:'absolute',top:'100%',left:0,right:0,background:'#18181f',border:'1px solid #2a2a35',borderRadius:'8px',padding:'10px 12px',zIndex:100,fontSize:'11px',color:'#888',lineHeight:'1.5',boxShadow:'0 8px 20px rgba(0,0,0,.5)',marginTop:'4px'}}>
+          {help}
+        </div>
+      )}
+      <div style={{fontSize:'22px',fontWeight:'800',color:alert?'#f87171':pos?'#6ee7b7':'var(--text)',marginBottom:'4px',lineHeight:1}}>{v}</div>
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginTop:'4px'}}>
+        <div style={{fontSize:'10px',color:alert?'rgba(248,113,113,.6)':pos?'rgba(110,231,183,.6)':'var(--text4)'}}>{sub}</div>
+        {d && <div style={{fontSize:'10px',color:d.up?'#6ee7b7':'#f87171',fontWeight:'700'}}>{d.up?'↑':'↓'}{Math.abs(d.pct)}%</div>}
       </div>
     </div>
   )
 }
 
 const MiniMetric = ({l,v,alert,pos,info}) => (
-  <div style={{background:'#0d0d12',borderRadius:'6px',padding:'8px 10px',border:'1px solid '+(alert?'rgba(248,113,113,.15)':pos?'rgba(110,231,183,.1)':'transparent')}}>
-    <div style={{fontSize:'9px',color:'#333',fontFamily:'monospace',marginBottom:'3px'}}>{l}{info&&<span style={{color:'#2a2a35',marginLeft:'4px'}}>?</span>}</div>
-    <div style={{fontSize:'13px',fontWeight:'700',color:alert?'#f87171':pos?'#6ee7b7':'#fff'}}>{v}</div>
+  <div style={{background:'rgba(255,255,255,.03)',borderRadius:'6px',padding:'8px 10px',border:'1px solid '+(alert?'rgba(248,113,113,.2)':pos?'rgba(110,231,183,.15)':'rgba(255,255,255,.05)')}}>
+    <div style={{fontSize:'9px',color:'var(--text4)',fontFamily:'monospace',marginBottom:'3px',textTransform:'uppercase',letterSpacing:'.05em'}}>{l}</div>
+    <div style={{fontSize:'13px',fontWeight:'700',color:alert?'#f87171':pos?'#6ee7b7':'var(--text)'}}>{v}</div>
   </div>
 )
 
@@ -221,7 +229,7 @@ const ExpandCard = ({ name, sub, badge, row }) => {
   const [open, setOpen] = React.useState(false)
   const qs = qualityScore(row); const ql = qualityLabel(qs)
   return (
-    <div style={{background:'#111116',border:'1px solid '+(qs>=75?'rgba(110,231,183,.15)':qs>=50?'rgba(252,211,77,.1)':'rgba(248,113,113,.12)'),borderRadius:'10px',padding:'16px 20px',marginBottom:'8px'}}>
+    <div style={{background:'var(--sidebar)',border:'1px solid '+(qs>=75?'rgba(110,231,183,.2)':qs>=50?'rgba(252,211,77,.15)':'rgba(248,113,113,.18)'),borderRadius:'10px',padding:'16px 20px',marginBottom:'8px'}}>
       <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',cursor:'pointer',flexWrap:'wrap',gap:'8px'}} onClick={()=>setOpen(!open)}>
         <div style={{flex:1,minWidth:0}}>
           <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'2px'}}>
@@ -279,7 +287,7 @@ const AdScoreCard = ({ ad }) => {
   const bgs = { R:'rgba(248,113,113,.04)', Y:'rgba(252,211,77,.04)', G:'rgba(110,231,183,.05)' }
   const borders = { R:'rgba(248,113,113,.1)', Y:'rgba(252,211,77,.1)', G:'rgba(110,231,183,.15)' }
   return (
-    <div style={{background:'#111116',border:'1px solid '+(qs>=75?'rgba(110,231,183,.2)':qs>=50?'rgba(252,211,77,.15)':'rgba(248,113,113,.2)'),borderRadius:'10px',padding:'16px 20px',marginBottom:'8px'}}>
+    <div style={{background:'var(--sidebar)',border:'1px solid '+(qs>=75?'rgba(110,231,183,.2)':qs>=50?'rgba(252,211,77,.15)':'rgba(248,113,113,.2)'),borderRadius:'10px',padding:'16px 20px',marginBottom:'8px'}}>
       <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'10px',flexWrap:'wrap',gap:'8px',cursor:'pointer'}} onClick={()=>setOpen(!open)}>
         <div style={{flex:1,minWidth:0}}>
           <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'2px'}}>
@@ -760,77 +768,125 @@ export default function Reportes() {
     } catch(e){console.error(e)}
   }
 
-  const tabs = platform === 'google_ads' ? ['overview','google-ads'] : ['overview','campanas','conjuntos','anuncios','audiencia']
-  const tabLabels = {overview:'Overview',campanas:'Campanas',conjuntos:'Conjuntos',anuncios:'Anuncios',audiencia:'Audiencia','google-ads':'Google Ads','tiktok-ads':'TikTok Ads'}
+  const isGoogle = platform === 'google_ads'
+  const tabs = isGoogle
+    ? [{id:'overview',label:'Resumen',icon:'📊',desc:'Vista general de la cuenta'},{id:'google-ads',label:'Campañas',icon:'🎯',desc:'Detalle por campaña'}]
+    : [{id:'overview',label:'Resumen',icon:'📊',desc:'Vista general'},{id:'campanas',label:'Campañas',icon:'🎯',desc:'Cada campaña activa'},{id:'conjuntos',label:'Conjuntos',icon:'👥',desc:'Grupos de anuncios'},{id:'anuncios',label:'Anuncios',icon:'🖼',desc:'Creativos individuales'},{id:'audiencia',label:'Audiencia',icon:'🗺',desc:'Quién ve tus anuncios'}]
   const objInfo = OBJECTIVE_MAP[detectedObjective] || OBJECTIVE_MAP.MULTIPLE
-  const currentTypeLabel = resultType==='auto'?'Auto - '+(RESULT_TYPE_LABELS[objInfo?.resultTypes?.[0]]||''):RESULT_TYPE_LABELS[resultType]||resultType
+
+  const METRIC_HELP = {
+    'Importe gastado': 'Dinero total que Meta cobró en este período',
+    'Resultados': 'Acciones clave que logró tu campaña (mensajes, leads, ventas…)',
+    'Costo/resultado': 'Cuánto pagaste en promedio por cada resultado obtenido',
+    'Impresiones': 'Veces que tu anuncio fue mostrado (puede ser a la misma persona varias veces)',
+    'Alcance': 'Personas únicas que vieron tu anuncio al menos una vez',
+    'Frecuencia': 'Promedio de veces que cada persona vio tu anuncio. +3.5 puede causar fatiga',
+    'CTR': 'Porcentaje de personas que hicieron clic. +1% es bueno, +2% excelente',
+    'CPC': 'Costo por cada clic que recibiste',
+    'CPM': 'Cuánto pagaste por cada 1,000 impresiones',
+    'Hook Rate': 'Qué % de personas vio los primeros 3 segundos del video. Referencia: 25%+ bueno',
+    'Hold Rate': 'Qué % de quienes iniciaron el video lo terminaron. Referencia: 40%+ bueno',
+  }
 
   return (
-    <div style={{background:'#0a0a0e',fontFamily:'Inter,sans-serif',minHeight:'100%'}}>
+    <div style={{background:'var(--bg)',fontFamily:'"Plus Jakarta Sans",Inter,sans-serif',minHeight:'100%'}}>
+      <style>{`.tab-btn:hover{background:rgba(99,102,241,.08)!important} .metric-help{display:none} .metric-card:hover .metric-help{display:block}`}</style>
 
-      {/* DATE + OBJECTIVE BAR */}
-      <div style={{background:'#111116',borderBottom:'1px solid #1a1a22',padding:'8px 24px',display:'flex',alignItems:'center',gap:'8px',flexWrap:'wrap',position:'sticky',top:0,zIndex:50}}>
-        {/* Objective selector */}
-        <div style={{position:'relative',flexShrink:0}}>
-          <button onClick={()=>setShowTypeDropdown(!showTypeDropdown)}
-            style={{padding:'5px 12px',borderRadius:'6px',border:'1px solid #a78bfa',background:'rgba(167,139,250,.1)',color:'#a78bfa',fontSize:'11px',cursor:'pointer',fontFamily:'monospace',whiteSpace:'nowrap'}}>
-            Objetivo: {resultType==='auto'?'Auto - '+(OBJECTIVE_MAP[detectedObjective]?.resultTypes?.[0]||''):RESULT_TYPE_LABELS[resultType]||resultType} ▾
-          </button>
-          {showTypeDropdown&&(
-            <div style={{position:'absolute',top:'100%',left:0,background:'#18181f',border:'1px solid #2a2a35',borderRadius:'8px',padding:'6px',zIndex:200,minWidth:'200px',boxShadow:'0 8px 24px rgba(0,0,0,.5)'}}>
-              <div onClick={()=>{setResultType('auto');setShowTypeDropdown(false)}} style={{padding:'7px 10px',borderRadius:'5px',cursor:'pointer',color:resultType==='auto'?'#a78bfa':'#888',background:resultType==='auto'?'rgba(167,139,250,.1)':'transparent',fontSize:'11px',fontFamily:'monospace',marginBottom:'3px'}}>Auto — detectar por objetivo</div>
-              <div style={{height:'1px',background:'#2a2a35',margin:'3px 0'}}></div>
-              {availableTypes.map(t=>(
-                <div key={t} onClick={()=>{setResultType(t);setShowTypeDropdown(false)}} style={{padding:'7px 10px',borderRadius:'5px',cursor:'pointer',color:resultType===t?'#a78bfa':'#888',background:resultType===t?'rgba(167,139,250,.1)':'transparent',fontSize:'11px',fontFamily:'monospace'}}>
-                  {RESULT_TYPE_LABELS[t]}
-                </div>
-              ))}
-            </div>
-          )}
+      {/* BARRA SUPERIOR: tabs + fechas */}
+      <div style={{background:'var(--sidebar)',borderBottom:'1px solid var(--border)',position:'sticky',top:0,zIndex:50}}>
+
+        {/* TABS - navegación principal */}
+        <div style={{padding:'0 20px',display:'flex',gap:'2px',overflowX:'auto',scrollbarWidth:'none'}}>
+          {tabs.map(t=>(
+            <button key={t.id} className="tab-btn" onClick={()=>setActiveTab(t.id)}
+              style={{display:'flex',alignItems:'center',gap:'6px',padding:'12px 14px',borderRadius:'0',border:'none',borderBottom:'2px solid',
+                borderBottomColor:activeTab===t.id?'#6366f1':'transparent',
+                background:'transparent',cursor:'pointer',fontFamily:'inherit',flexShrink:0,
+                transition:'all .15s'}}>
+              <span style={{fontSize:'14px'}}>{t.icon}</span>
+              <div style={{textAlign:'left'}}>
+                <div style={{fontSize:'12px',fontWeight:'700',color:activeTab===t.id?'#a5b4fc':'var(--text3)'}}>{t.label}</div>
+                <div style={{fontSize:'9px',color:'var(--text4)',marginTop:'1px'}}>{t.desc}</div>
+              </div>
+            </button>
+          ))}
+
+          {/* Spacer + fecha + objetivo */}
+          <div style={{marginLeft:'auto',display:'flex',alignItems:'center',gap:'6px',padding:'8px 0',flexShrink:0}}>
+            {/* Objetivo */}
+            {platform==='meta_ads' && (
+              <div style={{position:'relative'}}>
+                <button onClick={()=>setShowTypeDropdown(!showTypeDropdown)}
+                  style={{padding:'5px 10px',borderRadius:'6px',border:'1px solid rgba(167,139,250,.3)',background:'rgba(167,139,250,.08)',color:'#a78bfa',fontSize:'10px',cursor:'pointer',fontFamily:'inherit',whiteSpace:'nowrap',display:'flex',alignItems:'center',gap:'4px'}}>
+                  <span>🎯</span>
+                  <span>{resultType==='auto'?'Auto':(RESULT_TYPE_LABELS[resultType]||resultType)}</span>
+                  <span>▾</span>
+                </button>
+                {showTypeDropdown&&(
+                  <div style={{position:'absolute',top:'100%',right:0,background:'#18181f',border:'1px solid #2a2a35',borderRadius:'8px',padding:'6px',zIndex:200,minWidth:'190px',boxShadow:'0 8px 24px rgba(0,0,0,.6)'}}>
+                    <div style={{fontSize:'9px',color:'#444',fontFamily:'monospace',padding:'4px 8px 6px',textTransform:'uppercase',letterSpacing:'.08em'}}>Tipo de resultado</div>
+                    <div onClick={()=>{setResultType('auto');setShowTypeDropdown(false)}} style={{padding:'8px 10px',borderRadius:'5px',cursor:'pointer',color:resultType==='auto'?'#a78bfa':'#888',background:resultType==='auto'?'rgba(167,139,250,.1)':'transparent',fontSize:'11px',fontFamily:'monospace'}}>Auto — detectar por objetivo</div>
+                    <div style={{height:'1px',background:'#2a2a35',margin:'3px 0'}}></div>
+                    {availableTypes.map(t=>(
+                      <div key={t} onClick={()=>{setResultType(t);setShowTypeDropdown(false)}} style={{padding:'8px 10px',borderRadius:'5px',cursor:'pointer',color:resultType===t?'#a78bfa':'#888',background:resultType===t?'rgba(167,139,250,.1)':'transparent',fontSize:'11px',fontFamily:'monospace'}}>
+                        {RESULT_TYPE_LABELS[t]}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Comparar */}
+            <button onClick={()=>setComparing(!comparing)}
+              style={{padding:'5px 10px',borderRadius:'6px',border:'1px solid',fontSize:'10px',cursor:'pointer',fontFamily:'inherit',
+                borderColor:comparing?'rgba(110,231,183,.4)':'rgba(255,255,255,.08)',
+                background:comparing?'rgba(110,231,183,.08)':'transparent',
+                color:comparing?'#6ee7b7':'var(--text4)'}}>
+              {comparing?'✓ Comparando':'Comparar'}
+            </button>
+
+            {/* PDF */}
+            <button onClick={exportPDF}
+              style={{padding:'5px 10px',borderRadius:'6px',border:'1px solid rgba(255,255,255,.08)',background:'transparent',color:'var(--text4)',fontSize:'10px',cursor:'pointer',fontFamily:'inherit'}}>
+              ↓ PDF
+            </button>
+          </div>
         </div>
 
-        {/* Date presets */}
-        <div style={{display:'flex',gap:'3px',flexWrap:'wrap'}}>
+        {/* DATE PRESETS - segunda fila */}
+        <div style={{padding:'6px 20px',borderTop:'1px solid var(--border)',display:'flex',alignItems:'center',gap:'4px',flexWrap:'wrap'}}>
+          <span style={{fontSize:'9px',color:'var(--text4)',fontFamily:'monospace',marginRight:'4px',flexShrink:0}}>PERÍODO:</span>
           {PRESETS.map(p=>(
             <button key={p.value} onClick={()=>{setPreset(p.value);setShowCustom(p.value==='custom');if(p.value!=='custom')setDemographics(null)}}
-              style={{padding:'5px 9px',borderRadius:'5px',border:'1px solid',fontSize:'10px',cursor:'pointer',fontFamily:'monospace',
-                borderColor:preset===p.value?'#fff':'#222',
-                background:preset===p.value?'#fff':'transparent',
-                color:preset===p.value?'#0a0a0e':'#555',
-                fontWeight:preset===p.value?'700':'400'}}>
+              style={{padding:'4px 10px',borderRadius:'5px',border:'1px solid',fontSize:'10px',cursor:'pointer',fontFamily:'inherit',
+                borderColor:preset===p.value?'rgba(99,102,241,.6)':'rgba(255,255,255,.08)',
+                background:preset===p.value?'rgba(99,102,241,.15)':'transparent',
+                color:preset===p.value?'#a5b4fc':'var(--text4)',
+                fontWeight:preset===p.value?'700':'400',transition:'all .15s'}}>
               {p.label}
             </button>
           ))}
-        </div>
-
-        {/* Compare + PDF */}
-        <div style={{marginLeft:'auto',display:'flex',gap:'6px'}}>
-          <button onClick={()=>setComparing(!comparing)}
-            style={{padding:'5px 10px',borderRadius:'5px',border:'1px solid',fontSize:'10px',cursor:'pointer',fontFamily:'monospace',
-              borderColor:comparing?'#6ee7b7':'#222',background:comparing?'rgba(110,231,183,.1)':'transparent',color:comparing?'#6ee7b7':'#555'}}>
-            {comparing?'Comparando':'Comparar'}
-          </button>
-          <button onClick={exportPDF}
-            style={{padding:'5px 10px',borderRadius:'5px',border:'1px solid #222',background:'transparent',color:'#555',fontSize:'10px',cursor:'pointer',fontFamily:'monospace'}}>
-            PDF
-          </button>
+          {showCustom&&(
+            <>
+              <input type="date" value={customFrom} onChange={e=>{setCustomFrom(e.target.value);setDemographics(null)}} style={{background:'rgba(255,255,255,.05)',border:'1px solid rgba(255,255,255,.1)',color:'#fff',padding:'4px 8px',borderRadius:'5px',fontSize:'10px',outline:'none',fontFamily:'inherit'}}/>
+              <span style={{fontSize:'10px',color:'var(--text4)'}}>→</span>
+              <input type="date" value={customTo} onChange={e=>{setCustomTo(e.target.value);setDemographics(null)}} style={{background:'rgba(255,255,255,.05)',border:'1px solid rgba(255,255,255,.1)',color:'#fff',padding:'4px 8px',borderRadius:'5px',fontSize:'10px',outline:'none',fontFamily:'inherit'}}/>
+            </>
+          )}
         </div>
       </div>
 
-      {/* Custom date inputs */}
-      {showCustom&&(
-        <div style={{background:'#111116',borderBottom:'1px solid #1a1a22',padding:'6px 24px',display:'flex',gap:'8px',alignItems:'center'}}>
-          <span style={{fontSize:'11px',color:'#444',fontFamily:'monospace'}}>Desde</span>
-          <input type="date" value={customFrom} onChange={e=>{setCustomFrom(e.target.value);setDemographics(null)}} style={{background:'#18181f',border:'1px solid #2a2a35',color:'#fff',padding:'4px 8px',borderRadius:'6px',fontSize:'11px',outline:'none'}}/>
-          <span style={{fontSize:'11px',color:'#444',fontFamily:'monospace'}}>Hasta</span>
-          <input type="date" value={customTo} onChange={e=>{setCustomTo(e.target.value);setDemographics(null)}} style={{background:'#18181f',border:'1px solid #2a2a35',color:'#fff',padding:'4px 8px',borderRadius:'6px',fontSize:'11px',outline:'none'}}/>
+      {loading&&(
+        <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:'80px 0',gap:'12px'}}>
+          <div style={{width:'32px',height:'32px',borderRadius:'50%',border:'3px solid rgba(99,102,241,.2)',borderTop:'3px solid #6366f1',animation:'spin 1s linear infinite'}}></div>
+          <div style={{fontSize:'12px',color:'var(--text4)',fontFamily:'monospace'}}>Cargando datos de tu cuenta...</div>
+          <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
         </div>
       )}
 
-      {loading&&<div style={{textAlign:'center',padding:'80px 0',color:'#444',fontFamily:'monospace',fontSize:'12px'}}>Cargando datos...</div>}
-
       {!loading&&(
-        <div ref={reportRef} style={{padding:'24px',maxWidth:'1400px',margin:'0 auto'}}>
+        <div ref={reportRef} style={{padding:'20px 24px',maxWidth:'1400px',margin:'0 auto'}}>
 
           {activeTab==='overview'&&(
             <>
@@ -850,27 +906,46 @@ export default function Reportes() {
               ) : overview && (
                 <>
                   {comparing&&prevOverview&&(
-                    <div style={{background:'rgba(110,231,183,.05)',border:'1px solid rgba(110,231,183,.15)',borderRadius:'8px',padding:'10px 16px',marginBottom:'16px',fontSize:'11px',color:'#6ee7b7',fontFamily:'monospace'}}>
-                      Comparando periodo actual vs periodo anterior
+                    <div style={{background:'rgba(110,231,183,.05)',border:'1px solid rgba(110,231,183,.2)',borderRadius:'8px',padding:'10px 16px',marginBottom:'16px',fontSize:'11px',color:'#6ee7b7',display:'flex',alignItems:'center',gap:'8px'}}>
+                      <span>↕</span>
+                      <span>Comparando período actual vs período anterior — las flechas ↑↓ muestran si mejoró o bajó cada métrica</span>
                     </div>
                   )}
-                  <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(155px,1fr))',gap:'10px',marginBottom:'24px'}}>
-                    <MetricCard l='Importe gastado' v={fmt$(overview.spend)} sub='total ejecutado' prev={prevOverview?.spend} comparing={comparing}/>
-                    <MetricCard l='Resultados' v={fmtN(overview.results)} sub='conversiones' pos={overview.results>0} prev={prevOverview?.results} comparing={comparing}/>
-                    <MetricCard l='Costo/resultado' v={overview.cpr>0?fmt$(overview.cpr):'—'} sub='eficiencia' prev={prevOverview?.cpr} comparing={comparing}/>
-                    <MetricCard l='Impresiones' v={fmtN(overview.impressions)} sub='total' prev={prevOverview?.impressions} comparing={comparing}/>
-                    <MetricCard l='Alcance' v={fmtN(overview.reach)} sub='personas unicas' prev={prevOverview?.reach} comparing={comparing}/>
-                    <MetricCard l='Frecuencia' v={(+overview.frequency).toFixed(2)} sub={overview.frequency<=2?'Optima':overview.frequency<=3.5?'Revisar':'Fatiga'} alert={overview.frequency>3.5} pos={overview.frequency<=2} prev={prevOverview?.frequency} comparing={comparing}/>
-                    <MetricCard l='CTR' v={fmtP(overview.ctr)} sub={overview.ctr>=2?'Excelente':overview.ctr>=1?'Bueno':'Bajo'} alert={overview.ctr<1} pos={overview.ctr>=2} prev={prevOverview?.ctr} comparing={comparing}/>
-                    <MetricCard l='CPC' v={fmt$(overview.cpc)} sub='por clic' prev={prevOverview?.cpc} comparing={comparing}/>
-                    <MetricCard l='CPM' v={fmt$(overview.cpm)} sub='por mil imp' prev={prevOverview?.cpm} comparing={comparing}/>
-                    <MetricCard l='Clics' v={fmtN(overview.clicks)} sub='trafico' prev={prevOverview?.clicks} comparing={comparing}/>
-                    {overview.hookRate>0&&<MetricCard l='Hook Rate' v={overview.hookRate.toFixed(1)+'%'} sub='ref: 25%+ bueno' pos={overview.hookRate>=25} alert={overview.hookRate<15} prev={prevOverview?.hookRate} comparing={comparing}/>}
-                    {overview.holdRate>0&&<MetricCard l='Hold Rate' v={overview.holdRate.toFixed(1)+'%'} sub='ref: 40%+ bueno' pos={overview.holdRate>=40} alert={overview.holdRate<25} prev={prevOverview?.holdRate} comparing={comparing}/>}
-                    <MetricCard l='Reacciones' v={fmtN(overview.reactions)} sub='likes' prev={prevOverview?.reactions} comparing={comparing}/>
-                    <MetricCard l='Comentarios' v={fmtN(overview.comments)} sub='interacciones' prev={prevOverview?.comments} comparing={comparing}/>
-                    <MetricCard l='Guardados' v={fmtN(overview.saves)} sub='post saves' prev={prevOverview?.saves} comparing={comparing}/>
-                    <MetricCard l='Shares' v={fmtN(overview.shares)} sub='compartidos' prev={prevOverview?.shares} comparing={comparing}/>
+                  {/* KPIs principales - las métricas más importantes */}
+                  <div style={{marginBottom:'8px'}}>
+                    <div style={{fontSize:'11px',fontWeight:'700',color:'var(--text4)',textTransform:'uppercase',letterSpacing:'.07em',marginBottom:'10px'}}>📌 Métricas clave</div>
+                    <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(155px,1fr))',gap:'10px',marginBottom:'20px'}}>
+                      <MetricCard l='Dinero gastado' v={fmt$(overview.spend)} sub='total del período' prev={prevOverview?.spend} comparing={comparing} help='Dinero total que Meta cobró en este período por mostrar tus anuncios.'/>
+                      <MetricCard l='Resultados' v={fmtN(overview.results)} sub={overview.results>0?'¡obtenidos!':'sin resultados'} pos={overview.results>0} prev={prevOverview?.results} comparing={comparing} help='Acciones clave logradas: mensajes, leads, ventas o clics — según el objetivo de tu campaña.'/>
+                      <MetricCard l='Costo por resultado' v={overview.cpr>0?fmt$(overview.cpr):'Sin resultados'} sub={overview.cpr>0?'por cada resultado':'revisa tu campaña'} alert={overview.cpr===0&&overview.spend>50} prev={prevOverview?.cpr} comparing={comparing} help='Cuánto pagaste en promedio por cada resultado. Mientras más bajo, más eficiente es tu campaña.'/>
+                      <MetricCard l='Personas alcanzadas' v={fmtN(overview.reach)} sub='personas únicas' prev={prevOverview?.reach} comparing={comparing} help='Cuántas personas diferentes vieron tu anuncio al menos una vez en este período.'/>
+                    </div>
+                  </div>
+
+                  {/* Rendimiento del anuncio */}
+                  <div style={{marginBottom:'8px'}}>
+                    <div style={{fontSize:'11px',fontWeight:'700',color:'var(--text4)',textTransform:'uppercase',letterSpacing:'.07em',marginBottom:'10px'}}>⚡ Rendimiento del anuncio</div>
+                    <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(145px,1fr))',gap:'10px',marginBottom:'20px'}}>
+                      <MetricCard l='CTR (clics)' v={fmtP(overview.ctr)} sub={overview.ctr>=2?'Excelente ✓':overview.ctr>=1?'Bueno':'Bajo — mejorar'} alert={overview.ctr<1} pos={overview.ctr>=2} prev={prevOverview?.ctr} comparing={comparing} help='Porcentaje de personas que hacen clic en tu anuncio. Menos de 1% es bajo; arriba de 2% es excelente.'/>
+                      <MetricCard l='Frecuencia' v={(+overview.frequency).toFixed(2)} sub={overview.frequency<=2?'Óptima ✓':overview.frequency<=3.5?'Revisar':'⚠ Fatiga publicitaria'} alert={overview.frequency>3.5} pos={overview.frequency<=2} prev={prevOverview?.frequency} comparing={comparing} help='Cuántas veces vio tu anuncio cada persona en promedio. Si supera 3.5, la gente empieza a ignorarlo.'/>
+                      <MetricCard l='CPM' v={fmt$(overview.cpm)} sub='por 1,000 impresiones' prev={prevOverview?.cpm} comparing={comparing} help='Cuánto pagas por cada 1,000 veces que se muestra tu anuncio. Útil para comparar campañas.'/>
+                      <MetricCard l='CPC' v={fmt$(overview.cpc)} sub='por clic recibido' prev={prevOverview?.cpc} comparing={comparing} help='Cuánto pagas por cada clic. Si es muy alto, tu anuncio no está siendo relevante para el público.'/>
+                      <MetricCard l='Impresiones' v={fmtN(overview.impressions)} sub='veces mostrado' prev={prevOverview?.impressions} comparing={comparing} help='Número de veces que tu anuncio apareció en pantalla (incluyendo la misma persona varias veces).'/>
+                      <MetricCard l='Clics totales' v={fmtN(overview.clicks)} sub='a tu destino' prev={prevOverview?.clicks} comparing={comparing} help='Total de clics recibidos en el anuncio. Puede incluir clics en "Me gusta" o "Compartir".'/>
+                      {overview.hookRate>0&&<MetricCard l='Hook Rate' v={overview.hookRate.toFixed(1)+'%'} sub={overview.hookRate>=25?'Buen gancho ✓':'Mejorar los primeros 3s'} pos={overview.hookRate>=25} alert={overview.hookRate<15} prev={prevOverview?.hookRate} comparing={comparing} help='Qué % de personas vio los primeros 3 segundos del video. Es el "gancho". 25%+ es bueno, 35%+ excelente.'/>}
+                      {overview.holdRate>0&&<MetricCard l='Hold Rate' v={overview.holdRate.toFixed(1)+'%'} sub={overview.holdRate>=40?'Buen contenido ✓':'El video no retiene'} pos={overview.holdRate>=40} alert={overview.holdRate<25} prev={prevOverview?.holdRate} comparing={comparing} help='Qué % de quienes empezaron el video lo terminaron. 40%+ significa que el contenido engancha.'/>}
+                    </div>
+                  </div>
+
+                  {/* Engagement */}
+                  <div style={{marginBottom:'24px'}}>
+                    <div style={{fontSize:'11px',fontWeight:'700',color:'var(--text4)',textTransform:'uppercase',letterSpacing:'.07em',marginBottom:'10px'}}>💬 Engagement (interacciones)</div>
+                    <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(130px,1fr))',gap:'10px'}}>
+                      <MetricCard l='Reacciones' v={fmtN(overview.reactions)} sub='likes y emojis' prev={prevOverview?.reactions} comparing={comparing} help='Número de reacciones (Me gusta, Me encanta, etc.) en tus anuncios.'/>
+                      <MetricCard l='Comentarios' v={fmtN(overview.comments)} sub='en tus anuncios' prev={prevOverview?.comments} comparing={comparing} help='Comentarios que dejaron las personas en tus anuncios.'/>
+                      <MetricCard l='Guardados' v={fmtN(overview.saves)} sub='guardaron tu post' prev={prevOverview?.saves} comparing={comparing} help='Personas que guardaron tu anuncio. Una señal de que el contenido es muy valioso.'/>
+                      <MetricCard l='Compartidos' v={fmtN(overview.shares)} sub='veces compartido' prev={prevOverview?.shares} comparing={comparing} help='Cuántas veces se compartió tu anuncio. Si es alto, el contenido resuena mucho.'/>
+                    </div>
                   </div>
                 </>
               )}
@@ -878,8 +953,8 @@ export default function Reportes() {
 
               {platform === 'google_ads' && googleAdsData?.daily?.length>1&&(
                 <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'16px',marginBottom:'24px'}}>
-                  <div style={{background:'#111116',border:'1px solid #1a1a22',borderRadius:'10px',padding:'20px'}}>
-                    <div style={{fontSize:'10px',color:'#444',fontFamily:'monospace',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:'16px'}}>Gasto vs Clics por dia</div>
+                  <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'10px',padding:'20px'}}>
+                    <div style={{fontSize:'11px',fontWeight:'700',color:'var(--text4)',marginBottom:'14px'}}>Gasto vs Clics por dia</div>
                     <div style={{height:'200px'}}>
                       <Line data={{labels:googleAdsData.daily.map(d=>d.date.slice(5)),datasets:[
                         {label:'Gastado ($)',data:googleAdsData.daily.map(d=>+d.spend.toFixed(2)),borderColor:'#f97316',backgroundColor:'rgba(249,115,22,.08)',fill:true,tension:.4,yAxisID:'y',pointRadius:2,borderWidth:2},
@@ -887,8 +962,8 @@ export default function Reportes() {
                       ]}} options={chartOpts(true)}/>
                     </div>
                   </div>
-                  <div style={{background:'#111116',border:'1px solid #1a1a22',borderRadius:'10px',padding:'20px'}}>
-                    <div style={{fontSize:'10px',color:'#444',fontFamily:'monospace',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:'16px'}}>CTR y CPM por dia</div>
+                  <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'10px',padding:'20px'}}>
+                    <div style={{fontSize:'11px',fontWeight:'700',color:'var(--text4)',marginBottom:'14px'}}>CTR y CPM por dia</div>
                     <div style={{height:'200px'}}>
                       <Line data={{labels:googleAdsData.daily.map(d=>d.date.slice(5)),datasets:[
                         {label:'CTR %',data:googleAdsData.daily.map(d=>+(d.clicks/(d.impressions||1)*100).toFixed(2)),borderColor:'#6ee7b7',backgroundColor:'rgba(110,231,183,.06)',fill:true,tension:.4,yAxisID:'y',pointRadius:2,borderWidth:2},
@@ -901,8 +976,8 @@ export default function Reportes() {
 
               {platform === 'meta_ads' && daily.length>1&&(
                 <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'16px',marginBottom:'24px'}}>
-                  <div style={{background:'#111116',border:'1px solid #1a1a22',borderRadius:'10px',padding:'20px'}}>
-                    <div style={{fontSize:'10px',color:'#444',fontFamily:'monospace',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:'16px'}}>Spend vs Resultados por dia</div>
+                  <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'10px',padding:'20px'}}>
+                    <div style={{fontSize:'11px',fontWeight:'700',color:'var(--text4)',marginBottom:'14px'}}>Spend vs Resultados por dia</div>
                     <div style={{height:'200px'}}>
                       <Line data={{labels:daily.map(d=>d.date.slice(5)),datasets:[
                         {label:'Gastado ($)',data:daily.map(d=>+d.spend.toFixed(2)),borderColor:'#f97316',backgroundColor:'rgba(249,115,22,.08)',fill:true,tension:.4,yAxisID:'y',pointRadius:2,borderWidth:2},
@@ -910,8 +985,8 @@ export default function Reportes() {
                       ]}} options={chartOpts(true)}/>
                     </div>
                   </div>
-                  <div style={{background:'#111116',border:'1px solid #1a1a22',borderRadius:'10px',padding:'20px'}}>
-                    <div style={{fontSize:'10px',color:'#444',fontFamily:'monospace',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:'16px'}}>CTR y CPM por dia</div>
+                  <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'10px',padding:'20px'}}>
+                    <div style={{fontSize:'11px',fontWeight:'700',color:'var(--text4)',marginBottom:'14px'}}>CTR y CPM por dia</div>
                     <div style={{height:'200px'}}>
                       <Line data={{labels:daily.map(d=>d.date.slice(5)),datasets:[
                         {label:'CTR %',data:daily.map(d=>+d.ctr.toFixed(2)),borderColor:'#6ee7b7',backgroundColor:'rgba(110,231,183,.06)',fill:true,tension:.4,yAxisID:'y',pointRadius:2,borderWidth:2},
@@ -920,8 +995,8 @@ export default function Reportes() {
                     </div>
                   </div>
                   {daily.some(d=>d.hookRate>0)&&(
-                    <div style={{background:'#111116',border:'1px solid #1a1a22',borderRadius:'10px',padding:'20px'}}>
-                      <div style={{fontSize:'10px',color:'#444',fontFamily:'monospace',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:'16px'}}>Hook Rate y Hold Rate por dia</div>
+                    <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'10px',padding:'20px'}}>
+                      <div style={{fontSize:'11px',fontWeight:'700',color:'var(--text4)',marginBottom:'14px'}}>Hook Rate y Hold Rate por dia</div>
                       <div style={{height:'200px'}}>
                         <Line data={{labels:daily.map(d=>d.date.slice(5)),datasets:[
                           {label:'Hook Rate %',data:daily.map(d=>+d.hookRate.toFixed(2)),borderColor:'#a78bfa',backgroundColor:'rgba(167,139,250,.06)',fill:true,tension:.4,yAxisID:'y',pointRadius:2,borderWidth:2},
@@ -931,8 +1006,8 @@ export default function Reportes() {
                     </div>
                   )}
                   {daily.some(d=>d.frequency>0)&&(
-                    <div style={{background:'#111116',border:'1px solid #1a1a22',borderRadius:'10px',padding:'20px'}}>
-                      <div style={{fontSize:'10px',color:'#444',fontFamily:'monospace',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:'16px'}}>Frecuencia por dia</div>
+                    <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'10px',padding:'20px'}}>
+                      <div style={{fontSize:'11px',fontWeight:'700',color:'var(--text4)',marginBottom:'14px'}}>Frecuencia por dia</div>
                       <div style={{height:'200px'}}>
                         <Line data={{labels:daily.map(d=>d.date.slice(5)),datasets:[
                           {label:'Frecuencia',data:daily.map(d=>+d.frequency.toFixed(2)),borderColor:'#fcd34d',backgroundColor:'rgba(252,211,77,.06)',fill:true,tension:.4,pointRadius:2,borderWidth:2,
@@ -945,8 +1020,8 @@ export default function Reportes() {
               )}
 
               {platform === 'meta_ads' && overview.vid25>0&&(
-                <div style={{background:'#111116',border:'1px solid #1a1a22',borderRadius:'10px',padding:'20px',marginBottom:'24px'}}>
-                  <div style={{fontSize:'10px',color:'#444',fontFamily:'monospace',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:'16px'}}>Embudo de video completo</div>
+                <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'10px',padding:'20px',marginBottom:'24px'}}>
+                  <div style={{fontSize:'11px',fontWeight:'700',color:'var(--text4)',marginBottom:'14px'}}>Embudo de video completo</div>
                   <div style={{display:'flex',gap:'8px',alignItems:'flex-end',height:'140px',paddingBottom:'24px'}}>
                     {[{l:'3s',v:overview.vid3s,c:'#a78bfa'},{l:'25%',v:overview.vid25,c:'#6ee7b7'},{l:'50%',v:overview.vid50,c:'#3b82f6'},{l:'75%',v:overview.vid75,c:'#f97316'},{l:'100%',v:overview.vid100,c:'#f87171'}].map((b,i,arr)=>{
                       const max=(arr[0].v||arr[1].v)||1; const pct=Math.round(b.v/max*100)
@@ -980,50 +1055,72 @@ export default function Reportes() {
           )}
 
           {activeTab==='campanas'&&(
-            isPro === false ? <ProGate feature="el desglose de campanas" type="campanas"/> :
-
+            isPro === false ? <ProGate feature="el desglose de campañas" type="campanas"/> :
             <>
+              <div style={{background:'rgba(99,102,241,.06)',border:'1px solid rgba(99,102,241,.15)',borderRadius:'8px',padding:'10px 16px',marginBottom:'16px',fontSize:'11px',color:'#a5b4fc',display:'flex',alignItems:'center',gap:'8px'}}>
+                <span>🎯</span>
+                <span>Cada fila es una campaña. Haz clic en cualquiera para ver su diagnóstico y recomendaciones personalizadas.</span>
+              </div>
               {campaigns.length>1&&(
-                <div style={{background:'#111116',border:'1px solid #1a1a22',borderRadius:'10px',padding:'20px',marginBottom:'16px'}}>
-                  <div style={{fontSize:'10px',color:'#444',fontFamily:'monospace',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:'16px'}}>CTR por campana</div>
+                <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'10px',padding:'20px',marginBottom:'16px'}}>
+                  <div style={{fontSize:'11px',fontWeight:'700',color:'var(--text4)',marginBottom:'16px'}}>Comparativa de CTR por campaña</div>
                   <div style={{height:'160px'}}>
                     <Bar data={{labels:campaigns.map(c=>c.name.length>22?c.name.slice(0,22)+'...':c.name),datasets:[{label:'CTR %',data:campaigns.map(c=>+c.ctr.toFixed(2)),backgroundColor:campaigns.map((_,i)=>COLORS[i%COLORS.length]+'80'),borderColor:campaigns.map((_,i)=>COLORS[i%COLORS.length]),borderWidth:1,borderRadius:4}]}} options={chartOpts()}/>
                   </div>
                 </div>
               )}
-              {campaigns.map((c,i)=><ExpandCard key={i} name={c.name} badge={c.objective} row={c}/>)}
-              {campaigns.length===0&&<div style={{textAlign:'center',padding:'60px 0',color:'#444',fontFamily:'monospace'}}>Sin datos para este periodo</div>}
+              {campaigns.map((c,i)=><ExpandCard key={i} name={c.name} badge={OBJECTIVE_MAP[c.objective]?.label||c.objective} row={c}/>)}
+              {campaigns.length===0&&(
+                <div style={{textAlign:'center',padding:'60px 20px',color:'var(--text4)'}}>
+                  <div style={{fontSize:'32px',marginBottom:'12px'}}>🔍</div>
+                  <div style={{fontSize:'14px',fontWeight:'700',color:'var(--text)',marginBottom:'6px'}}>Sin campañas en este período</div>
+                  <div style={{fontSize:'12px',color:'var(--text4)'}}>Prueba seleccionando un rango de fechas diferente</div>
+                </div>
+              )}
             </>
           )}
 
           {activeTab==='conjuntos'&&(
-            isPro === false ? <ProGate feature="el desglose de conjuntos" type="conjuntos"/> :
-
+            isPro === false ? <ProGate feature="el desglose de conjuntos de anuncios" type="conjuntos"/> :
             <>
+              <div style={{background:'rgba(99,102,241,.06)',border:'1px solid rgba(99,102,241,.15)',borderRadius:'8px',padding:'10px 16px',marginBottom:'16px',fontSize:'11px',color:'#a5b4fc',display:'flex',alignItems:'center',gap:'8px'}}>
+                <span>👥</span>
+                <span>Los conjuntos definen a quién se muestra tu anuncio (segmentación, presupuesto y ubicación). Haz clic para ver diagnóstico.</span>
+              </div>
               {adsets.length>1&&(
-                <div style={{background:'#111116',border:'1px solid #1a1a22',borderRadius:'10px',padding:'20px',marginBottom:'16px'}}>
-                  <div style={{fontSize:'10px',color:'#444',fontFamily:'monospace',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:'16px'}}>Gasto por conjunto de anuncios</div>
+                <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'10px',padding:'20px',marginBottom:'16px'}}>
+                  <div style={{fontSize:'11px',fontWeight:'700',color:'var(--text4)',marginBottom:'16px'}}>Gasto por conjunto de anuncios</div>
                   <div style={{height:'160px'}}>
                     <Bar data={{labels:adsets.map(a=>a.name.length>22?a.name.slice(0,22)+'...':a.name),datasets:[{label:'Gastado ($)',data:adsets.map(a=>+a.spend.toFixed(2)),backgroundColor:adsets.map((_,i)=>COLORS[i%COLORS.length]+'80'),borderColor:adsets.map((_,i)=>COLORS[i%COLORS.length]),borderWidth:1,borderRadius:4}]}} options={chartOpts()}/>
                   </div>
                 </div>
               )}
-              {adsets.map((a,i)=><ExpandCard key={i} name={a.name} sub={a.campaign} row={a}/>)}
-              {adsets.length===0&&<div style={{textAlign:'center',padding:'60px 0',color:'#444',fontFamily:'monospace'}}>Sin datos para este periodo</div>}
+              {adsets.map((a,i)=><ExpandCard key={i} name={a.name} sub={'Campaña: '+a.campaign} row={a}/>)}
+              {adsets.length===0&&(
+                <div style={{textAlign:'center',padding:'60px 20px',color:'var(--text4)'}}>
+                  <div style={{fontSize:'32px',marginBottom:'12px'}}>🔍</div>
+                  <div style={{fontSize:'14px',fontWeight:'700',color:'var(--text)',marginBottom:'6px'}}>Sin conjuntos en este período</div>
+                  <div style={{fontSize:'12px',color:'var(--text4)'}}>Prueba seleccionando un rango de fechas diferente</div>
+                </div>
+              )}
             </>
           )}
 
           {activeTab==='anuncios'&&(
             isPro === false ? <ProGate feature="el score de creativos" type="anuncios"/> :
-
             <>
-              {ads.length>0&&(
-                <div style={{background:'rgba(167,139,250,.05)',border:'1px solid rgba(167,139,250,.15)',borderRadius:'8px',padding:'10px 16px',marginBottom:'16px',fontSize:'11px',color:'#a78bfa',fontFamily:'monospace'}}>
-                  Score de creativos — ordenados de mejor a peor. Haz clic para ver diagnostico completo y Hook/Hold Rate.
+              <div style={{background:'rgba(167,139,250,.06)',border:'1px solid rgba(167,139,250,.15)',borderRadius:'8px',padding:'10px 16px',marginBottom:'16px',fontSize:'11px',color:'#a78bfa',display:'flex',alignItems:'center',gap:'8px'}}>
+                <span>🖼</span>
+                <span>Cada anuncio tiene un <strong>Score del 0 al 100</strong> — ordenados del mejor al peor. Haz clic para ver qué mejorar.</span>
+              </div>
+              {[...ads].sort((a,b)=>qualityScore(b)-qualityScore(a)).map((a,i)=><AdScoreCard key={i} ad={a}/>)}
+              {ads.length===0&&(
+                <div style={{textAlign:'center',padding:'60px 20px',color:'var(--text4)'}}>
+                  <div style={{fontSize:'32px',marginBottom:'12px'}}>🔍</div>
+                  <div style={{fontSize:'14px',fontWeight:'700',color:'var(--text)',marginBottom:'6px'}}>Sin anuncios en este período</div>
+                  <div style={{fontSize:'12px',color:'var(--text4)'}}>Prueba seleccionando un rango de fechas diferente</div>
                 </div>
               )}
-              {[...ads].sort((a,b)=>qualityScore(b)-qualityScore(a)).map((a,i)=><AdScoreCard key={i} ad={a}/>)}
-              {ads.length===0&&<div style={{textAlign:'center',padding:'60px 0',color:'#444',fontFamily:'monospace'}}>Sin datos para este periodo</div>}
             </>
           )}
 {activeTab==='google-ads'&&(
@@ -1046,8 +1143,8 @@ export default function Reportes() {
         </div>
 
         {googleAdsData.campaigns?.length>0&&(
-          <div style={{background:'#111116',border:'1px solid #1a1a22',borderRadius:'10px',padding:'20px',marginBottom:'24px'}}>
-            <div style={{fontSize:'10px',color:'#444',fontFamily:'monospace',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:'16px'}}>Campañas - Gasto por campaña</div>
+          <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'10px',padding:'20px',marginBottom:'24px'}}>
+            <div style={{fontSize:'11px',fontWeight:'700',color:'var(--text4)',marginBottom:'14px'}}>Campañas - Gasto por campaña</div>
             <div style={{height:'200px'}}>
               <Bar data={{labels:googleAdsData.campaigns.map(c=>c.name.length>20?c.name.slice(0,20)+'...':c.name),datasets:[{label:'Gastado ($)',data:googleAdsData.campaigns.map(c=>+c.spend.toFixed(2)),backgroundColor:googleAdsData.campaigns.map((_,i)=>COLORS[i%COLORS.length]+'80'),borderColor:googleAdsData.campaigns.map((_,i)=>COLORS[i%COLORS.length]),borderWidth:1,borderRadius:4}]}} options={chartOpts()}/>
             </div>
@@ -1056,8 +1153,8 @@ export default function Reportes() {
 
         {googleAdsData.daily?.length>1&&(
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'16px',marginBottom:'24px'}}>
-            <div style={{background:'#111116',border:'1px solid #1a1a22',borderRadius:'10px',padding:'20px'}}>
-              <div style={{fontSize:'10px',color:'#444',fontFamily:'monospace',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:'16px'}}>Gasto vs Clics por dia</div>
+            <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'10px',padding:'20px'}}>
+              <div style={{fontSize:'11px',fontWeight:'700',color:'var(--text4)',marginBottom:'14px'}}>Gasto vs Clics por dia</div>
               <div style={{height:'200px'}}>
                 <Line data={{labels:googleAdsData.daily.map(d=>d.date.slice(5)),datasets:[
                   {label:'Gastado ($)',data:googleAdsData.daily.map(d=>+d.spend.toFixed(2)),borderColor:'#f97316',backgroundColor:'rgba(249,115,22,.08)',fill:true,tension:.4,yAxisID:'y',pointRadius:2,borderWidth:2},
@@ -1065,8 +1162,8 @@ export default function Reportes() {
                 ]}} options={chartOpts(true)}/>
               </div>
             </div>
-            <div style={{background:'#111116',border:'1px solid #1a1a22',borderRadius:'10px',padding:'20px'}}>
-              <div style={{fontSize:'10px',color:'#444',fontFamily:'monospace',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:'16px'}}>CTR y CPM por dia</div>
+            <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'10px',padding:'20px'}}>
+              <div style={{fontSize:'11px',fontWeight:'700',color:'var(--text4)',marginBottom:'14px'}}>CTR y CPM por dia</div>
               <div style={{height:'200px'}}>
                 <Line data={{labels:googleAdsData.daily.map(d=>d.date.slice(5)),datasets:[
                   {label:'CTR %',data:googleAdsData.daily.map(d=>+(d.clicks/(d.impressions||1)*100).toFixed(2)),borderColor:'#6ee7b7',backgroundColor:'rgba(110,231,183,.06)',fill:true,tension:.4,yAxisID:'y',pointRadius:2,borderWidth:2},
@@ -1081,7 +1178,7 @@ export default function Reportes() {
           <>
             <div style={{fontSize:'12px',color:'#888',fontFamily:'monospace',marginBottom:'12px',fontWeight:'700'}}>Campañas</div>
             {googleAdsData.campaigns.map((c,i)=>(
-              <div key={i} style={{background:'#111116',border:'1px solid #1a1a22',borderRadius:'10px',padding:'16px 20px',marginBottom:'8px'}}>
+              <div key={i} style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'10px',padding:'16px 20px',marginBottom:'8px'}}>
                 <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'10px'}}>
                   <div>
                     <div style={{color:'#fff',fontSize:'13px',fontWeight:'700',marginBottom:'2px'}}>{c.name}</div>
@@ -1131,27 +1228,39 @@ export default function Reportes() {
   </div>
 )}
           {activeTab==='audiencia'&&(
-            isPro === false ? <ProGate feature="los datos demograficos" type="audiencia"/> :
+            isPro === false ? <ProGate feature="los datos de audiencia" type="audiencia"/> :
 
             <>
-              {loadingDemo&&<div style={{textAlign:'center',padding:'80px 0',color:'#444',fontFamily:'monospace',fontSize:'12px'}}>Cargando datos demograficos para {preset}...</div>}
-              {!loadingDemo&&!demographics&&<div style={{textAlign:'center',padding:'60px 0',color:'#444',fontFamily:'monospace'}}>Sin datos disponibles</div>}
+              {loadingDemo&&(
+                <div style={{display:'flex',flexDirection:'column',alignItems:'center',padding:'60px',gap:'12px'}}>
+                  <div style={{width:'28px',height:'28px',borderRadius:'50%',border:'3px solid rgba(99,102,241,.2)',borderTop:'3px solid #6366f1',animation:'spin 1s linear infinite'}}></div>
+                  <div style={{fontSize:'12px',color:'var(--text4)'}}>Cargando datos de audiencia...</div>
+                </div>
+              )}
+              {!loadingDemo&&!demographics&&(
+                <div style={{textAlign:'center',padding:'60px 20px'}}>
+                  <div style={{fontSize:'32px',marginBottom:'12px'}}>🗺</div>
+                  <div style={{fontSize:'14px',fontWeight:'700',color:'var(--text)',marginBottom:'6px'}}>Sin datos de audiencia</div>
+                  <div style={{fontSize:'12px',color:'var(--text4)'}}>Prueba un período con más gasto o selecciona un mes con actividad</div>
+                </div>
+              )}
               {!loadingDemo&&demographics&&(
                 <>
-                  <div style={{background:'rgba(59,130,246,.05)',border:'1px solid rgba(59,130,246,.15)',borderRadius:'8px',padding:'10px 16px',marginBottom:'20px',fontSize:'11px',color:'#60a5fa',fontFamily:'monospace'}}>
-                    Datos demograficos para el periodo seleccionado — muestra quien VE tus anuncios, puede diferir de tu segmentacion objetivo
+                  <div style={{background:'rgba(59,130,246,.06)',border:'1px solid rgba(59,130,246,.15)',borderRadius:'8px',padding:'10px 16px',marginBottom:'20px',fontSize:'11px',color:'#60a5fa',display:'flex',alignItems:'center',gap:'8px'}}>
+                    <span>🗺</span>
+                    <span>Muestra <strong>quién ve realmente tus anuncios</strong> — puede diferir de tu segmentación objetivo. Úsalo para ajustar tu estrategia.</span>
                   </div>
 
                   <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'16px',marginBottom:'20px'}}>
-                    <div style={{background:'#111116',border:'1px solid #1a1a22',borderRadius:'10px',padding:'20px'}}>
-                      <div style={{fontSize:'10px',color:'#444',fontFamily:'monospace',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:'16px'}}>Gasto por edad</div>
+                    <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'10px',padding:'20px'}}>
+                      <div style={{fontSize:'11px',fontWeight:'700',color:'var(--text4)',marginBottom:'14px'}}>Gasto por edad</div>
                       <div style={{height:'200px'}}>
                         <Bar data={{labels:demographics.age.map(d=>d.age),datasets:[{label:'Gastado ($)',data:demographics.age.map(d=>parseFloat(d.spend)||0),backgroundColor:demographics.age.map((_,i)=>COLORS[i%COLORS.length]+'80'),borderColor:demographics.age.map((_,i)=>COLORS[i%COLORS.length]),borderWidth:1,borderRadius:4}]}} options={chartOpts()}/>
                       </div>
                     </div>
 
-                    <div style={{background:'#111116',border:'1px solid #1a1a22',borderRadius:'10px',padding:'20px'}}>
-                      <div style={{fontSize:'10px',color:'#444',fontFamily:'monospace',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:'16px'}}>CTR por grupo de edad</div>
+                    <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'10px',padding:'20px'}}>
+                      <div style={{fontSize:'11px',fontWeight:'700',color:'var(--text4)',marginBottom:'14px'}}>CTR por grupo de edad</div>
                       <div style={{height:'200px'}}>
                         <Bar data={{labels:demographics.age.map(d=>d.age),datasets:[{label:'CTR %',data:demographics.age.map(d=>{const imp=parseFloat(d.impressions)||0;const clk=parseFloat(d.clicks)||0;return imp>0?+(clk/imp*100).toFixed(2):0}),backgroundColor:demographics.age.map((_,i)=>COLORS[i%COLORS.length]+'80'),borderColor:demographics.age.map((_,i)=>COLORS[i%COLORS.length]),borderWidth:1,borderRadius:4}]}} options={chartOpts()}/>
                       </div>
@@ -1159,15 +1268,15 @@ export default function Reportes() {
                   </div>
 
                   <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'16px',marginBottom:'20px'}}>
-                    <div style={{background:'#111116',border:'1px solid #1a1a22',borderRadius:'10px',padding:'20px'}}>
-                      <div style={{fontSize:'10px',color:'#444',fontFamily:'monospace',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:'16px'}}>Distribucion por genero</div>
+                    <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'10px',padding:'20px'}}>
+                      <div style={{fontSize:'11px',fontWeight:'700',color:'var(--text4)',marginBottom:'14px'}}>Distribucion por genero</div>
                       <div style={{height:'200px'}}>
                         <Doughnut data={{labels:demographics.gender.map(d=>d.gender==='male'?'Hombre':d.gender==='female'?'Mujer':'Otro'),datasets:[{data:demographics.gender.map(d=>parseFloat(d.spend)||0),backgroundColor:['#3b82f6','#ec4899','#6ee7b7'],borderWidth:0}]}} options={doughnutOpts}/>
                       </div>
                     </div>
 
-                    <div style={{background:'#111116',border:'1px solid #1a1a22',borderRadius:'10px',padding:'20px'}}>
-                      <div style={{fontSize:'10px',color:'#444',fontFamily:'monospace',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:'16px'}}>Plataforma y dispositivo</div>
+                    <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'10px',padding:'20px'}}>
+                      <div style={{fontSize:'11px',fontWeight:'700',color:'var(--text4)',marginBottom:'14px'}}>Plataforma y dispositivo</div>
                       <div style={{marginBottom:'12px'}}>
                         <div style={{fontSize:'9px',color:'#555',fontFamily:'monospace',marginBottom:'8px'}}>Por plataforma</div>
                         {demographics.platform.map((p,i)=>{
@@ -1204,8 +1313,8 @@ export default function Reportes() {
                   </div>
 
                   <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'16px',marginBottom:'20px'}}>
-                    <div style={{background:'#111116',border:'1px solid #1a1a22',borderRadius:'10px',padding:'20px'}}>
-                      <div style={{fontSize:'10px',color:'#444',fontFamily:'monospace',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:'16px'}}>Top paises por gasto</div>
+                    <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'10px',padding:'20px'}}>
+                      <div style={{fontSize:'11px',fontWeight:'700',color:'var(--text4)',marginBottom:'14px'}}>Top paises por gasto</div>
                       <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
                         {demographics.country.slice(0,10).map((c,i)=>{
                           const max=parseFloat(demographics.country[0]?.spend)||1
@@ -1226,8 +1335,8 @@ export default function Reportes() {
                       </div>
                     </div>
 
-                    <div style={{background:'#111116',border:'1px solid #1a1a22',borderRadius:'10px',padding:'20px'}}>
-                      <div style={{fontSize:'10px',color:'#444',fontFamily:'monospace',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:'16px'}}>Top regiones/estados</div>
+                    <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'10px',padding:'20px'}}>
+                      <div style={{fontSize:'11px',fontWeight:'700',color:'var(--text4)',marginBottom:'14px'}}>Top regiones/estados</div>
                       <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
                         {demographics.region.slice(0,10).map((r,i)=>{
                           const max=parseFloat(demographics.region[0]?.spend)||1
@@ -1248,7 +1357,7 @@ export default function Reportes() {
 
 
 
-                  <div style={{background:'#111116',border:'1px solid #1a1a22',borderRadius:'10px',padding:'20px',marginBottom:'20px'}}>
+                  <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'10px',padding:'20px',marginBottom:'20px'}}>
                     <div style={{fontSize:'10px',color:'#444',fontFamily:'monospace',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:'4px'}}>Mapa de alcance por estado y pais</div>
                     <div style={{fontSize:'10px',color:'#333',fontFamily:'monospace',marginBottom:'16px'}}>Burbujas grandes = estados · Burbujas pequenas = paises · Tamano proporcional al gasto · Haz clic para ver detalle</div>
                     <MapChart countryData={demographics.country} regionData={demographics.region}/>
