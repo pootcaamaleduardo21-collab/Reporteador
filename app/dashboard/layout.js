@@ -88,6 +88,12 @@ export default function DashboardLayout({ children }) {
     router.push(path)
   }
 
+  function connectMeta() {
+    if (!user) return
+    const state = btoa(JSON.stringify({ uid: user.id, ts: Date.now() }))
+    window.location.href = `/api/auth/meta?state=${encodeURIComponent(state)}`
+  }
+
   function selectAccount(acc) {
     setSelectedAccount(acc)
     setStripOpen(false)
@@ -308,8 +314,8 @@ export default function DashboardLayout({ children }) {
 
           {/* Plataformas no conectadas — siempre visibles como invitación a conectar */}
           {!accounts.some(a=>a.platform==='meta_ads') && (
-            <a href="/api/auth/meta"
-              style={{display:'flex',alignItems:'center',gap:'8px',padding:'7px 8px',borderRadius:'7px',cursor:'pointer',textDecoration:'none',opacity:.7}}>
+            <div onClick={connectMeta} className="nav-hover"
+              style={{display:'flex',alignItems:'center',gap:'8px',padding:'7px 8px',borderRadius:'7px',cursor:'pointer',opacity:.75}}>
               <div style={{width:'20px',height:'20px',borderRadius:'5px',background:'rgba(24,119,242,.2)',border:'1px dashed rgba(24,119,242,.4)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
                 <FbLogoSVG size={11}/>
               </div>
@@ -317,7 +323,7 @@ export default function DashboardLayout({ children }) {
                 <div style={{fontSize:'11px',fontWeight:'600',color:'#555'}}>Meta Ads</div>
                 <div style={{fontSize:'9px',color:'#a5b4fc',marginTop:'1px'}}>Conectar →</div>
               </div>}
-            </a>
+            </div>
           )}
           {!accounts.some(a=>a.platform==='google_ads') && (
             <a href="/api/auth/google-ads/login"

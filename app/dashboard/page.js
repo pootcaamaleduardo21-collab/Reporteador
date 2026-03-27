@@ -38,16 +38,20 @@ export default function DashboardHome() {
   const [loadingOrganic, setLoadingOrganic] = useState(false)
   const [loadingRadar, setLoadingRadar] = useState(false)
   const [loading, setLoading] = useState(true)
-  // Calculadora CPL
-  const [cplGasto, setCplGasto] = useState('')
-  const [cplLeads, setCplLeads] = useState('')
-  // Calculadora ROI
-  const [roiTicket, setRoiTicket] = useState('')
-  const [roiComision, setRoiComision] = useState('3')
-  const [roiLeads, setRoiLeads] = useState('')
-  const [roiCierre, setRoiCierre] = useState('10')
+  // Pipeline de comisiones
+  const [pipLeads, setPipLeads] = useState('')
+  const [pipPrecio, setPipPrecio] = useState('')
+  const [pipComision, setPipComision] = useState('3')
+  const [pipCierre, setPipCierre] = useState('10')
+  const [pipMeta, setPipMeta] = useState('')
   const { isPro } = usePlan()
   const router = useRouter()
+
+  function connectMeta() {
+    if (!user) return
+    const state = btoa(JSON.stringify({ uid: user.id, ts: Date.now() }))
+    window.location.href = `/api/auth/meta?state=${encodeURIComponent(state)}`
+  }
 
   useEffect(() => {
     async function init() {
@@ -134,19 +138,6 @@ export default function DashboardHome() {
   const activePlatformsCount = [hasMeta,hasGoogle,hasTiktok,hasFbPages,hasIG].filter(Boolean).length
   const boostCandidates = boostRadar.filter(p=>p.er>=1).length
 
-  // Calculadora CPL
-  const cpl = cplGasto && cplLeads && +cplLeads>0 ? +cplGasto / +cplLeads : null
-  const cplStatus = cpl===null?null:cpl<20?'excelente':cpl<50?'bueno':cpl<100?'regular':'alto'
-  const cplColors = {excelente:'#10b981',bueno:'#6ee7b7',regular:'#fbbf24',alto:'#f87171'}
-
-  // Calculadora ROI
-  const roiComisionVal = (+roiComision/100) * (+roiTicket||0)
-  const roiCierreRate = (+roiCierre/100)
-  const roiLeadsNum = +roiLeads||0
-  const roiVentas = Math.floor(roiLeadsNum * roiCierreRate)
-  const roiIngresos = roiVentas * roiComisionVal
-  const roiGasto = +cplGasto||0
-  const roiPct = roiGasto>0 ? ((roiIngresos - roiGasto) / roiGasto * 100) : null
 
   return (
     <div style={{padding:'24px 28px',maxWidth:'1160px',fontFamily:'"Plus Jakarta Sans",sans-serif'}}>
@@ -208,9 +199,9 @@ export default function DashboardHome() {
             Vincula Meta Ads y Google Ads para ver el rendimiento de tus campañas inmobiliarias, y Facebook/Instagram para ver tu alcance orgánico.
           </p>
           <div style={{display:'flex',gap:'10px',justifyContent:'center',flexWrap:'wrap'}}>
-            <a href="/api/auth/meta" className="plat-cta" style={{display:'inline-flex',alignItems:'center',gap:'8px',padding:'12px 22px',borderRadius:'10px',background:'#1877f2',color:'#fff',fontSize:'13px',fontWeight:'700',textDecoration:'none'}}>
+            <button onClick={connectMeta} className="plat-cta" style={{display:'inline-flex',alignItems:'center',gap:'8px',padding:'12px 22px',borderRadius:'10px',background:'#1877f2',color:'#fff',fontSize:'13px',fontWeight:'700',border:'none',cursor:'pointer',fontFamily:'inherit'}}>
               <MetaSVG size={15}/> Conectar Meta
-            </a>
+            </button>
             <a href="/api/auth/google-ads/login" className="plat-cta" style={{display:'inline-flex',alignItems:'center',gap:'8px',padding:'12px 22px',borderRadius:'10px',background:'rgba(255,255,255,.08)',border:'1px solid rgba(255,255,255,.12)',color:'var(--text)',fontSize:'13px',fontWeight:'700',textDecoration:'none'}}>
               <GoogleSVG size={15}/> Conectar Google Ads
             </a>
@@ -300,9 +291,9 @@ export default function DashboardHome() {
               {!metaToken && (
                 <div style={{background:'rgba(24,119,242,.05)',border:'1px dashed rgba(24,119,242,.25)',borderRadius:'13px',padding:'22px',textAlign:'center'}}>
                   <div style={{fontSize:'13px',color:'#888',marginBottom:'12px'}}>Conecta Meta para ver Facebook e Instagram</div>
-                  <a href="/api/auth/meta" className="plat-cta" style={{display:'inline-flex',alignItems:'center',gap:'7px',padding:'9px 18px',borderRadius:'9px',background:'#1877f2',color:'#fff',fontSize:'12px',fontWeight:'700',textDecoration:'none'}}>
+                  <button onClick={connectMeta} className="plat-cta" style={{display:'inline-flex',alignItems:'center',gap:'7px',padding:'9px 18px',borderRadius:'9px',background:'#1877f2',color:'#fff',fontSize:'12px',fontWeight:'700',border:'none',cursor:'pointer',fontFamily:'inherit'}}>
                     <MetaSVG size={13}/> Conectar Meta
-                  </a>
+                  </button>
                 </div>
               )}
             </div>
@@ -379,9 +370,9 @@ export default function DashboardHome() {
                 <div style={{background:'rgba(99,102,241,.04)',border:'1px dashed rgba(99,102,241,.2)',borderRadius:'13px',padding:'22px',textAlign:'center'}}>
                   <div style={{fontSize:'13px',color:'#888',marginBottom:'12px'}}>Conecta Meta Ads o Google Ads para ver campañas</div>
                   <div style={{display:'flex',gap:'8px',justifyContent:'center',flexWrap:'wrap'}}>
-                    <a href="/api/auth/meta" className="plat-cta" style={{display:'inline-flex',alignItems:'center',gap:'6px',padding:'8px 15px',borderRadius:'8px',background:'#1877f2',color:'#fff',fontSize:'11px',fontWeight:'700',textDecoration:'none'}}>
+                    <button onClick={connectMeta} className="plat-cta" style={{display:'inline-flex',alignItems:'center',gap:'6px',padding:'8px 15px',borderRadius:'8px',background:'#1877f2',color:'#fff',fontSize:'11px',fontWeight:'700',border:'none',cursor:'pointer',fontFamily:'inherit'}}>
                       <MetaSVG size={12}/> Meta Ads
-                    </a>
+                    </button>
                     <a href="/api/auth/google-ads/login" className="plat-cta" style={{display:'inline-flex',alignItems:'center',gap:'6px',padding:'8px 15px',borderRadius:'8px',background:'rgba(255,255,255,.08)',border:'1px solid rgba(255,255,255,.12)',color:'var(--text)',fontSize:'11px',fontWeight:'700',textDecoration:'none'}}>
                       <GoogleSVG size={12}/> Google Ads
                     </a>
@@ -406,144 +397,207 @@ export default function DashboardHome() {
 
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'14px'}}>
 
-          {/* ─── CALCULADORA CPL ─── */}
-          <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'14px',padding:'20px'}}>
-            <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'16px'}}>
-              <div style={{width:'34px',height:'34px',borderRadius:'9px',background:'linear-gradient(135deg,rgba(99,102,241,.2),rgba(67,56,202,.15))',border:'1px solid rgba(99,102,241,.25)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'16px',flexShrink:0}}>
-                💰
-              </div>
-              <div>
-                <div style={{fontSize:'13px',fontWeight:'700',color:'var(--text)'}}>Costo por Lead</div>
-                <div style={{fontSize:'10px',color:'var(--text4)'}}>Calculadora CPL</div>
-              </div>
-            </div>
-
-            <div style={{display:'flex',flexDirection:'column',gap:'8px',marginBottom:'14px'}}>
-              <div>
-                <div style={{fontSize:'10px',color:'var(--text4)',fontWeight:'600',marginBottom:'4px'}}>Gasto en ads (MXN)</div>
-                <input className="tool-input" type="number" placeholder="ej. 5,000" value={cplGasto} onChange={e=>setCplGasto(e.target.value)}/>
-              </div>
-              <div>
-                <div style={{fontSize:'10px',color:'var(--text4)',fontWeight:'600',marginBottom:'4px'}}>Leads generados</div>
-                <input className="tool-input" type="number" placeholder="ej. 45" value={cplLeads} onChange={e=>setCplLeads(e.target.value)}/>
-              </div>
-            </div>
-
-            {cpl !== null ? (
-              <div style={{background:`rgba(${cplStatus==='excelente'?'16,185,129':cplStatus==='bueno'?'110,231,183':cplStatus==='regular'?'251,191,36':'248,113,113'},.1)`,border:`1px solid rgba(${cplStatus==='excelente'?'16,185,129':cplStatus==='bueno'?'110,231,183':cplStatus==='regular'?'251,191,36':'248,113,113'},.25)`,borderRadius:'10px',padding:'12px'}}>
-                <div style={{fontSize:'24px',fontWeight:'800',color:cplColors[cplStatus],lineHeight:'1',marginBottom:'3px'}}>{fmtCurrency(cpl)}</div>
-                <div style={{fontSize:'10px',color:'var(--text4)',marginBottom:'6px'}}>costo por lead</div>
-                <div style={{fontSize:'11px',fontWeight:'700',color:cplColors[cplStatus]}}>
-                  {cplStatus==='excelente'?'🎉 Excelente — muy por debajo del benchmark':cplStatus==='bueno'?'✅ Bueno — dentro del rango ideal':cplStatus==='regular'?'⚠️ Regular — busca optimizar creativos':'🔴 Alto — revisa segmentación y creativos'}
-                </div>
-                <div style={{fontSize:'9px',color:'var(--text4)',marginTop:'4px'}}>Benchmark inmobiliario México: $20-$80 CPL</div>
-              </div>
-            ) : (
-              <div style={{fontSize:'11px',color:'var(--text4)',textAlign:'center',padding:'12px',background:'rgba(255,255,255,.02)',borderRadius:'8px',border:'1px solid rgba(255,255,255,.05)'}}>
-                Ingresa tu gasto y leads para calcular
-              </div>
-            )}
-          </div>
-
-          {/* ─── CALCULADORA ROI ─── */}
-          <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'14px',padding:'20px'}}>
-            <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'16px'}}>
-              <div style={{width:'34px',height:'34px',borderRadius:'9px',background:'linear-gradient(135deg,rgba(16,185,129,.2),rgba(5,150,105,.15))',border:'1px solid rgba(16,185,129,.25)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'16px',flexShrink:0}}>
-                📈
-              </div>
-              <div>
-                <div style={{fontSize:'13px',fontWeight:'700',color:'var(--text)'}}>ROI de Campaña</div>
-                <div style={{fontSize:'10px',color:'var(--text4)'}}>Retorno estimado</div>
-              </div>
-            </div>
-
-            <div style={{display:'flex',flexDirection:'column',gap:'8px',marginBottom:'14px'}}>
-              <div>
-                <div style={{fontSize:'10px',color:'var(--text4)',fontWeight:'600',marginBottom:'4px'}}>Precio promedio propiedad (MXN)</div>
-                <input className="tool-input" type="number" placeholder="ej. 2,500,000" value={roiTicket} onChange={e=>setRoiTicket(e.target.value)}/>
-              </div>
-              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'8px'}}>
-                <div>
-                  <div style={{fontSize:'10px',color:'var(--text4)',fontWeight:'600',marginBottom:'4px'}}>Comisión (%)</div>
-                  <input className="tool-input" type="number" placeholder="3" value={roiComision} onChange={e=>setRoiComision(e.target.value)}/>
-                </div>
-                <div>
-                  <div style={{fontSize:'10px',color:'var(--text4)',fontWeight:'600',marginBottom:'4px'}}>Cierre (%)</div>
-                  <input className="tool-input" type="number" placeholder="10" value={roiCierre} onChange={e=>setRoiCierre(e.target.value)}/>
-                </div>
-              </div>
-              <div>
-                <div style={{fontSize:'10px',color:'var(--text4)',fontWeight:'600',marginBottom:'4px'}}>Leads generados</div>
-                <input className="tool-input" type="number" placeholder="ej. 45" value={roiLeads} onChange={e=>setRoiLeads(e.target.value)}/>
-              </div>
-            </div>
-
-            {roiTicket && roiLeadsNum > 0 ? (
-              <div style={{background:'rgba(16,185,129,.08)',border:'1px solid rgba(16,185,129,.2)',borderRadius:'10px',padding:'12px'}}>
-                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'8px',marginBottom:'8px'}}>
+          {/* ─── 1. PIPELINE DE COMISIONES ─── */}
+          {(() => {
+            const leads = +pipLeads||0
+            const precio = +pipPrecio||0
+            const com = +pipComision/100||0.03
+            const cierre = +pipCierre/100||0.1
+            const meta = +pipMeta||0
+            const cierresEsp = leads * cierre
+            const comisionTotal = cierresEsp * precio * com
+            const metaPct = meta > 0 ? Math.min((comisionTotal/meta)*100, 100) : 0
+            const hasData = leads > 0 && precio > 0
+            return (
+              <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'14px',padding:'20px'}}>
+                <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'4px'}}>
+                  <div style={{width:'34px',height:'34px',borderRadius:'9px',background:'linear-gradient(135deg,rgba(99,102,241,.2),rgba(67,56,202,.15))',border:'1px solid rgba(99,102,241,.25)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'16px',flexShrink:0}}>💎</div>
                   <div>
-                    <div style={{fontSize:'18px',fontWeight:'800',color:'#10b981',lineHeight:'1'}}>{roiVentas}</div>
-                    <div style={{fontSize:'9px',color:'var(--text4)',marginTop:'2px'}}>cierres estimados</div>
-                  </div>
-                  <div>
-                    <div style={{fontSize:'18px',fontWeight:'800',color:'#6ee7b7',lineHeight:'1'}}>{fmtCurrency(roiIngresos)}</div>
-                    <div style={{fontSize:'9px',color:'var(--text4)',marginTop:'2px'}}>ingreso estimado</div>
+                    <div style={{fontSize:'13px',fontWeight:'700',color:'var(--text)'}}>Pipeline de Comisiones</div>
+                    <div style={{fontSize:'10px',color:'var(--text4)'}}>¿Cuánto valen tus leads actuales?</div>
                   </div>
                 </div>
-                {roiGasto > 0 && roiPct !== null && (
-                  <div style={{fontSize:'11px',fontWeight:'700',color:roiPct>0?'#10b981':'#f87171'}}>
-                    {roiPct>0?'📈':'📉'} ROI: {roiPct>0?'+':''}{roiPct.toFixed(0)}%
-                    {roiPct>0?' — cada peso invertido genera '+(roiIngresos/roiGasto).toFixed(1)+'x':''}
+                <div style={{fontSize:'10px',color:'var(--text4)',marginBottom:'12px',lineHeight:'1.5',padding:'8px 0',borderBottom:'1px solid rgba(255,255,255,.05)'}}>
+                  Meta Ads te dice cuántos leads tienes. Kaan te dice cuánto valen en comisiones potenciales.
+                </div>
+                <div style={{display:'flex',flexDirection:'column',gap:'7px',marginBottom:'12px'}}>
+                  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'7px'}}>
+                    <div>
+                      <div style={{fontSize:'9px',color:'var(--text4)',fontWeight:'700',marginBottom:'3px',textTransform:'uppercase',letterSpacing:'.05em'}}>Leads este mes</div>
+                      <input className="tool-input" type="number" placeholder="ej. 45" value={pipLeads} onChange={e=>setPipLeads(e.target.value)}/>
+                    </div>
+                    <div>
+                      <div style={{fontSize:'9px',color:'var(--text4)',fontWeight:'700',marginBottom:'3px',textTransform:'uppercase',letterSpacing:'.05em'}}>Precio prop. (MXN)</div>
+                      <input className="tool-input" type="number" placeholder="ej. 2,500,000" value={pipPrecio} onChange={e=>setPipPrecio(e.target.value)}/>
+                    </div>
+                    <div>
+                      <div style={{fontSize:'9px',color:'var(--text4)',fontWeight:'700',marginBottom:'3px',textTransform:'uppercase',letterSpacing:'.05em'}}>Comisión (%)</div>
+                      <input className="tool-input" type="number" placeholder="3" value={pipComision} onChange={e=>setPipComision(e.target.value)}/>
+                    </div>
+                    <div>
+                      <div style={{fontSize:'9px',color:'var(--text4)',fontWeight:'700',marginBottom:'3px',textTransform:'uppercase',letterSpacing:'.05em'}}>Tasa cierre (%)</div>
+                      <input className="tool-input" type="number" placeholder="10" value={pipCierre} onChange={e=>setPipCierre(e.target.value)}/>
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{fontSize:'9px',color:'var(--text4)',fontWeight:'700',marginBottom:'3px',textTransform:'uppercase',letterSpacing:'.05em'}}>Meta mensual de comisiones (MXN, opcional)</div>
+                    <input className="tool-input" type="number" placeholder="ej. 150,000" value={pipMeta} onChange={e=>setPipMeta(e.target.value)}/>
+                  </div>
+                </div>
+                {hasData ? (
+                  <div style={{background:'linear-gradient(135deg,rgba(99,102,241,.12),rgba(139,92,246,.08))',border:'1px solid rgba(99,102,241,.25)',borderRadius:'10px',padding:'14px'}}>
+                    <div style={{fontSize:'10px',color:'#a5b4fc',fontWeight:'700',marginBottom:'6px',textTransform:'uppercase',letterSpacing:'.06em'}}>Tu pipeline vale</div>
+                    <div style={{fontSize:'28px',fontWeight:'800',color:'#a5b4fc',lineHeight:'1',marginBottom:'2px'}}>{fmtCurrency(comisionTotal)}</div>
+                    <div style={{fontSize:'10px',color:'var(--text4)',marginBottom:'10px'}}>en comisiones potenciales · {cierresEsp.toFixed(1)} cierres esperados</div>
+                    {meta > 0 && (
+                      <>
+                        <div style={{display:'flex',justifyContent:'space-between',fontSize:'9px',color:'var(--text4)',marginBottom:'4px'}}>
+                          <span>Progreso hacia tu meta</span>
+                          <span style={{color:metaPct>=100?'#10b981':'#a5b4fc'}}>{metaPct.toFixed(0)}%</span>
+                        </div>
+                        <div style={{height:'6px',background:'rgba(255,255,255,.07)',borderRadius:'3px',overflow:'hidden'}}>
+                          <div style={{height:'100%',width:`${metaPct}%`,background:metaPct>=100?'#10b981':'linear-gradient(90deg,#6366f1,#a5b4fc)',borderRadius:'3px',transition:'width .5s ease'}}></div>
+                        </div>
+                        {metaPct >= 100 && <div style={{fontSize:'10px',color:'#10b981',marginTop:'6px',fontWeight:'700'}}>🎉 ¡Ya alcanzaste tu meta mensual!</div>}
+                      </>
+                    )}
+                  </div>
+                ) : (
+                  <div style={{fontSize:'11px',color:'var(--text4)',textAlign:'center',padding:'14px',background:'rgba(255,255,255,.02)',borderRadius:'8px',border:'1px dashed rgba(255,255,255,.08)'}}>
+                    Ingresa tus datos para ver el valor real de tu pipeline
                   </div>
                 )}
               </div>
-            ) : (
-              <div style={{fontSize:'11px',color:'var(--text4)',textAlign:'center',padding:'12px',background:'rgba(255,255,255,.02)',borderRadius:'8px',border:'1px solid rgba(255,255,255,.05)'}}>
-                Llena los datos para ver tu ROI estimado
-              </div>
-            )}
-          </div>
+            )
+          })()}
 
-          {/* ─── EMBUDO INMOBILIARIO ─── */}
-          <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'14px',padding:'20px'}}>
-            <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'16px'}}>
-              <div style={{width:'34px',height:'34px',borderRadius:'9px',background:'linear-gradient(135deg,rgba(251,191,36,.2),rgba(180,83,9,.15))',border:'1px solid rgba(251,191,36,.25)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'16px',flexShrink:0}}>
-                🔑
-              </div>
-              <div>
-                <div style={{fontSize:'13px',fontWeight:'700',color:'var(--text)'}}>Embudo Inmobiliario</div>
-                <div style={{fontSize:'10px',color:'var(--text4)'}}>Etapas de conversión</div>
-              </div>
-            </div>
-
-            <div style={{display:'flex',flexDirection:'column',gap:'6px'}}>
-              {[
-                {label:'Alcance',desc:'Personas que ven tus anuncios',icon:'👁',color:'#6366f1',pct:100},
-                {label:'Interés',desc:'Clics en propiedades',icon:'🏠',color:'#8b5cf6',pct:8},
-                {label:'Lead',desc:'Formularios completados',icon:'📋',color:'#a5b4fc',pct:3},
-                {label:'Cita',desc:'Visitas agendadas',icon:'📅',color:'#10b981',pct:1},
-                {label:'Venta',desc:'Propiedades cerradas',icon:'🔑',color:'#fbbf24',pct:0.3},
-              ].map((step,i)=>(
-                <div key={i} className="funnel-step" style={{display:'flex',alignItems:'center',gap:'10px'}}>
-                  <div style={{width:'28px',height:'28px',borderRadius:'7px',background:`rgba(${step.color==='#6366f1'?'99,102,241':step.color==='#8b5cf6'?'139,92,246':step.color==='#a5b4fc'?'165,180,252':step.color==='#10b981'?'16,185,129':'251,191,36'},.15)`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:'13px',flexShrink:0}}>{step.icon}</div>
-                  <div style={{flex:1,minWidth:0}}>
-                    <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'3px'}}>
-                      <span style={{fontSize:'11px',fontWeight:'700',color:'var(--text)'}}>{step.label}</span>
-                      <span style={{fontSize:'9px',color:'var(--text4)',fontFamily:'monospace'}}>{step.pct}%</span>
-                    </div>
-                    <div style={{height:'4px',background:'rgba(255,255,255,.05)',borderRadius:'2px',overflow:'hidden'}}>
-                      <div style={{height:'100%',width:`${step.pct === 100 ? 100 : step.pct * 5}%`,maxWidth:'100%',background:step.color,borderRadius:'2px'}}></div>
-                    </div>
-                    <div style={{fontSize:'9px',color:'var(--text4)',marginTop:'2px'}}>{step.desc}</div>
+          {/* ─── 2. DIAGNÓSTICO DE MARKETING ─── */}
+          {(() => {
+            const checks = [
+              { label:'Meta conectado (orgánico)', ok: !!metaToken, tip:'Conecta Meta para ver Facebook e Instagram orgánico', action: connectMeta },
+              { label:'Meta Ads conectado', ok: accounts.some(a=>a.platform==='meta_ads'), tip:'Conecta Meta Ads para ver campañas pagadas', action: connectMeta },
+              { label:'Google Ads conectado', ok: accounts.some(a=>a.platform==='google_ads'), tip:'Conecta Google Ads para Search y Display', action: null },
+              { label:'Instagram Business activo', ok: hasIG, tip:'Vincula tu IG a una Página de Facebook', action: null },
+              { label:'Boost Radar activo', ok: hasFbPages, tip:'Necesitas páginas de Facebook conectadas', action: null },
+            ]
+            const score = Math.round((checks.filter(c=>c.ok).length / checks.length) * 100)
+            const scoreColor = score>=80?'#10b981':score>=60?'#6ee7b7':score>=40?'#fbbf24':'#f87171'
+            const scoreLabel = score>=80?'Excelente':score>=60?'Bueno':score>=40?'Regular':'Incompleto'
+            return (
+              <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'14px',padding:'20px'}}>
+                <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'4px'}}>
+                  <div style={{width:'34px',height:'34px',borderRadius:'9px',background:'linear-gradient(135deg,rgba(16,185,129,.2),rgba(5,150,105,.15))',border:'1px solid rgba(16,185,129,.25)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'16px',flexShrink:0}}>🩺</div>
+                  <div>
+                    <div style={{fontSize:'13px',fontWeight:'700',color:'var(--text)'}}>Diagnóstico de Marketing</div>
+                    <div style={{fontSize:'10px',color:'var(--text4)'}}>Salud de tu setup digital</div>
                   </div>
                 </div>
-              ))}
-            </div>
+                <div style={{fontSize:'10px',color:'var(--text4)',marginBottom:'12px',lineHeight:'1.5',padding:'8px 0',borderBottom:'1px solid rgba(255,255,255,.05)'}}>
+                  Revisa qué tan completa está tu infraestructura de marketing inmobiliario.
+                </div>
+                {/* Score gauge */}
+                <div style={{display:'flex',alignItems:'center',gap:'14px',marginBottom:'14px',padding:'12px',background:'rgba(255,255,255,.03)',borderRadius:'10px',border:'1px solid rgba(255,255,255,.06)'}}>
+                  <div style={{textAlign:'center',flexShrink:0}}>
+                    <div style={{fontSize:'34px',fontWeight:'800',color:scoreColor,lineHeight:'1'}}>{score}</div>
+                    <div style={{fontSize:'9px',color:'var(--text4)',marginTop:'2px'}}>/ 100</div>
+                  </div>
+                  <div>
+                    <div style={{fontSize:'13px',fontWeight:'700',color:scoreColor,marginBottom:'3px'}}>{scoreLabel}</div>
+                    <div style={{height:'5px',width:'100px',background:'rgba(255,255,255,.07)',borderRadius:'3px',overflow:'hidden'}}>
+                      <div style={{height:'100%',width:`${score}%`,background:scoreColor,borderRadius:'3px'}}></div>
+                    </div>
+                    <div style={{fontSize:'9px',color:'var(--text4)',marginTop:'4px'}}>{checks.filter(c=>c.ok).length}/{checks.length} elementos activos</div>
+                  </div>
+                </div>
+                {/* Checklist */}
+                <div style={{display:'flex',flexDirection:'column',gap:'7px'}}>
+                  {checks.map((c,i)=>(
+                    <div key={i} style={{display:'flex',alignItems:'flex-start',gap:'8px'}}>
+                      <div style={{width:'18px',height:'18px',borderRadius:'50%',background:c.ok?'rgba(16,185,129,.15)':'rgba(255,255,255,.05)',border:`1px solid ${c.ok?'rgba(16,185,129,.4)':'rgba(255,255,255,.1)'}`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:'10px',flexShrink:0,marginTop:'1px'}}>
+                        {c.ok?'✓':'·'}
+                      </div>
+                      <div style={{flex:1}}>
+                        <div style={{fontSize:'11px',fontWeight:'600',color:c.ok?'var(--text)':'#555'}}>{c.label}</div>
+                        {!c.ok && (
+                          <div style={{fontSize:'10px',color:'var(--text4)',marginTop:'1px'}}>
+                            {c.tip}
+                            {c.action && <span onClick={c.action} style={{color:'#a5b4fc',cursor:'pointer',marginLeft:'4px'}}>Conectar →</span>}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )
+          })()}
 
-            <div style={{marginTop:'12px',padding:'8px 10px',background:'rgba(251,191,36,.06)',border:'1px solid rgba(251,191,36,.15)',borderRadius:'8px',fontSize:'10px',color:'#fbbf24'}}>
-              💡 Benchmark: de 1,000 personas alcanzadas → ~3 leads → 0.3 ventas en promedio
-            </div>
-          </div>
+          {/* ─── 3. ESTACIONALIDAD INMOBILIARIA ─── */}
+          {(() => {
+            const now = new Date()
+            const currentMonth = now.getMonth() // 0-11
+            const months = [
+              { m:'Ene', level:1, tip:'Post-navidad: CPL caro, bajo interés comprador. Ideal para construir audiencias baratas.', budget:'Reduce' },
+              { m:'Feb', level:2, tip:'Recuperación lenta. Vacaciones escolares impulsan búsqueda de propiedades vacacionales.', budget:'Normal' },
+              { m:'Mar', level:3, tip:'Pico primaveral. Familias planifican mudanza antes del fin de cursos. Escala presupuesto.', budget:'Escala' },
+              { m:'Abr', level:3, tip:'Semana Santa inspira compras vacacionales. Alta demanda en zonas turísticas.', budget:'Escala' },
+              { m:'May', level:3, tip:'Último mes antes del verano. Alta demanda residencial. Aumenta inversión.', budget:'Escala' },
+              { m:'Jun', level:2, tip:'Inicio de vacaciones. Demanda mixta. Mantén presupuesto pero varía creativos.', budget:'Normal' },
+              { m:'Jul', level:1, tip:'Pleno verano. Compradores de vacaciones, no residencial. Segmenta bien.', budget:'Reduce' },
+              { m:'Ago', level:2, tip:'Regreso a clases activa búsqueda de zonas residenciales con colegios cercanos.', budget:'Normal' },
+              { m:'Sep', level:2, tip:'Fiestas patrias. Sentimiento positivo. Recuperación de demanda residencial.', budget:'Normal' },
+              { m:'Oct', level:3, tip:'Segundo pico del año. Excelente momento para escalar campañas de leads.', budget:'Escala' },
+              { m:'Nov', level:1, tip:'Buen Fin distrae compradores. CPL sube 30-50%. Reduce budget y espera diciembre.', budget:'Pausa' },
+              { m:'Dic', level:1, tip:'Congelamiento total. Nadie compra casa en navidad. Usa para planificar enero.', budget:'Pausa' },
+            ]
+            const levelColor = l => l===3?'#10b981':l===2?'#fbbf24':'#f87171'
+            const levelLabel = l => l===3?'Alto':l===2?'Medio':'Bajo'
+            const budgetColor = b => b==='Escala'?'#10b981':b==='Normal'?'#a5b4fc':b==='Reduce'?'#fbbf24':'#f87171'
+            const cur = months[currentMonth]
+            return (
+              <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'14px',padding:'20px'}}>
+                <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'4px'}}>
+                  <div style={{width:'34px',height:'34px',borderRadius:'9px',background:'linear-gradient(135deg,rgba(251,191,36,.2),rgba(180,83,9,.15))',border:'1px solid rgba(251,191,36,.25)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'16px',flexShrink:0}}>📅</div>
+                  <div>
+                    <div style={{fontSize:'13px',fontWeight:'700',color:'var(--text)'}}>Estacionalidad Inmobiliaria</div>
+                    <div style={{fontSize:'10px',color:'var(--text4)'}}>Cuándo invertir más (o menos) en México</div>
+                  </div>
+                </div>
+                <div style={{fontSize:'10px',color:'var(--text4)',marginBottom:'12px',lineHeight:'1.5',padding:'8px 0',borderBottom:'1px solid rgba(255,255,255,.05)'}}>
+                  Ninguna plataforma te avisa sobre la estacionalidad del mercado inmobiliario. Kaan sí.
+                </div>
+                {/* Current month highlight */}
+                <div style={{background:`rgba(${cur.level===3?'16,185,129':cur.level===2?'251,191,36':'248,113,113'},.1)`,border:`1px solid rgba(${cur.level===3?'16,185,129':cur.level===2?'251,191,36':'248,113,113'},.25)`,borderRadius:'10px',padding:'12px',marginBottom:'12px'}}>
+                  <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'6px'}}>
+                    <div style={{fontSize:'12px',fontWeight:'700',color:'var(--text)'}}>Ahora: {cur.m} {now.getFullYear()}</div>
+                    <div style={{display:'flex',gap:'6px'}}>
+                      <span style={{fontSize:'9px',fontWeight:'700',padding:'2px 8px',borderRadius:'20px',background:`rgba(${cur.level===3?'16,185,129':cur.level===2?'251,191,36':'248,113,113'},.15)`,color:levelColor(cur.level)}}>{levelLabel(cur.level)} demanda</span>
+                      <span style={{fontSize:'9px',fontWeight:'700',padding:'2px 8px',borderRadius:'20px',background:`rgba(${cur.budget==='Escala'?'16,185,129':cur.budget==='Normal'?'165,180,252':cur.budget==='Reduce'?'251,191,36':'248,113,113'},.12)`,color:budgetColor(cur.budget)}}>{cur.budget} presupuesto</span>
+                    </div>
+                  </div>
+                  <div style={{fontSize:'11px',color:'var(--text4)',lineHeight:'1.55'}}>{cur.tip}</div>
+                </div>
+                {/* 12-month visual */}
+                <div style={{display:'grid',gridTemplateColumns:'repeat(6,1fr)',gap:'4px'}}>
+                  {months.map((mo,i)=>(
+                    <div key={i} style={{textAlign:'center',cursor:'default'}}>
+                      <div style={{height:'28px',borderRadius:'5px',background:`rgba(${mo.level===3?'16,185,129':mo.level===2?'251,191,36':'248,113,113'},.${i===currentMonth?'25':'1'})`,border:`1px solid rgba(${mo.level===3?'16,185,129':mo.level===2?'251,191,36':'248,113,113'},.${i===currentMonth?'5':'2'})`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:'8px',fontWeight:i===currentMonth?'800':'600',color:i===currentMonth?levelColor(mo.level):'var(--text4)',outline:i===currentMonth?`2px solid ${levelColor(mo.level)}`:'none',outlineOffset:'1px'}}>
+                        {mo.m}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div style={{display:'flex',gap:'10px',marginTop:'8px',justifyContent:'center'}}>
+                  {[{c:'#10b981',l:'Alta'},  {c:'#fbbf24',l:'Media'}, {c:'#f87171',l:'Baja'}].map(x=>(
+                    <div key={x.l} style={{display:'flex',alignItems:'center',gap:'4px'}}>
+                      <div style={{width:'8px',height:'8px',borderRadius:'2px',background:x.c}}></div>
+                      <span style={{fontSize:'9px',color:'var(--text4)'}}>{x.l}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )
+          })()}
         </div>
       </div>
 

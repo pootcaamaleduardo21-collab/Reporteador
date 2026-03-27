@@ -1,90 +1,87 @@
-import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
 
-const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
-const REDIRECT_URI = `${process.env.NEXT_PUBLIC_APP_URL || 'https://reporteador.vercel.app'}/api/oauth/google-ads/callback`;
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://reporteador.vercel.app'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
-);
+)
 
 export async function GET(request) {
-  const { searchParams } = new URL(request.url);
-  const code = searchParams.get('code');
-  const error = searchParams.get('error');
+  const { searchParams } = new URL(request.url)
+  const code = searchParams.get('code')
+  const error = searchParams.get('error')
+  const stateRaw = searchParams.get('state') || ''
 
-  if (error) {
-    return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_APP_URL || 'https://reporteador.vercel.app'}/dashboard?error=oauth_denied`
-    );
+  if (error || !code) {
+    return NextResponse.redirect(`${APP_URL}/dashboard?error=meta_denied`)
   }
 
-  if (!code) {
-    return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_APP_URL || 'https://reporteador.vercel.app'}/dashboard?error=no_code`
-    );
+  // Decode user ID from state (set by client before OAuth redirect)
+  let userId = null
+  try {
+    const parsed = JSON.parse(atob(stateRaw))
+    userId = parsed.uid
+  } catch (e) {}
+
+  if (!userId) {
+    return NextResponse.redirect(`${APP_URL}/dashboard?error=meta_no_user`)
   }
 
   try {
-    // Intercambiar código por tokens
-    const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({
-        client_id: GOOGLE_CLIENT_ID,
-        client_secret: GOOGLE_CLIENT_SECRET,
-        code,
-        grant_type: 'authorization_code',
-        redirect_uri: REDIRECT_URI,
-      }),
-    });
+    // 1. Exchange code for access token
+    const tokenRes = await fetch(
+      'https://graph.facebook.com/v21.0/oauth/access_token?' +
+        new URLSearchParams({
+          client_id: process.env.META_APP_ID,
+          client_secret: process.env.META_APP_SECRET,
+          redirect_uri: `${APP_URL}/api/auth/callback/meta`,
+          code,
+        })
+    )
+    const tokenData = await tokenRes.json()
 
-    const tokens = await tokenResponse.json();
-
-    if (!tokenResponse.ok) {
-      throw new Error(tokens.error || 'Token exchange failed');
+    if (tokenData.error || !tokenData.access_token) {
+      console.error('Meta token exchange error:', tokenData.error)
+      throw new Error(tokenData.error?.message || 'Token exchange failed')
     }
 
-    // Obtener el usuario autenticado desde la cookie de sesión
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    if (!session) {
-      return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_APP_URL || 'https://reporteador.vercel.app'}/login`
-      );
+    const accessToken = tokenData.access_token
+
+    // 2. Save token to meta_tokens (used for organic pages + IG)
+    await supabase
+      .from('meta_tokens')
+      .upsert(
+        { user_id: userId, access_token: accessToken, updated_at: new Date().toISOString() },
+        { onConflict: 'user_id' }
+      )
+
+    // 3. Fetch Meta Ads accounts
+    const adsRes = await fetch(
+      `https://graph.facebook.com/v21.0/me/adaccounts?fields=id,name,account_status,currency&access_token=${accessToken}&limit=25`
+    )
+    const adsData = await adsRes.json()
+
+    if (adsData.data && adsData.data.length > 0) {
+      for (const account of adsData.data) {
+        const rawId = account.id.replace('act_', '')
+        await supabase.from('ad_accounts').upsert(
+          {
+            user_id: userId,
+            account_id: `act_${rawId}`,
+            account_name: account.name || `Meta Ads ${rawId}`,
+            platform: 'meta_ads',
+            is_active: account.account_status === 1,
+          },
+          { onConflict: 'user_id,account_id' }
+        )
+      }
     }
 
-    const userId = session.user.id;
-    const customerId = process.env.NEXT_PUBLIC_GOOGLE_CUSTOMER_ID;
-
-    // Guardar tokens en Supabase
-    const { error: dbError } = await supabase
-      .from('google_ads_tokens')
-      .upsert({
-        user_id: userId,
-        customer_id: customerId,
-        access_token: tokens.access_token,
-        refresh_token: tokens.refresh_token || null,
-        token_expires_at: new Date(Date.now() + tokens.expires_in * 1000).toISOString(),
-        updated_at: new Date().toISOString(),
-      }, {
-        onConflict: 'user_id,customer_id'
-      });
-
-    if (dbError) {
-      console.error('DB Error:', dbError);
-      throw dbError;
-    }
-
-    return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_APP_URL || 'https://reporteador.vercel.app'}/dashboard/google-ads?success=connected`
-    );
-  } catch (error) {
-    console.error('OAuth error:', error);
-    return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_APP_URL || 'https://reporteador.vercel.app'}/dashboard/google-ads?error=oauth_error`
-    );
+    return NextResponse.redirect(`${APP_URL}/dashboard?success=meta_connected`)
+  } catch (err) {
+    console.error('Meta OAuth callback error:', err)
+    return NextResponse.redirect(`${APP_URL}/dashboard?error=meta_oauth_error`)
   }
 }
