@@ -1,4 +1,4 @@
-// app/api/google-ads/token.js
+// app/api/google-ads/campaigns.js - versión simplificada
 import { createClient } from '@supabase/supabase-js'
 
 const supabase = createClient(
@@ -8,25 +8,52 @@ const supabase = createClient(
 
 export async function POST(request) {
   try {
-    const { userId } = await request.json()
+    const { dateRange } = await request.json()
     
-    const { data, error } = await supabase
-      .from('google_ads_tokens')
-      .select('access_token, refresh_token, token_expires_at')
-      .eq('user_id', userId)
-      .single()
-    
-    if (error) throw error
-    
-    // Verificar si el token expiró y refrescarlo si es necesario
-    const expiresAt = new Date(data.token_expires_at)
-    if (new Date() > expiresAt && data.refresh_token) {
-      // Aquí iría la lógica para refrescar el token
-      // Por ahora retornamos el token actual
-    }
-    
-    return Response.json({ access_token: data.access_token })
+    // Por ahora, retornamos datos de ejemplo
+    // Cuando tengas el Developer Token, conectamos la API real
+    const mockCampaigns = [
+      {
+        id: '1',
+        name: 'Campaña de Búsqueda - Verano',
+        status: 'ENABLED',
+        spend: 2500.00,
+        conversions: 145,
+        clicks: 3200,
+        impressions: 45000,
+        cpc: 0.78,
+        ctr: 7.1,
+        cpm: 55.56
+      },
+      {
+        id: '2',
+        name: 'Display - Remarketing',
+        status: 'ENABLED',
+        spend: 1200.00,
+        conversions: 68,
+        clicks: 1560,
+        impressions: 28000,
+        cpc: 0.77,
+        ctr: 5.6,
+        cpm: 42.86
+      },
+      {
+        id: '3',
+        name: 'Shopping - Productos',
+        status: 'ENABLED',
+        spend: 3100.00,
+        conversions: 210,
+        clicks: 4100,
+        impressions: 52000,
+        cpc: 0.76,
+        ctr: 7.88,
+        cpm: 59.62
+      }
+    ]
+
+    return new Response(JSON.stringify({ campaigns: mockCampaigns }), { status: 200 })
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 })
+    console.error('Error:', error)
+    return new Response(JSON.stringify({ error: error.message }), { status: 500 })
   }
 }
