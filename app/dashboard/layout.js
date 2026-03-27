@@ -306,11 +306,40 @@ export default function DashboardLayout({ children }) {
             )
           })()}
 
-          {accounts.length === 0 && (
-            <div className="nav-hover" onClick={()=>navigate('/dashboard/platforms')}
-              style={{display:'flex',alignItems:'center',gap:'8px',padding:'7px 8px',borderRadius:'7px',cursor:'pointer',background:'transparent',border:'none',width:'100%'}}>
-              <span style={{fontSize:'14px',width:'20px',textAlign:'center',flexShrink:0}}>+</span>
-              {sidebarOpen && <div style={{fontSize:'11px',fontWeight:'600',color:'#a5b4fc',textAlign:'left'}}>Conectar plataformas</div>}
+          {/* Plataformas no conectadas — siempre visibles como invitación a conectar */}
+          {!accounts.some(a=>a.platform==='meta_ads') && (
+            <a href="/api/auth/meta"
+              style={{display:'flex',alignItems:'center',gap:'8px',padding:'7px 8px',borderRadius:'7px',cursor:'pointer',textDecoration:'none',opacity:.7}}>
+              <div style={{width:'20px',height:'20px',borderRadius:'5px',background:'rgba(24,119,242,.2)',border:'1px dashed rgba(24,119,242,.4)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                <FbLogoSVG size={11}/>
+              </div>
+              {sidebarOpen && <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:'11px',fontWeight:'600',color:'#555'}}>Meta Ads</div>
+                <div style={{fontSize:'9px',color:'#a5b4fc',marginTop:'1px'}}>Conectar →</div>
+              </div>}
+            </a>
+          )}
+          {!accounts.some(a=>a.platform==='google_ads') && (
+            <a href="/api/auth/google-ads/login"
+              style={{display:'flex',alignItems:'center',gap:'8px',padding:'7px 8px',borderRadius:'7px',cursor:'pointer',textDecoration:'none',opacity:.7}}>
+              <div style={{width:'20px',height:'20px',borderRadius:'5px',background:'rgba(255,255,255,.06)',border:'1px dashed rgba(255,255,255,.2)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                <GoogleLogoSVG size={12}/>
+              </div>
+              {sidebarOpen && <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:'11px',fontWeight:'600',color:'#555'}}>Google Ads</div>
+                <div style={{fontSize:'9px',color:'#a5b4fc',marginTop:'1px'}}>Conectar →</div>
+              </div>}
+            </a>
+          )}
+          {!accounts.some(a=>a.platform==='tiktok_ads') && (
+            <div style={{display:'flex',alignItems:'center',gap:'8px',padding:'7px 8px',borderRadius:'7px',opacity:.4,cursor:'default'}}>
+              <div style={{width:'20px',height:'20px',borderRadius:'5px',background:'rgba(255,255,255,.04)',border:'1px dashed rgba(255,255,255,.12)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                <TTLogoSVG size={10}/>
+              </div>
+              {sidebarOpen && <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:'11px',fontWeight:'600',color:'#444'}}>TikTok Ads</div>
+                <div style={{fontSize:'9px',color:'#555',marginTop:'1px'}}>Próximamente</div>
+              </div>}
             </div>
           )}
 
