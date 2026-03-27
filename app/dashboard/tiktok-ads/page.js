@@ -8,7 +8,7 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
 
-export default function GoogleAdsPage() {
+export default function TikTokAdsPage() {
   const [connected, setConnected] = useState(false);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
@@ -25,7 +25,7 @@ export default function GoogleAdsPage() {
 
       if (session?.user) {
         const { data } = await supabase
-          .from('google_ads_tokens')
+          .from('tiktok_ads_tokens')
           .select('*')
           .eq('user_id', session.user.id)
           .single();
@@ -43,20 +43,9 @@ export default function GoogleAdsPage() {
   };
 
   const handleConnect = () => {
-  const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-  const redirectUri = `${window.location.origin}/api/oauth/google-ads/callback`;
-  const scopes = 'https://www.googleapis.com/auth/adwords';
-
-  const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
-    `client_id=${clientId}&` +
-    `redirect_uri=${encodeURIComponent(redirectUri)}&` +
-    `response_type=code&` +
-    `scope=${encodeURIComponent(scopes)}&` +
-    `access_type=offline&` +
-    `prompt=consent`;
-
-  window.location.href = authUrl;
-};
+    // Placeholder for TikTok OAuth connection
+    alert('Conectar TikTok Ads - Próximamente');
+  };
 
   if (loading) {
     return (
@@ -70,10 +59,10 @@ export default function GoogleAdsPage() {
     <div style={{ padding: '40px' }}>
       <div style={{ maxWidth: '600px', margin: '0 auto' }}>
         <h1 style={{ fontSize: '24px', fontWeight: '800', marginBottom: '8px', color: 'var(--text)' }}>
-          G Google Ads
+          ⟲ TikTok Ads
         </h1>
         <p style={{ fontSize: '13px', color: 'var(--text4)', marginBottom: '32px' }}>
-          Conecta tu cuenta de Google Ads para ver tus campañas, métricas y rendimiento
+          Conecta tu cuenta de TikTok Ads para ver tus campañas, métricas y rendimiento
         </p>
 
         <div style={{
@@ -85,12 +74,12 @@ export default function GoogleAdsPage() {
         }}>
           {connected ? (
             <div>
-              <div style={{ fontSize: '48px', marginBottom: '16px', fontWeight: 'bold' }}>✓</div>
+              <div style={{ fontSize: '48px', marginBottom: '16px' }}>✓</div>
               <h2 style={{ fontSize: '18px', fontWeight: '700', color: '#6ee7b7', marginBottom: '8px' }}>
                 Conectado
               </h2>
               <p style={{ fontSize: '13px', color: 'var(--text4)', marginBottom: '24px' }}>
-                Tu cuenta de Google Ads está conectada correctamente.
+                Tu cuenta de TikTok Ads está conectada correctamente.
               </p>
               <div style={{
                 background: 'rgba(110,231,183,.08)',
@@ -102,7 +91,7 @@ export default function GoogleAdsPage() {
                 fontFamily: 'monospace',
                 color: '#6ee7b7'
               }}>
-                ID: {tokenData?.customer_id}
+                ID: {tokenData?.advertiser_id}
               </div>
               <button
                 onClick={handleConnect}
@@ -122,12 +111,12 @@ export default function GoogleAdsPage() {
             </div>
           ) : (
             <div>
-              <div style={{ fontSize: '48px', marginBottom: '16px', fontWeight: 'bold' }}>○</div>
+              <div style={{ fontSize: '48px', marginBottom: '16px' }}>○</div>
               <h2 style={{ fontSize: '18px', fontWeight: '700', color: 'var(--text)', marginBottom: '8px' }}>
                 No conectado
               </h2>
               <p style={{ fontSize: '13px', color: 'var(--text4)', marginBottom: '24px' }}>
-                Haz clic en el botón para conectar tu cuenta de Google Ads
+                Haz clic en el botón para conectar tu cuenta de TikTok Ads
               </p>
               <button
                 onClick={handleConnect}
@@ -142,7 +131,7 @@ export default function GoogleAdsPage() {
                   fontWeight: '700'
                 }}
               >
-                Conectar Google Ads
+                Conectar TikTok Ads
               </button>
             </div>
           )}

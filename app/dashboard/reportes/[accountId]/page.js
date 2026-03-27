@@ -555,7 +555,7 @@ export default function Reportes() {
   // Sync tab from URL ?tab= param
   useEffect(() => {
     const tab = searchParams?.get('tab')
-    if (tab && ['overview','campanas','conjuntos','anuncios','audiencia','google-ads'].includes(tab)) {
+    if (tab && ['overview','campanas','conjuntos','anuncios','audiencia','google-ads','tiktok-ads'].includes(tab)) {
       setActiveTab(tab)
     }
   }, [searchParams])
@@ -709,7 +709,7 @@ export default function Reportes() {
   }
 
   const tabs = ['overview','campanas','conjuntos','anuncios','audiencia']
-  const tabLabels = {overview:'Overview',campanas:'Campanas',conjuntos:'Conjuntos',anuncios:'Anuncios',audiencia:'Audiencia'}
+  const tabLabels = {overview:'Overview',campanas:'Campanas',conjuntos:'Conjuntos',anuncios:'Anuncios',audiencia:'Audiencia','google-ads':'Google Ads','tiktok-ads':'TikTok Ads'}
   const objInfo = OBJECTIVE_MAP[detectedObjective] || OBJECTIVE_MAP.MULTIPLE
   const currentTypeLabel = resultType==='auto'?'Auto - '+(RESULT_TYPE_LABELS[objInfo?.resultTypes?.[0]]||''):RESULT_TYPE_LABELS[resultType]||resultType
 
@@ -946,6 +946,22 @@ export default function Reportes() {
         <li>ROI consolidado</li>
       </ul>
       <p>Por ahora, exporta tus datos desde Google Ads Manager e importa CSVs en la sección de reportes.</p>
+    </div>
+  </div>
+)}
+{activeTab==='tiktok-ads'&&(
+  <div style={{background:'rgba(168,85,247,.05)',border:'1px solid rgba(168,85,247,.15)',borderRadius:'8px',padding:'20px',marginBottom:'20px'}}>
+    <div style={{fontSize:'14px',color:'#a855f7',fontFamily:'monospace',fontWeight:'700',marginBottom:'12px'}}>TikTok Ads</div>
+    <div style={{fontSize:'11px',color:'#888',fontFamily:'monospace',lineHeight:'1.8'}}>
+      <p style={{marginBottom:'12px'}}>La integración con TikTok Ads está en desarrollo.</p>
+      <p style={{marginBottom:'12px'}}>Próximamente podrás ver:</p>
+      <ul style={{marginLeft:'20px',marginBottom:'12px'}}>
+        <li>Campañas de TikTok Ads</li>
+        <li>Grupos de anuncios y desempeño</li>
+        <li>Análisis de creativos por anuncio</li>
+        <li>Comparativa con otras plataformas</li>
+      </ul>
+      <p>Por ahora, exporta tus datos desde TikTok Ads Manager e importa CSVs en la sección de reportes.</p>
     </div>
   </div>
 )}
