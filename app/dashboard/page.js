@@ -222,27 +222,35 @@ export default function DashboardHome() {
           <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(260px,1fr))',gap:'12px'}}>
 
             {hasMeta && (
-              <div className="hover-card" onClick={() => router.push('/dashboard/reportes/' + metaAccounts[0].account_id)}
-                style={{...card, cursor:'pointer', transition:'border-color .2s'}}>
+              <div style={{...card, transition:'border-color .2s'}}>
                 <div style={{display:'flex',alignItems:'center',gap:'10px',marginBottom:'14px'}}>
-                  <div style={{width:'32px',height:'32px',borderRadius:'8px',background:'#1877f2',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:'11px',fontWeight:'800',flexShrink:0}}>META</div>
+                  <div style={{width:'32px',height:'32px',borderRadius:'8px',background:'#1877f2',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:'11px',fontWeight:'800',flexShrink:0}}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                  </div>
                   <div>
                     <div style={{fontSize:'13px',fontWeight:'700',color:'var(--text)'}}>Meta Ads</div>
-                    <div style={{fontSize:'10px',color:'var(--text4)'}}>Facebook · Instagram</div>
+                    <div style={{fontSize:'10px',color:'var(--text4)'}}>{metaAccounts.length} cuenta{metaAccounts.length!==1?'s':''} · Facebook & Instagram</div>
                   </div>
-                  <div style={{marginLeft:'auto',fontSize:'11px',color:'#a5b4fc'}}>Ver →</div>
                 </div>
-                <div style={{display:'flex',gap:'12px',flexWrap:'wrap'}}>
-                  {metaAccounts.slice(0, isPro ? 10 : 1).map(acc => (
-                    <div key={acc.id} onClick={e=>{e.stopPropagation();router.push('/dashboard/reportes/'+acc.account_id)}}
-                      style={{display:'flex',alignItems:'center',gap:'6px',padding:'5px 9px',background:'rgba(255,255,255,.04)',borderRadius:'6px',border:'1px solid rgba(255,255,255,.07)',cursor:'pointer'}}>
-                      <div style={{width:'5px',height:'5px',borderRadius:'50%',background:acc.is_active?'#6ee7b7':'#f87171',flexShrink:0}}></div>
-                      <span style={{fontSize:'10px',color:'#ccc',whiteSpace:'nowrap'}}>{acc.account_name||acc.account_id}</span>
-                    </div>
+                {/* Accesos directos por sección */}
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'6px',marginBottom:'10px'}}>
+                  {[
+                    {icon:'📊',label:'Resumen',tab:'overview'},
+                    {icon:'🎯',label:'Campañas',tab:'campanas'},
+                    {icon:'👥',label:'Conjuntos',tab:'conjuntos'},
+                    {icon:'🖼',label:'Anuncios',tab:'anuncios'},
+                    {icon:'🗺',label:'Audiencia',tab:'audiencia'},
+                  ].map(t=>(
+                    <button key={t.tab} className="hover-card"
+                      onClick={()=>router.push('/dashboard/reportes/'+metaAccounts[0].account_id+'?tab='+t.tab)}
+                      style={{display:'flex',alignItems:'center',gap:'6px',padding:'7px 10px',background:'rgba(255,255,255,.03)',border:'1px solid rgba(255,255,255,.06)',borderRadius:'7px',cursor:'pointer',fontFamily:'inherit',textAlign:'left',transition:'border-color .15s'}}>
+                      <span style={{fontSize:'13px'}}>{t.icon}</span>
+                      <span style={{fontSize:'11px',color:'var(--text4)',fontWeight:'500'}}>{t.label}</span>
+                    </button>
                   ))}
                   {!isPro && metaAccounts.length > 1 && (
-                    <div style={{fontSize:'10px',color:'#fcd34d',padding:'5px 9px',background:'rgba(252,211,77,.06)',border:'1px solid rgba(252,211,77,.15)',borderRadius:'6px'}}>
-                      +{metaAccounts.length-1} en Pro
+                    <div style={{display:'flex',alignItems:'center',gap:'6px',padding:'7px 10px',background:'rgba(252,211,77,.05)',border:'1px solid rgba(252,211,77,.15)',borderRadius:'7px'}}>
+                      <span style={{fontSize:'10px',color:'#fcd34d'}}>🔒 +{metaAccounts.length-1} cuentas en Pro</span>
                     </div>
                   )}
                 </div>

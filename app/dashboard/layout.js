@@ -145,98 +145,146 @@ export default function DashboardLayout({ children }) {
 
           {sidebarOpen && <div style={{fontSize:'9px',color:'var(--text4)',fontWeight:'600',letterSpacing:'.08em',textTransform:'uppercase',padding:'10px 8px 3px'}}>Campañas Pagadas</div>}
 
-          {selectedAccount && (
-            <>
-              {selectedAccount.platform === 'meta_ads' && (
-                <>
-                  <div className="nav-hover" onClick={()=>setReportsOpen(!reportsOpen)}
-                    style={{display:'flex',alignItems:'center',gap:'8px',padding:'7px 8px',borderRadius:'7px',cursor:'pointer',background:activeSection==='reportes'?'rgba(99,102,241,.14)':'transparent',border:'none',width:'100%'}}>
-                    <span style={{fontSize:'14px',width:'20px',textAlign:'center',flexShrink:0,fontWeight:'bold'}}>f</span>
-                    {sidebarOpen && <>
-                      <div style={{flex:1}}><div style={{fontSize:'11px',fontWeight:'600',color:activeSection==='reportes'?'#a5b4fc':'#888',textAlign:'left'}}>Meta Ads</div></div>
-                      <span style={{fontSize:'10px',color:'var(--text4)',transition:'transform .2s',transform:reportsOpen?'rotate(180deg)':'rotate(0deg)'}}>▾</span>
-                    </>}
-                  </div>
-
-                  <div style={{overflow:'hidden',maxHeight:reportsOpen&&sidebarOpen?'200px':'0',transition:'max-height .25s ease'}}>
-                    {[
-                      {id:'campanas',label:'Campaña',tab:'campanas'},
-                      {id:'conjuntos',label:'Conjunto',tab:'conjuntos'},
-                      {id:'anuncios',label:'Anuncio',tab:'anuncios'},
-                      {id:'audiencia',label:'Audiencia',tab:'audiencia'},
-                    ].map(r=>(
-                      <div key={r.id} className="nav-hover"
-                        onClick={()=>navigate('/dashboard/reportes/'+selectedAccount.account_id+'?tab='+r.tab)}
-                        style={{display:'flex',alignItems:'center',gap:'8px',padding:'6px 8px 6px 28px',borderRadius:'7px',cursor:'pointer',marginBottom:'1px',color:'#777',fontSize:'10px',fontWeight:'500'}}>
-                        <div style={{whiteSpace:'nowrap'}}>{r.label}</div>
-                      </div>
-                    ))}
-                  </div>
-                </>
-              )}
-
-              {selectedAccount.platform === 'google_ads' && (
-                <>
-                  <div className="nav-hover" onClick={()=>setGoogleAdsOpen(!googleAdsOpen)}
-                    style={{display:'flex',alignItems:'center',gap:'8px',padding:'7px 8px',borderRadius:'7px',cursor:'pointer',background:activeSection==='reportes'?'rgba(99,102,241,.14)':'transparent',border:'none',width:'100%'}}>
-                    <span style={{fontSize:'14px',width:'20px',textAlign:'center',flexShrink:0,fontWeight:'bold'}}>G</span>
-                    {sidebarOpen && <>
-                      <div style={{flex:1}}><div style={{fontSize:'11px',fontWeight:'600',color:activeSection==='reportes'?'#a5b4fc':'#888',textAlign:'left'}}>Google Ads</div></div>
-                      <span style={{fontSize:'10px',color:'var(--text4)',transition:'transform .2s',transform:googleAdsOpen?'rotate(180deg)':'rotate(0deg)'}}>▾</span>
-                    </>}
-                  </div>
-
-                  <div style={{overflow:'hidden',maxHeight:googleAdsOpen&&sidebarOpen?'200px':'0',transition:'max-height .25s ease'}}>
-                    {[
-                      {id:'ga-campanas',label:'Campaña',tab:'google-ads'},
-                    ].map(r=>(
-                      <div key={r.id} className="nav-hover"
-                        onClick={()=>navigate('/dashboard/reportes/'+selectedAccount.account_id+'?tab='+r.tab)}
-                        style={{display:'flex',alignItems:'center',gap:'8px',padding:'6px 8px 6px 28px',borderRadius:'7px',cursor:'pointer',marginBottom:'1px',color:'#777',fontSize:'10px',fontWeight:'500'}}>
-                        <div style={{whiteSpace:'nowrap'}}>{r.label}</div>
-                      </div>
-                    ))}
-                  </div>
-                </>
-              )}
-
-              {selectedAccount.platform === 'tiktok_ads' && (
-                <>
-                  <div className="nav-hover" onClick={()=>setTiktokAdsOpen(!tiktokAdsOpen)}
-                    style={{display:'flex',alignItems:'center',gap:'8px',padding:'7px 8px',borderRadius:'7px',cursor:'pointer',background:activeSection==='reportes'?'rgba(99,102,241,.14)':'transparent',border:'none',width:'100%'}}>
-                    <span style={{fontSize:'14px',width:'20px',textAlign:'center',flexShrink:0,fontWeight:'bold'}}>⟲</span>
-                    {sidebarOpen && <>
-                      <div style={{flex:1}}><div style={{fontSize:'11px',fontWeight:'600',color:activeSection==='reportes'?'#a5b4fc':'#888',textAlign:'left'}}>TikTok Ads</div></div>
-                      <span style={{fontSize:'10px',color:'var(--text4)',transition:'transform .2s',transform:tiktokAdsOpen?'rotate(180deg)':'rotate(0deg)'}}>▾</span>
-                    </>}
-                  </div>
-
-                  <div style={{overflow:'hidden',maxHeight:tiktokAdsOpen&&sidebarOpen?'200px':'0',transition:'max-height .25s ease'}}>
-                    {[
-                      {id:'ta-campanas',label:'Campaña',tab:'tiktok-ads'},
-                    ].map(r=>(
-                      <div key={r.id} className="nav-hover"
-                        onClick={()=>navigate('/dashboard/reportes/'+selectedAccount.account_id+'?tab='+r.tab)}
-                        style={{display:'flex',alignItems:'center',gap:'8px',padding:'6px 8px 6px 28px',borderRadius:'7px',cursor:'pointer',marginBottom:'1px',color:'#777',fontSize:'10px',fontWeight:'500'}}>
-                        <div style={{whiteSpace:'nowrap'}}>{r.label}</div>
-                      </div>
-                    ))}
-                  </div>
-                </>
-              )}
-
-              {!selectedAccount.platform && (
-                <div style={{padding:'8px',color:'#555',fontSize:'10px',fontStyle:'italic'}}>
-                  Selecciona una cuenta para ver opciones
+          {/* META ADS - siempre visible si hay cuentas meta */}
+          {accounts.some(a=>a.platform==='meta_ads') && (() => {
+            const metaAccs = accounts.filter(a=>a.platform==='meta_ads')
+            const firstMeta = metaAccs[0]
+            const isActiveMeta = isReportePage && selectedAccount?.platform==='meta_ads'
+            return (
+              <>
+                <div className="nav-hover" onClick={()=>setReportsOpen(!reportsOpen)}
+                  style={{display:'flex',alignItems:'center',gap:'8px',padding:'7px 8px',borderRadius:'7px',cursor:'pointer',background:isActiveMeta?'rgba(99,102,241,.14)':'transparent',border:'none',width:'100%'}}>
+                  <span style={{fontSize:'13px',width:'20px',textAlign:'center',flexShrink:0,color:'#1877f2',fontWeight:'bold'}}>f</span>
+                  {sidebarOpen && <>
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{fontSize:'11px',fontWeight:'600',color:isActiveMeta?'#a5b4fc':'#888',textAlign:'left'}}>Meta Ads</div>
+                      <div style={{fontSize:'9px',color:'var(--text4)',marginTop:'1px'}}>{metaAccs.length} cuenta{metaAccs.length!==1?'s':''}</div>
+                    </div>
+                    <span style={{fontSize:'10px',color:'var(--text4)',transition:'transform .2s',transform:reportsOpen?'rotate(180deg)':'rotate(0deg)',flexShrink:0}}>▾</span>
+                  </>}
                 </div>
-              )}
-            </>
-          )}
+                <div style={{overflow:'hidden',maxHeight:reportsOpen&&sidebarOpen?'300px':'0',transition:'max-height .3s ease'}}>
+                  {/* Pestañas de la cuenta seleccionada (o primera meta) */}
+                  {[
+                    {label:'Resumen',tab:'overview',icon:'📊'},
+                    {label:'Campañas',tab:'campanas',icon:'🎯'},
+                    {label:'Conjuntos',tab:'conjuntos',icon:'👥'},
+                    {label:'Anuncios',tab:'anuncios',icon:'🖼'},
+                    {label:'Audiencia',tab:'audiencia',icon:'🗺'},
+                  ].map(r=>{
+                    const targetAcc = (isActiveMeta && selectedAccount) ? selectedAccount : firstMeta
+                    return (
+                      <div key={r.tab} className="nav-hover"
+                        onClick={()=>navigate('/dashboard/reportes/'+targetAcc.account_id+'?tab='+r.tab)}
+                        style={{display:'flex',alignItems:'center',gap:'7px',padding:'5px 8px 5px 28px',borderRadius:'6px',cursor:'pointer',marginBottom:'1px'}}>
+                        <span style={{fontSize:'11px'}}>{r.icon}</span>
+                        <div style={{fontSize:'10px',color:'#666',fontWeight:'500',whiteSpace:'nowrap'}}>{r.label}</div>
+                      </div>
+                    )
+                  })}
+                  {/* Si hay más de una cuenta meta, mostrar selector */}
+                  {metaAccs.length > 1 && sidebarOpen && (
+                    <div style={{padding:'4px 8px 4px 28px'}}>
+                      <div style={{fontSize:'9px',color:'var(--text4)',marginBottom:'4px',textTransform:'uppercase',letterSpacing:'.06em'}}>Cambiar cuenta:</div>
+                      {metaAccs.map(acc=>(
+                        <div key={acc.id} className="nav-hover"
+                          onClick={()=>navigate('/dashboard/reportes/'+acc.account_id)}
+                          style={{display:'flex',alignItems:'center',gap:'5px',padding:'4px 6px',borderRadius:'5px',cursor:'pointer',marginBottom:'2px',background:selectedAccount?.id===acc.id?'rgba(99,102,241,.08)':'transparent'}}>
+                          <div style={{width:'5px',height:'5px',borderRadius:'50%',background:acc.is_active?'#6ee7b7':'#555',flexShrink:0}}></div>
+                          <div style={{fontSize:'9px',color:selectedAccount?.id===acc.id?'#a5b4fc':'#555',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{acc.account_name||acc.account_id}</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </>
+            )
+          })()}
+
+          {/* GOOGLE ADS - siempre visible si hay cuentas google */}
+          {accounts.some(a=>a.platform==='google_ads') && (() => {
+            const gAccs = accounts.filter(a=>a.platform==='google_ads')
+            const firstG = gAccs[0]
+            const isActiveGoogle = isReportePage && selectedAccount?.platform==='google_ads'
+            return (
+              <>
+                <div className="nav-hover" onClick={()=>setGoogleAdsOpen(!googleAdsOpen)}
+                  style={{display:'flex',alignItems:'center',gap:'8px',padding:'7px 8px',borderRadius:'7px',cursor:'pointer',background:isActiveGoogle?'rgba(99,102,241,.14)':'transparent',border:'none',width:'100%'}}>
+                  <span style={{fontSize:'11px',width:'20px',textAlign:'center',flexShrink:0,fontWeight:'900',color:'#4285f4'}}>G</span>
+                  {sidebarOpen && <>
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{fontSize:'11px',fontWeight:'600',color:isActiveGoogle?'#a5b4fc':'#888',textAlign:'left'}}>Google Ads</div>
+                      <div style={{fontSize:'9px',color:'var(--text4)',marginTop:'1px'}}>{gAccs.length} cuenta{gAccs.length!==1?'s':''}</div>
+                    </div>
+                    <span style={{fontSize:'10px',color:'var(--text4)',transition:'transform .2s',transform:googleAdsOpen?'rotate(180deg)':'rotate(0deg)',flexShrink:0}}>▾</span>
+                  </>}
+                </div>
+                <div style={{overflow:'hidden',maxHeight:googleAdsOpen&&sidebarOpen?'200px':'0',transition:'max-height .3s ease'}}>
+                  {[
+                    {label:'Resumen',tab:'overview',icon:'📊'},
+                    {label:'Campañas',tab:'google-ads',icon:'🎯'},
+                  ].map(r=>{
+                    const targetAcc = (isActiveGoogle && selectedAccount) ? selectedAccount : firstG
+                    return (
+                      <div key={r.tab} className="nav-hover"
+                        onClick={()=>navigate('/dashboard/reportes/'+targetAcc.account_id+'?tab='+r.tab)}
+                        style={{display:'flex',alignItems:'center',gap:'7px',padding:'5px 8px 5px 28px',borderRadius:'6px',cursor:'pointer',marginBottom:'1px'}}>
+                        <span style={{fontSize:'11px'}}>{r.icon}</span>
+                        <div style={{fontSize:'10px',color:'#666',fontWeight:'500',whiteSpace:'nowrap'}}>{r.label}</div>
+                      </div>
+                    )
+                  })}
+                  {gAccs.length > 1 && sidebarOpen && (
+                    <div style={{padding:'4px 8px 4px 28px'}}>
+                      {gAccs.map(acc=>(
+                        <div key={acc.id} className="nav-hover"
+                          onClick={()=>navigate('/dashboard/reportes/'+acc.account_id)}
+                          style={{display:'flex',alignItems:'center',gap:'5px',padding:'4px 6px',borderRadius:'5px',cursor:'pointer',marginBottom:'2px'}}>
+                          <div style={{width:'5px',height:'5px',borderRadius:'50%',background:acc.is_active?'#6ee7b7':'#555',flexShrink:0}}></div>
+                          <div style={{fontSize:'9px',color:'#555',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{acc.account_name||acc.account_id}</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </>
+            )
+          })()}
+
+          {/* TIKTOK ADS */}
+          {accounts.some(a=>a.platform==='tiktok_ads') && (() => {
+            const ttAccs = accounts.filter(a=>a.platform==='tiktok_ads')
+            const firstTT = ttAccs[0]
+            const isActiveTT = isReportePage && selectedAccount?.platform==='tiktok_ads'
+            return (
+              <>
+                <div className="nav-hover" onClick={()=>setTiktokAdsOpen(!tiktokAdsOpen)}
+                  style={{display:'flex',alignItems:'center',gap:'8px',padding:'7px 8px',borderRadius:'7px',cursor:'pointer',background:isActiveTT?'rgba(99,102,241,.14)':'transparent',border:'none',width:'100%'}}>
+                  <span style={{fontSize:'12px',width:'20px',textAlign:'center',flexShrink:0,fontWeight:'bold'}}>⟲</span>
+                  {sidebarOpen && <>
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{fontSize:'11px',fontWeight:'600',color:isActiveTT?'#a5b4fc':'#888',textAlign:'left'}}>TikTok Ads</div>
+                      <div style={{fontSize:'9px',color:'var(--text4)',marginTop:'1px'}}>{ttAccs.length} cuenta{ttAccs.length!==1?'s':''}</div>
+                    </div>
+                    <span style={{fontSize:'10px',color:'var(--text4)',transition:'transform .2s',transform:tiktokAdsOpen?'rotate(180deg)':'rotate(0deg)',flexShrink:0}}>▾</span>
+                  </>}
+                </div>
+                <div style={{overflow:'hidden',maxHeight:tiktokAdsOpen&&sidebarOpen?'120px':'0',transition:'max-height .3s ease'}}>
+                  <div className="nav-hover"
+                    onClick={()=>navigate('/dashboard/reportes/'+firstTT.account_id+'?tab=overview')}
+                    style={{display:'flex',alignItems:'center',gap:'7px',padding:'5px 8px 5px 28px',borderRadius:'6px',cursor:'pointer'}}>
+                    <span style={{fontSize:'11px'}}>📊</span>
+                    <div style={{fontSize:'10px',color:'#666',fontWeight:'500'}}>Resumen</div>
+                  </div>
+                </div>
+              </>
+            )
+          })()}
 
           {accounts.length === 0 && (
             <div className="nav-hover" onClick={()=>navigate('/dashboard/platforms')}
               style={{display:'flex',alignItems:'center',gap:'8px',padding:'7px 8px',borderRadius:'7px',cursor:'pointer',background:'transparent',border:'none',width:'100%'}}>
-              <span style={{fontSize:'14px',width:'20px',textAlign:'center',flexShrink:0,fontWeight:'bold'}}>+</span>
+              <span style={{fontSize:'14px',width:'20px',textAlign:'center',flexShrink:0}}>+</span>
               {sidebarOpen && <div style={{fontSize:'11px',fontWeight:'600',color:'#a5b4fc',textAlign:'left'}}>Conectar plataformas</div>}
             </div>
           )}
