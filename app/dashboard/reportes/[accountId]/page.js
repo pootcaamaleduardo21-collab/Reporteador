@@ -555,7 +555,7 @@ export default function Reportes() {
   // Sync tab from URL ?tab= param
   useEffect(() => {
     const tab = searchParams?.get('tab')
-    if (tab && ['overview','campanas','conjuntos','anuncios','audiencia'].includes(tab)) {
+    if (tab && ['overview','campanas','conjuntos','anuncios','audiencia','google-ads'].includes(tab)) {
       setActiveTab(tab)
     }
   }, [searchParams])
@@ -933,7 +933,22 @@ export default function Reportes() {
               {ads.length===0&&<div style={{textAlign:'center',padding:'60px 0',color:'#444',fontFamily:'monospace'}}>Sin datos para este periodo</div>}
             </>
           )}
-
+{activeTab==='google-ads'&&(
+  <div style={{background:'rgba(59,130,246,.05)',border:'1px solid rgba(59,130,246,.15)',borderRadius:'8px',padding:'20px',marginBottom:'20px'}}>
+    <div style={{fontSize:'14px',color:'#3b82f6',fontFamily:'monospace',fontWeight:'700',marginBottom:'12px'}}>Google Ads</div>
+    <div style={{fontSize:'11px',color:'#888',fontFamily:'monospace',lineHeight:'1.8'}}>
+      <p style={{marginBottom:'12px'}}>La integración con Google Ads está en desarrollo.</p>
+      <p style={{marginBottom:'12px'}}>Próximamente podrás ver:</p>
+      <ul style={{marginLeft:'20px',marginBottom:'12px'}}>
+        <li>Campañas de Google Ads</li>
+        <li>Rendimiento por red (búsqueda, display, shopping)</li>
+        <li>Comparativa Meta vs Google Ads</li>
+        <li>ROI consolidado</li>
+      </ul>
+      <p>Por ahora, exporta tus datos desde Google Ads Manager e importa CSVs en la sección de reportes.</p>
+    </div>
+  </div>
+)}
           {activeTab==='audiencia'&&(
             isPro === false ? <ProGate feature="los datos demograficos" type="audiencia"/> :
 
