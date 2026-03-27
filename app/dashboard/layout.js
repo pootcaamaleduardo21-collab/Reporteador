@@ -4,6 +4,31 @@ import { useRouter, usePathname } from 'next/navigation'
 import { supabase } from '../lib/supabase'
 import { usePlan } from '../lib/usePlan'
 
+const FbLogoSVG = ({size=14}) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="#1877f2">
+    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+  </svg>
+)
+const IGLogoSVG = ({size=14}) => (
+  <svg width={size} height={size} viewBox="0 0 24 24">
+    <defs><linearGradient id="igg" x1="0%" y1="100%" x2="100%" y2="0%"><stop offset="0%" stopColor="#f09433"/><stop offset="50%" stopColor="#dc2743"/><stop offset="100%" stopColor="#bc1888"/></linearGradient></defs>
+    <path fill="url(#igg)" d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+  </svg>
+)
+const TTLogoSVG = ({size=14}) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="white">
+    <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.27 6.27 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.18 8.18 0 004.78 1.52V6.76a4.85 4.85 0 01-1.01-.07z"/>
+  </svg>
+)
+const GoogleLogoSVG = ({size=14}) => (
+  <svg width={size} height={size} viewBox="0 0 24 24">
+    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+  </svg>
+)
+
 export default function DashboardLayout({ children }) {
   const [user, setUser] = useState(null)
   const [accounts, setAccounts] = useState([])
@@ -129,13 +154,13 @@ export default function DashboardLayout({ children }) {
           {sidebarOpen && <div style={{fontSize:'9px',color:'var(--text4)',fontWeight:'600',letterSpacing:'.08em',textTransform:'uppercase',padding:'10px 8px 3px'}}>Redes Orgánicas</div>}
 
           {[
-            {id:'facebook',icon:'f',label:'Facebook',sub:'Orgánico',path:'/dashboard/facebook'},
-            {id:'instagram',icon:'◉',label:'Instagram',sub:'Orgánico',path:'/dashboard/instagram'},
-            {id:'tiktok-organic',icon:'∿',label:'TikTok',sub:'Orgánico',path:'/dashboard/tiktok-organic'},
+            {id:'facebook',label:'Facebook',sub:'Orgánico',path:'/dashboard/facebook',iconBg:'#1877f2',Icon:()=><FbLogoSVG size={13}/>},
+            {id:'instagram',label:'Instagram',sub:'Orgánico',path:'/dashboard/instagram',iconBg:'linear-gradient(135deg,#f09433,#dc2743,#bc1888)',Icon:()=><IGLogoSVG size={13}/>},
+            {id:'tiktok-organic',label:'TikTok',sub:'Orgánico',path:'/dashboard/tiktok-organic',iconBg:'#010101',Icon:()=><TTLogoSVG size={12}/>},
           ].map(s=>(
             <div key={s.id} className="nav-hover" onClick={()=>navigate(s.path)}
               style={{display:'flex',alignItems:'center',gap:'8px',padding:'7px 8px',borderRadius:'7px',cursor:'pointer',marginBottom:'1px',background:activeSection===s.id?'rgba(99,102,241,.14)':'transparent'}}>
-              <span style={{fontSize:'14px',width:'20px',textAlign:'center',flexShrink:0,fontWeight:'bold'}}>{s.icon}</span>
+              <div style={{width:'20px',height:'20px',borderRadius:'5px',background:s.iconBg,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}><s.Icon/></div>
               {sidebarOpen && <div style={{flex:1,overflow:'hidden'}}>
                 <div style={{fontSize:'11px',fontWeight:'600',color:activeSection===s.id?'#a5b4fc':'#888',whiteSpace:'nowrap'}}>{s.label}</div>
                 {s.sub && <div style={{fontSize:'9px',color:'var(--text4)',marginTop:'1px'}}>{s.sub}</div>}
@@ -154,7 +179,7 @@ export default function DashboardLayout({ children }) {
               <>
                 <div className="nav-hover" onClick={()=>setReportsOpen(!reportsOpen)}
                   style={{display:'flex',alignItems:'center',gap:'8px',padding:'7px 8px',borderRadius:'7px',cursor:'pointer',background:isActiveMeta?'rgba(99,102,241,.14)':'transparent',border:'none',width:'100%'}}>
-                  <span style={{fontSize:'13px',width:'20px',textAlign:'center',flexShrink:0,color:'#1877f2',fontWeight:'bold'}}>f</span>
+                  <div style={{width:'20px',height:'20px',borderRadius:'5px',background:'#1877f2',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}><FbLogoSVG size={12}/></div>
                   {sidebarOpen && <>
                     <div style={{flex:1,minWidth:0}}>
                       <div style={{fontSize:'11px',fontWeight:'600',color:isActiveMeta?'#a5b4fc':'#888',textAlign:'left'}}>Meta Ads</div>
@@ -210,7 +235,7 @@ export default function DashboardLayout({ children }) {
               <>
                 <div className="nav-hover" onClick={()=>setGoogleAdsOpen(!googleAdsOpen)}
                   style={{display:'flex',alignItems:'center',gap:'8px',padding:'7px 8px',borderRadius:'7px',cursor:'pointer',background:isActiveGoogle?'rgba(99,102,241,.14)':'transparent',border:'none',width:'100%'}}>
-                  <span style={{fontSize:'11px',width:'20px',textAlign:'center',flexShrink:0,fontWeight:'900',color:'#4285f4'}}>G</span>
+                  <div style={{width:'20px',height:'20px',borderRadius:'5px',background:'#fff',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}><GoogleLogoSVG size={13}/></div>
                   {sidebarOpen && <>
                     <div style={{flex:1,minWidth:0}}>
                       <div style={{fontSize:'11px',fontWeight:'600',color:isActiveGoogle?'#a5b4fc':'#888',textAlign:'left'}}>Google Ads</div>
@@ -260,7 +285,7 @@ export default function DashboardLayout({ children }) {
               <>
                 <div className="nav-hover" onClick={()=>setTiktokAdsOpen(!tiktokAdsOpen)}
                   style={{display:'flex',alignItems:'center',gap:'8px',padding:'7px 8px',borderRadius:'7px',cursor:'pointer',background:isActiveTT?'rgba(99,102,241,.14)':'transparent',border:'none',width:'100%'}}>
-                  <span style={{fontSize:'12px',width:'20px',textAlign:'center',flexShrink:0,fontWeight:'bold'}}>⟲</span>
+                  <div style={{width:'20px',height:'20px',borderRadius:'5px',background:'#010101',border:'1px solid rgba(255,255,255,.15)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}><TTLogoSVG size={11}/></div>
                   {sidebarOpen && <>
                     <div style={{flex:1,minWidth:0}}>
                       <div style={{fontSize:'11px',fontWeight:'600',color:isActiveTT?'#a5b4fc':'#888',textAlign:'left'}}>TikTok Ads</div>
