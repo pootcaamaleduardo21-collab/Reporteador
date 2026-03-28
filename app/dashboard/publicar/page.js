@@ -6,6 +6,15 @@ import { supabase } from '../../lib/supabase'
 const FB_MAX = 63206
 const IG_MAX = 2200
 
+// Colores por tipo de tendencia
+const TIPO_COLORS = {
+  educativo: { bg: 'rgba(99,102,241,.12)', border: 'rgba(99,102,241,.3)', text: '#a5b4fc' },
+  lifestyle: { bg: 'rgba(236,72,153,.1)', border: 'rgba(236,72,153,.3)', text: '#f472b6' },
+  mercado: { bg: 'rgba(245,158,11,.1)', border: 'rgba(245,158,11,.3)', text: '#fbbf24' },
+  inversion: { bg: 'rgba(110,231,183,.1)', border: 'rgba(110,231,183,.25)', text: '#6ee7b7' },
+  proceso: { bg: 'rgba(96,165,250,.1)', border: 'rgba(96,165,250,.25)', text: '#60a5fa' },
+}
+
 function fmt(n) {
   if (n == null) return '—'
   if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M'
@@ -28,7 +37,7 @@ export default function PublicarPage() {
   const [loadingPages, setLoadingPages] = useState(true)
 
   const [selectedPage, setSelectedPage] = useState(null)
-  const [platform, setPlatform] = useState('facebook') // 'facebook' | 'instagram'
+  const [platform, setPlatform] = useState('facebook')
   const [caption, setCaption] = useState('')
   const [imageUrl, setImageUrl] = useState('')
   const [link, setLink] = useState('')
@@ -39,6 +48,18 @@ export default function PublicarPage() {
 
   const [recentPosts, setRecentPosts] = useState([])
   const [loadingPosts, setLoadingPosts] = useState(false)
+
+  // ── IA Copywriter ──
+  const [mainTab, setMainTab] = useState('compositor') // 'compositor' | 'ia'
+  const [trends, setTrends] = useState([])
+  const [loadingTrends, setLoadingTrends] = useState(false)
+  const [selectedTrend, setSelectedTrend] = useState(null)
+  const [generatedPosts, setGeneratedPosts] = useState([])
+  const [generatingPosts, setGeneratingPosts] = useState(false)
+  const [aiStyle, setAiStyle] = useState('equilibrado')
+  const [customPrompt, setCustomPrompt] = useState('')
+  const [aiError, setAiError] = useState(null)
+  const [aiMode, setAiMode] = useState('tendencia') // 'tendencia' | 'libre'
 
   const charLimit = platform === 'instagram' ? IG_MAX : FB_MAX
   const charCount = caption.length
@@ -107,6 +128,57 @@ export default function PublicarPage() {
       console.error('Error fetching recent posts', e)
     }
     setLoadingPosts(false)
+  }
+
+  // ── IA: Cargar tendencias del día ──
+  async function loadTrends() {
+    setLoadingTrends(true)
+    setAiError(null)
+    try {
+      const res = await fetch('/api/ai/trends')
+      const j = await res.json()
+      if (j.error) throw new Error(j.error)
+      setTrends(j.trends || [])
+    } catch (e) {
+      setAiError('No se pudieron cargar las tendencias. Verifica tu conexión o la API key.')
+    }
+    setLoadingTrends(false)
+  }
+
+  // ── IA: Generar variaciones de post ──
+  async function generatePosts() {
+    setGeneratingPosts(true)
+    setAiError(null)
+    setGeneratedPosts([])
+    try {
+      const body = {
+        topic: aiMode === 'tendencia' && selectedTrend ? selectedTrend.titulo : null,
+        platform,
+        accountName: selectedPage?.name || 'Agente Inmobiliario',
+        followers: selectedPage?.fan_count || 0,
+        style: aiStyle,
+        customPrompt: aiMode === 'libre' ? customPrompt : null,
+      }
+      const res = await fetch('/api/ai/generate-post', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+      const j = await res.json()
+      if (j.error) throw new Error(j.error)
+      setGeneratedPosts(j.posts || [])
+    } catch (e) {
+      setAiError(e.message || 'Error al generar el post. Verifica la API key de Anthropic.')
+    }
+    setGeneratingPosts(false)
+  }
+
+  // ── IA: Usar un post generado en el compositor ──
+  function useGeneratedPost(texto) {
+    setCaption(texto)
+    setMainTab('compositor')
+    setSuccess(null)
+    setError(null)
   }
 
   async function handlePost() {
@@ -221,12 +293,223 @@ export default function PublicarPage() {
         textarea:focus, input:focus { outline: none; border-color: rgba(99,102,241,.5) !important; }
       `}</style>
 
-      {/* Header */}
-      <div style={{ marginBottom: '20px' }}>
-        <div style={{ fontSize: '18px', fontWeight: '800', color: 'var(--text)', marginBottom: '4px' }}>Crear Post</div>
-        <div style={{ fontSize: '12px', color: 'var(--text4)' }}>Publica contenido orgánico en Facebook e Instagram</div>
+      {/* Header + tab switcher */}
+      <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+        <div>
+          <div style={{ fontSize: '18px', fontWeight: '800', color: 'var(--text)', marginBottom: '4px' }}>Crear Post</div>
+          <div style={{ fontSize: '12px', color: 'var(--text4)' }}>Publica contenido orgánico en Facebook e Instagram</div>
+        </div>
+        <div style={{ display: 'flex', gap: '4px', background: 'rgba(255,255,255,.04)', padding: '3px', borderRadius: '9px', border: '1px solid var(--border)' }}>
+          {[
+            { id: 'compositor', label: '✏️ Compositor' },
+            { id: 'ia', label: '🤖 Asistente IA' },
+          ].map(t => (
+            <button key={t.id} onClick={() => setMainTab(t.id)}
+              style={{ padding: '6px 14px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: '600', fontFamily: 'inherit', transition: 'all .15s',
+                background: mainTab === t.id ? (t.id === 'ia' ? 'linear-gradient(135deg,#6366f1,#8b5cf6)' : 'rgba(255,255,255,.1)') : 'transparent',
+                color: mainTab === t.id ? '#fff' : 'var(--text4)' }}>
+              {t.label}
+            </button>
+          ))}
+        </div>
       </div>
 
+      {/* ═══ IA COPYWRITER TAB ═══ */}
+      {mainTab === 'ia' && (
+        <div style={{ display: 'flex', gap: '18px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+
+          {/* LEFT: Tendencias + generador */}
+          <div style={{ flex: '1 1 340px', minWidth: '300px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+
+            {/* Tendencias del día */}
+            <div style={{ ...cardStyle, background: 'linear-gradient(135deg,rgba(99,102,241,.08),rgba(139,92,246,.05))' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                <div>
+                  <div style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text)', marginBottom: '2px' }}>🔥 Tendencias del día</div>
+                  <div style={{ fontSize: '10px', color: 'var(--text4)' }}>Temas relevantes para el mercado inmobiliario hoy</div>
+                </div>
+                <button onClick={loadTrends} disabled={loadingTrends}
+                  style={{ padding: '6px 12px', background: 'rgba(99,102,241,.2)', border: '1px solid rgba(99,102,241,.3)', borderRadius: '6px', color: '#a5b4fc', fontSize: '11px', fontWeight: '600', cursor: 'pointer', fontFamily: 'inherit', opacity: loadingTrends ? 0.6 : 1 }}>
+                  {loadingTrends ? '⏳ Cargando...' : trends.length > 0 ? '↻ Actualizar' : '✦ Generar tendencias'}
+                </button>
+              </div>
+
+              {trends.length === 0 && !loadingTrends && (
+                <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text4)', fontSize: '12px', lineHeight: '1.6' }}>
+                  Haz clic en <strong style={{ color: '#a5b4fc' }}>✦ Generar tendencias</strong> para que la IA analice qué temas son relevantes hoy en el mercado inmobiliario.
+                </div>
+              )}
+
+              {loadingTrends && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '16px', color: 'var(--text4)', fontSize: '12px' }}>
+                  <div style={{ width: '14px', height: '14px', borderRadius: '50%', border: '2px solid rgba(99,102,241,.3)', borderTop: '2px solid #6366f1', animation: 'spin .8s linear infinite', flexShrink: 0 }}></div>
+                  Analizando tendencias inmobiliarias...
+                </div>
+              )}
+
+              {trends.length > 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  {trends.map(t => {
+                    const colors = TIPO_COLORS[t.tipo] || TIPO_COLORS.educativo
+                    const isSelected = selectedTrend?.id === t.id
+                    return (
+                      <div key={t.id} onClick={() => { setSelectedTrend(t); setAiMode('tendencia') }}
+                        style={{ padding: '10px 12px', borderRadius: '8px', cursor: 'pointer', transition: 'all .15s',
+                          background: isSelected ? colors.bg : 'rgba(255,255,255,.03)',
+                          border: `1px solid ${isSelected ? colors.border : 'rgba(255,255,255,.06)'}` }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '3px' }}>
+                          <span style={{ fontSize: '14px', flexShrink: 0 }}>{t.emoji}</span>
+                          <span style={{ fontSize: '12px', fontWeight: '700', color: isSelected ? colors.text : 'var(--text)', flex: 1 }}>{t.titulo}</span>
+                          {isSelected && <span style={{ fontSize: '10px', color: colors.text, flexShrink: 0 }}>✓</span>}
+                        </div>
+                        <div style={{ fontSize: '10px', color: 'var(--text4)', lineHeight: '1.4', marginLeft: '22px' }}>{t.descripcion}</div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Generador */}
+            <div style={cardStyle}>
+              <div style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text)', marginBottom: '12px' }}>✨ Generar ideas de post</div>
+
+              {/* Modo */}
+              <div style={{ display: 'flex', gap: '4px', marginBottom: '12px', background: 'rgba(255,255,255,.04)', padding: '3px', borderRadius: '7px', border: '1px solid var(--border)' }}>
+                {[{ id: 'tendencia', label: '📊 Por tendencia' }, { id: 'libre', label: '💬 Prompt libre' }].map(m => (
+                  <button key={m.id} onClick={() => setAiMode(m.id)}
+                    style={{ flex: 1, padding: '5px 8px', borderRadius: '5px', border: 'none', cursor: 'pointer', fontSize: '11px', fontWeight: '600', fontFamily: 'inherit', transition: 'all .15s',
+                      background: aiMode === m.id ? 'rgba(255,255,255,.1)' : 'transparent',
+                      color: aiMode === m.id ? 'var(--text)' : 'var(--text4)' }}>
+                    {m.label}
+                  </button>
+                ))}
+              </div>
+
+              {aiMode === 'tendencia' && (
+                <div style={{ fontSize: '11px', color: 'var(--text4)', marginBottom: '10px', padding: '8px 10px', background: 'rgba(255,255,255,.03)', borderRadius: '6px', border: '1px solid var(--border)' }}>
+                  {selectedTrend
+                    ? <span>Tema: <strong style={{ color: '#a5b4fc' }}>{selectedTrend.emoji} {selectedTrend.titulo}</strong></span>
+                    : 'Selecciona una tendencia arriba para generar el post'}
+                </div>
+              )}
+
+              {aiMode === 'libre' && (
+                <textarea value={customPrompt} onChange={e => setCustomPrompt(e.target.value)}
+                  placeholder="Ej: Crea un post sobre por qué marzo es buen momento para comprar departamento en Playa del Carmen..."
+                  style={{ width: '100%', minHeight: '80px', background: 'rgba(255,255,255,.04)', border: '1px solid var(--border)', borderRadius: '7px', color: 'var(--text)', fontSize: '12px', padding: '8px 10px', resize: 'vertical', fontFamily: 'inherit', lineHeight: '1.5', boxSizing: 'border-box', marginBottom: '10px' }}
+                />
+              )}
+
+              {/* Estilo */}
+              <div style={{ marginBottom: '12px' }}>
+                <div style={{ fontSize: '10px', color: 'var(--text4)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: '6px' }}>Tono del copy</div>
+                <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
+                  {[{ id: 'equilibrado', label: '⚖️ Equilibrado' }, { id: 'profesional', label: '👔 Profesional' }, { id: 'casual', label: '😊 Cercano' }].map(s => (
+                    <button key={s.id} onClick={() => setAiStyle(s.id)}
+                      style={{ padding: '4px 10px', borderRadius: '5px', border: '1px solid', cursor: 'pointer', fontSize: '11px', fontWeight: '600', fontFamily: 'inherit', transition: 'all .15s',
+                        borderColor: aiStyle === s.id ? '#a5b4fc' : 'rgba(255,255,255,.08)',
+                        background: aiStyle === s.id ? 'rgba(99,102,241,.15)' : 'transparent',
+                        color: aiStyle === s.id ? '#a5b4fc' : 'var(--text4)' }}>
+                      {s.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Plataforma target */}
+              <div style={{ marginBottom: '14px' }}>
+                <div style={{ fontSize: '10px', color: 'var(--text4)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: '6px' }}>Generar para</div>
+                <div style={{ display: 'flex', gap: '5px' }}>
+                  {[{ id: 'facebook', label: '📘 Facebook' }, { id: 'instagram', label: '📸 Instagram' }].map(p => (
+                    <button key={p.id} onClick={() => setPlatform(p.id)}
+                      style={{ padding: '4px 12px', borderRadius: '5px', border: '1px solid', cursor: 'pointer', fontSize: '11px', fontWeight: '600', fontFamily: 'inherit', transition: 'all .15s',
+                        borderColor: platform === p.id ? '#60a5fa' : 'rgba(255,255,255,.08)',
+                        background: platform === p.id ? 'rgba(96,165,250,.12)' : 'transparent',
+                        color: platform === p.id ? '#60a5fa' : 'var(--text4)' }}>
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {aiError && (
+                <div style={{ marginBottom: '10px', padding: '8px 10px', background: 'rgba(248,113,113,.08)', border: '1px solid rgba(248,113,113,.2)', borderRadius: '6px', fontSize: '11px', color: '#f87171' }}>
+                  ✗ {aiError}
+                </div>
+              )}
+
+              <button onClick={generatePosts}
+                disabled={generatingPosts || (aiMode === 'tendencia' && !selectedTrend) || (aiMode === 'libre' && !customPrompt.trim())}
+                style={{ width: '100%', padding: '10px', background: 'linear-gradient(135deg,#6366f1,#8b5cf6)', border: 'none', borderRadius: '8px', color: '#fff', fontSize: '13px', fontWeight: '700', cursor: 'pointer', fontFamily: 'inherit', opacity: (generatingPosts || (aiMode === 'tendencia' && !selectedTrend) || (aiMode === 'libre' && !customPrompt.trim())) ? 0.5 : 1, transition: 'opacity .15s' }}>
+                {generatingPosts ? '⏳ Generando 3 variaciones...' : '✨ Generar ideas de post'}
+              </button>
+            </div>
+          </div>
+
+          {/* RIGHT: Posts generados */}
+          <div style={{ flex: '1 1 340px', minWidth: '300px' }}>
+            {generatingPosts && (
+              <div style={{ ...cardStyle, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '14px', padding: '32px' }}>
+                <div style={{ width: '24px', height: '24px', borderRadius: '50%', border: '2px solid rgba(99,102,241,.3)', borderTop: '2px solid #6366f1', animation: 'spin .8s linear infinite' }}></div>
+                <div style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text)' }}>La IA está escribiendo...</div>
+                <div style={{ fontSize: '11px', color: 'var(--text4)', textAlign: 'center' }}>Generando 3 variaciones de copy para {platform === 'instagram' ? 'Instagram' : 'Facebook'}...</div>
+              </div>
+            )}
+
+            {generatedPosts.length > 0 && !generatingPosts && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                <div style={{ fontSize: '12px', color: 'var(--text4)', fontFamily: 'monospace' }}>3 variaciones generadas — elige la que más te guste:</div>
+                {generatedPosts.map((p, i) => (
+                  <div key={i} style={{ ...cardStyle, border: '1px solid rgba(99,102,241,.2)', position: 'relative' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontSize: '16px' }}>{p.emoji_principal || '✍️'}</span>
+                        <div>
+                          <div style={{ fontSize: '11px', fontWeight: '700', color: '#a5b4fc' }}>{p.variacion}</div>
+                          <div style={{ fontSize: '10px', color: 'var(--text4)', fontFamily: 'monospace' }}>{p.caracteres || p.texto?.length || 0} chars</div>
+                        </div>
+                      </div>
+                      <button onClick={() => useGeneratedPost(p.texto)}
+                        style={{ padding: '6px 14px', background: 'linear-gradient(135deg,#6366f1,#8b5cf6)', border: 'none', borderRadius: '7px', color: '#fff', fontSize: '11px', fontWeight: '700', cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}>
+                        Usar este →
+                      </button>
+                    </div>
+                    {p.hook && (
+                      <div style={{ fontSize: '11px', color: '#fbbf24', fontWeight: '600', marginBottom: '6px', padding: '5px 8px', background: 'rgba(251,191,36,.08)', borderRadius: '5px', borderLeft: '2px solid #fbbf24' }}>
+                        🪝 {p.hook}
+                      </div>
+                    )}
+                    <div style={{ fontSize: '12px', color: 'var(--text)', lineHeight: '1.55', whiteSpace: 'pre-wrap', wordBreak: 'break-word', maxHeight: '180px', overflowY: 'auto', padding: '8px', background: 'rgba(255,255,255,.03)', borderRadius: '6px', marginBottom: '8px' }}>
+                      {p.texto}
+                    </div>
+                    {p.hashtags?.length > 0 && (
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                        {p.hashtags.slice(0,8).map((h, hi) => (
+                          <span key={hi} style={{ fontSize: '10px', color: '#60a5fa', background: 'rgba(96,165,250,.1)', padding: '2px 6px', borderRadius: '4px', fontFamily: 'monospace' }}>{h}</span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {generatedPosts.length === 0 && !generatingPosts && (
+              <div style={{ ...cardStyle, textAlign: 'center', padding: '40px 20px', color: 'var(--text4)' }}>
+                <div style={{ fontSize: '36px', marginBottom: '12px' }}>🤖</div>
+                <div style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text)', marginBottom: '8px' }}>Asistente IA Copywriter</div>
+                <div style={{ fontSize: '12px', lineHeight: '1.6' }}>
+                  Selecciona una tendencia del día o escribe tu propio prompt, elige el tono y genera 3 variaciones de post listas para publicar.
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ═══ COMPOSITOR TAB ═══ */}
+      {mainTab === 'compositor' && (
       <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
 
         {/* LEFT: Composer */}
@@ -471,6 +754,7 @@ export default function PublicarPage() {
           </div>
         </div>
       </div>
+      )}
     </div>
   )
 }
