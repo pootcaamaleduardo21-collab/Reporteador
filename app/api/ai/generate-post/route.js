@@ -9,35 +9,34 @@ const supabase = createClient(
 const DAILY_LIMIT   = 10
 const MONTHLY_LIMIT = 50
 
-// Llamada directa a la API REST de Google (v1 — más modelos disponibles)
-async function callGemini(systemPrompt, userPrompt) {
-  const apiKey = process.env.GOOGLE_AI_API_KEY
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`
-
-  const res = await fetch(url, {
+async function callGroq(systemPrompt, userPrompt) {
+  const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
     body: JSON.stringify({
-      contents: [{ role: 'user', parts: [{ text: `${systemPrompt}\n\n${userPrompt}` }] }],
-      generationConfig: { maxOutputTokens: 2048, temperature: 0.9 },
+      model: 'llama-3.3-70b-versatile',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user',   content: userPrompt },
+      ],
+      max_tokens: 2048,
+      temperature: 0.9,
     }),
   })
 
   const data = await res.json()
-
-  if (!res.ok) {
-    const errMsg = data.error?.message || `HTTP ${res.status}`
-    throw new Error(errMsg)
-  }
-
-  const text = data.candidates?.[0]?.content?.parts?.[0]?.text || ''
-  if (!text) throw new Error('Respuesta vacía de Gemini')
+  if (!res.ok) throw new Error(data.error?.message || `HTTP ${res.status}`)
+  const text = data.choices?.[0]?.message?.content || ''
+  if (!text) throw new Error('Respuesta vacía de Groq')
   return text
 }
 
 export async function POST(request) {
-  if (!process.env.GOOGLE_AI_API_KEY) {
-    return NextResponse.json({ error: 'GOOGLE_AI_API_KEY no configurada en las variables de entorno.' }, { status: 500 })
+  if (!process.env.GROQ_API_KEY) {
+    return NextResponse.json({ error: 'GROQ_API_KEY no configurada en las variables de entorno de Vercel.' }, { status: 500 })
   }
 
   try {
@@ -118,7 +117,7 @@ Responde ÚNICAMENTE con JSON válido (sin markdown, sin bloques de código):
   ]
 }`
 
-    const raw    = await callGemini(systemPrompt, userPrompt)
+    const raw    = await callGroq(systemPrompt, userPrompt)
     const clean  = raw.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim()
     const parsed = JSON.parse(clean)
 
@@ -133,7 +132,6 @@ Responde ÚNICAMENTE con JSON válido (sin markdown, sin bloques de código):
     return NextResponse.json({ posts: parsed.posts })
   } catch (err) {
     console.error('Generate post error:', err.message)
-    // Mostrar error exacto de Google para diagnóstico
-    return NextResponse.json({ error: `[Gemini] ${err.message || 'Error desconocido'}` }, { status: 500 })
+    return NextResponse.json({ error: err.message || 'Error al generar el post' }, { status: 500 })
   }
 }

@@ -11,35 +11,31 @@ const TRENDS_DAILY_LIMIT = 5
 let trendsCache     = null
 let trendsCacheDate = null
 
-// Llamada directa a la API REST de Google (v1)
-async function callGemini(prompt) {
-  const apiKey = process.env.GOOGLE_AI_API_KEY
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`
-
-  const res = await fetch(url, {
+async function callGroq(prompt) {
+  const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
     body: JSON.stringify({
-      contents: [{ role: 'user', parts: [{ text: prompt }] }],
-      generationConfig: { maxOutputTokens: 1024, temperature: 0.8 },
+      model: 'llama-3.3-70b-versatile',
+      messages: [{ role: 'user', content: prompt }],
+      max_tokens: 1024,
+      temperature: 0.8,
     }),
   })
 
   const data = await res.json()
-
-  if (!res.ok) {
-    const errMsg = data.error?.message || `HTTP ${res.status}`
-    throw new Error(errMsg)
-  }
-
-  const text = data.candidates?.[0]?.content?.parts?.[0]?.text || ''
-  if (!text) throw new Error('Respuesta vacía de Gemini')
+  if (!res.ok) throw new Error(data.error?.message || `HTTP ${res.status}`)
+  const text = data.choices?.[0]?.message?.content || ''
+  if (!text) throw new Error('Respuesta vacía de Groq')
   return text
 }
 
 export async function GET(request) {
-  if (!process.env.GOOGLE_AI_API_KEY) {
-    return NextResponse.json({ error: 'GOOGLE_AI_API_KEY no configurada en las variables de entorno.' }, { status: 500 })
+  if (!process.env.GROQ_API_KEY) {
+    return NextResponse.json({ error: 'GROQ_API_KEY no configurada en las variables de entorno de Vercel.' }, { status: 500 })
   }
 
   const today = new Date().toISOString().split('T')[0]
@@ -108,7 +104,7 @@ Responde ÚNICAMENTE con JSON válido (sin markdown, sin bloques de código):
   ]
 }`
 
-    const raw    = await callGemini(prompt)
+    const raw    = await callGroq(prompt)
     const clean  = raw.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim()
     const parsed = JSON.parse(clean)
 
@@ -136,14 +132,14 @@ Responde ÚNICAMENTE con JSON válido (sin markdown, sin bloques de código):
     console.error('Trends API error:', err.message)
     return NextResponse.json({
       trends: [
-        { id: 1, emoji: '🏡', titulo: 'Consejos para primera vivienda',       descripcion: 'Todo lo que necesitas saber antes de comprar tu primera casa.',      hashtags: ['#PrimeraVivienda', '#BienesRaices', '#TuHogar'],          tipo: 'educativo' },
-        { id: 2, emoji: '📈', titulo: 'Plusvalía en la Riviera Maya',         descripcion: 'Las zonas con mayor crecimiento inmobiliario este año.',             hashtags: ['#RivieraMaya', '#Inversion', '#Plusvalia'],               tipo: 'inversion' },
-        { id: 3, emoji: '🌊', titulo: 'Vivir cerca del mar',                 descripcion: 'El lifestyle que ofrece vivir en zona costera.',                     hashtags: ['#VidaEnPlaya', '#PlayaDelCarmen', '#Lifestyle'],          tipo: 'lifestyle' },
-        { id: 4, emoji: '💰', titulo: 'Crédito hipotecario en 2025',         descripcion: 'Cómo acceder a crédito y qué opciones existen.',                     hashtags: ['#Hipoteca', '#Infonavit', '#CreditoVivienda'],            tipo: 'proceso'   },
-        { id: 5, emoji: '🏢', titulo: 'Inversión en departamentos',          descripcion: 'Por qué los departamentos son la mejor inversión ahora.',            hashtags: ['#Departamentos', '#InversionInmobiliaria', '#Renta'],     tipo: 'inversion' },
-        { id: 6, emoji: '🔑', titulo: 'Proceso de compra paso a paso',       descripcion: 'Guía completa para comprar propiedad en México.',                    hashtags: ['#CompraTuCasa', '#GuiaInmobiliaria', '#BienesRaices'],    tipo: 'proceso'   },
-        { id: 7, emoji: '🏖️', titulo: 'Propiedades vacacionales rentables',  descripcion: 'Genera ingresos con una propiedad en zona turística.',              hashtags: ['#PropiedadVacacional', '#AirbnbMexico', '#Inversion'],    tipo: 'mercado'   },
-        { id: 8, emoji: '🌳', titulo: 'Amenidades más valoradas en 2025',    descripcion: 'Qué buscan hoy los compradores modernos en una propiedad.',          hashtags: ['#Amenidades', '#CalidadDeVida', '#HogarIdeal'],           tipo: 'mercado'   },
+        { id: 1, emoji: '🏡', titulo: 'Consejos para primera vivienda',      descripcion: 'Todo lo que necesitas saber antes de comprar tu primera casa.',     hashtags: ['#PrimeraVivienda', '#BienesRaices', '#TuHogar'],         tipo: 'educativo' },
+        { id: 2, emoji: '📈', titulo: 'Plusvalía en la Riviera Maya',        descripcion: 'Las zonas con mayor crecimiento inmobiliario este año.',            hashtags: ['#RivieraMaya', '#Inversion', '#Plusvalia'],              tipo: 'inversion' },
+        { id: 3, emoji: '🌊', titulo: 'Vivir cerca del mar',                descripcion: 'El lifestyle que ofrece vivir en zona costera.',                    hashtags: ['#VidaEnPlaya', '#PlayaDelCarmen', '#Lifestyle'],         tipo: 'lifestyle' },
+        { id: 4, emoji: '💰', titulo: 'Crédito hipotecario en 2025',        descripcion: 'Cómo acceder a crédito y qué opciones existen.',                    hashtags: ['#Hipoteca', '#Infonavit', '#CreditoVivienda'],           tipo: 'proceso'   },
+        { id: 5, emoji: '🏢', titulo: 'Inversión en departamentos',         descripcion: 'Por qué los departamentos son la mejor inversión ahora.',           hashtags: ['#Departamentos', '#InversionInmobiliaria', '#Renta'],    tipo: 'inversion' },
+        { id: 6, emoji: '🔑', titulo: 'Proceso de compra paso a paso',      descripcion: 'Guía completa para comprar propiedad en México.',                   hashtags: ['#CompraTuCasa', '#GuiaInmobiliaria', '#BienesRaices'],   tipo: 'proceso'   },
+        { id: 7, emoji: '🏖️', titulo: 'Propiedades vacacionales rentables', descripcion: 'Genera ingresos con una propiedad en zona turística.',             hashtags: ['#PropiedadVacacional', '#AirbnbMexico', '#Inversion'],   tipo: 'mercado'   },
+        { id: 8, emoji: '🌳', titulo: 'Amenidades más valoradas en 2025',   descripcion: 'Qué buscan hoy los compradores modernos en una propiedad.',         hashtags: ['#Amenidades', '#CalidadDeVida', '#HogarIdeal'],          tipo: 'mercado'   },
       ],
       cached: false,
       fallback: true,
