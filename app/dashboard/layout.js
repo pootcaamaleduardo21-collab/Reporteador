@@ -331,14 +331,14 @@ export default function DashboardLayout({ children }) {
 
           {/* Plataformas no conectadas — siempre visibles como invitación a conectar */}
           {!accounts.some(a=>a.platform==='meta_ads') && (
-            <div onClick={connectMeta} className="nav-hover"
+            <div onClick={connectMeta} className="nav-hover" title="Necesitas una cuenta de Meta Business Manager para ver campañas pagadas"
               style={{display:'flex',alignItems:'center',gap:'8px',padding:'7px 8px',borderRadius:'7px',cursor:'pointer',opacity:.75}}>
               <div style={{width:'20px',height:'20px',borderRadius:'5px',background:'rgba(24,119,242,.2)',border:'1px dashed rgba(24,119,242,.4)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
                 <FbLogoSVG size={11}/>
               </div>
               {sidebarOpen && <div style={{flex:1,minWidth:0}}>
                 <div style={{fontSize:'11px',fontWeight:'600',color:'#555'}}>Meta Ads</div>
-                <div style={{fontSize:'9px',color:'#a5b4fc',marginTop:'1px'}}>Conectar →</div>
+                <div style={{fontSize:'9px',color:'#a5b4fc',marginTop:'1px'}}>Sin cuentas de ads →</div>
               </div>}
             </div>
           )}

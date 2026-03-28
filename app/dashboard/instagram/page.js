@@ -162,12 +162,13 @@ export default function InstagramPage() {
 
       const [insR, mediaR, audienceCountryR, audienceCityR] = await Promise.all([
         fetch(`https://graph.facebook.com/v21.0/${ig_id}/insights?metric=reach,impressions,profile_views,follower_count,website_clicks&period=day&since=${range.since}&until=${range.until}&access_token=${token}`),
-        fetch(`https://graph.facebook.com/v21.0/${ig_id}/media?fields=id,caption,media_type,timestamp,like_count,comments_count,media_url,thumbnail_url,insights.metric(reach,impressions,saved,video_views,avg_watch_time,shares,plays)&limit=12&since=${range.since}&until=${range.until}&access_token=${token}`),
+        // Posts sin filtro de fecha — siempre muestra los últimos 20
+        fetch(`https://graph.facebook.com/v21.0/${ig_id}/media?fields=id,caption,media_type,timestamp,like_count,comments_count,media_url,thumbnail_url,permalink,insights.metric(reach,impressions,saved,video_views,avg_watch_time,shares,plays)&limit=20&access_token=${token}`),
         fetch(`https://graph.facebook.com/v21.0/${ig_id}/insights?metric=audience_country&period=lifetime&access_token=${token}`),
         fetch(`https://graph.facebook.com/v21.0/${ig_id}/insights?metric=audience_city&period=lifetime&access_token=${token}`),
       ])
 
-      const [insJ, mediaJ, audienceCountryJ, audienceCityJ] = await Promise.all([insR.json(),mediaR.json(),audienceCountryR.json(),audienceCityJ.json()])
+      const [insJ, mediaJ, audienceCountryJ, audienceCityJ] = await Promise.all([insR.json(),mediaR.json(),audienceCountryR.json(),audienceCityR.json()])
 
       // Process insights - sum daily values
       const ins = {}
@@ -357,7 +358,7 @@ export default function InstagramPage() {
           {/* Media grid */}
           {media.length > 0 && (
             <div style={{background:'#17171d',border:'1px solid rgba(255,255,255,.07)',borderRadius:'12px',padding:'16px',marginBottom:'16px'}}>
-              <div style={{fontSize:'10px',color:'#444',fontFamily:'monospace',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:'14px'}}>Publicaciones del periodo</div>
+              <div style={{fontSize:'10px',color:'#444',fontFamily:'monospace',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:'14px'}}>Publicaciones recientes — ordenadas por engagement</div>
               <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(260px,1fr))',gap:'10px'}}>
                 {media.map(m=>(
                   <div key={m.id} style={{background:'rgba(255,255,255,.02)',borderRadius:'9px',padding:'12px',border:'1px solid rgba(255,255,255,.04)'}}>
@@ -427,8 +428,59 @@ export default function InstagramPage() {
             </div>
           )}
 
+          {/* Recomendaciones automáticas IG */}
+          {(insights || media.length > 0) && (() => {
+            const recs = []
+            const totalEng = media.reduce((s,m)=>s+m.totalEngagement,0)
+            const avgEng = media.length > 0 ? totalEng/media.length : 0
+            const reels = media.filter(m=>m.media_type==='REELS'||m.media_type==='VIDEO')
+            const images = media.filter(m=>m.media_type==='IMAGE'||m.media_type==='CAROUSEL_ALBUM')
+            const avgReelEng = reels.length > 0 ? reels.reduce((s,m)=>s+m.totalEngagement,0)/reels.length : 0
+            const avgImgEng = images.length > 0 ? images.reduce((s,m)=>s+m.totalEngagement,0)/images.length : 0
+
+            if (avgReelEng > avgImgEng * 1.5 && reels.length > 0) recs.push({ icon:'🎬', title:'Los Reels te funcionan mejor', desc:`Tus Reels generan ${Math.round(avgReelEng)} interacciones en promedio. Instagram prioriza el video en el algoritmo — publica más Reels.`, color:'#f97316' })
+            else if (avgImgEng > avgReelEng * 1.3 && images.length > 0) recs.push({ icon:'📸', title:'Las imágenes tienen mejor engagement', desc:`Tus fotos generan más interacciones que los videos. Para propiedades inmobiliarias, las fotos de alta calidad suelen funcionar bien.`, color:'#e1306c' })
+
+            if (insights?.profile_views > 0 && insights?.follower_count > 0) {
+              const convRate = (insights.follower_count / insights.profile_views * 100).toFixed(1)
+              if (+convRate < 5) recs.push({ icon:'👤', title:'Optimiza tu bio de Instagram', desc:`Solo el ${convRate}% de quienes visitan tu perfil te siguen. Mejora tu bio con tu propuesta de valor y una llamada a la acción clara.`, color:'#a78bfa' })
+            }
+            if (insights?.website_clicks > 0) recs.push({ icon:'🔗', title:`${fmtN(insights.website_clicks)} clicks al link de bio`, desc:'Aprovecha el tráfico al link de tu bio — asegúrate de que el destino sea una página de contacto o catálogo de propiedades.', color:'#6ee7b7' })
+            if (media.length > 0) {
+              const bestDay = (() => {
+                const days = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb']
+                const counts = {}
+                media.forEach(m => { const d = new Date(m.timestamp).getDay(); counts[d] = (counts[d]||0) + m.totalEngagement })
+                const best = Object.entries(counts).sort((a,b)=>+b[1]-+a[1])[0]
+                return best ? days[+best[0]] : null
+              })()
+              if (bestDay) recs.push({ icon:'📅', title:`Publica los ${bestDay}`, desc:`Tus posts del ${bestDay} generan más engagement. Programa tu contenido más importante ese día.`, color:'#60a5fa' })
+            }
+            if (recs.length === 0) recs.push({ icon:'💡', title:'Publica 4-5 veces por semana', desc:'La consistencia es clave. En Instagram, la frecuencia de publicación impacta directamente el alcance orgánico. Combina Reels, carruseles y fotos.', color:'#a5b4fc' })
+
+            return (
+              <div style={{background:'#17171d',border:'1px solid rgba(255,255,255,.07)',borderRadius:'12px',padding:'16px',marginBottom:'16px'}}>
+                <div style={{fontSize:'10px',color:'#444',fontFamily:'monospace',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:'12px'}}>💡 Recomendaciones inteligentes</div>
+                <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+                  {recs.slice(0,4).map((r,i)=>(
+                    <div key={i} style={{display:'flex',gap:'10px',padding:'10px 12px',background:'rgba(255,255,255,.03)',borderRadius:'8px',border:'1px solid rgba(255,255,255,.05)'}}>
+                      <span style={{fontSize:'16px',flexShrink:0}}>{r.icon}</span>
+                      <div>
+                        <div style={{fontSize:'11px',fontWeight:'700',color:r.color,marginBottom:'2px'}}>{r.title}</div>
+                        <div style={{fontSize:'10px',color:'#555',lineHeight:'1.55'}}>{r.desc}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )
+          })()}
+
           {media.length===0 && !loading && (
-            <div style={{textAlign:'center',padding:'40px',color:'#333',fontFamily:'monospace'}}>Sin publicaciones en este periodo</div>
+            <div style={{textAlign:'center',padding:'40px',fontSize:'12px'}}>
+              <div style={{color:'var(--text4)',marginBottom:'8px'}}>Esta cuenta no tiene publicaciones recientes.</div>
+              <a href="/dashboard/publicar" style={{color:'#e1306c',textDecoration:'none',fontSize:'12px',fontWeight:'600'}}>Crea tu primer post →</a>
+            </div>
           )}
         </>
       )}

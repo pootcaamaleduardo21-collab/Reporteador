@@ -181,7 +181,8 @@ export default function FacebookPage() {
 
       const [insR, postsR, dailyR, geoCountryR, geoRegionR] = await Promise.all([
         fetch(`https://graph.facebook.com/v21.0/${pid}/insights?metric=page_impressions,page_reach,page_engaged_users,page_post_engagements,page_fan_adds_unique,page_fan_removes_unique,page_views_total&period=total_over_range&since=${range.since}&until=${range.until}&access_token=${tok}`),
-        fetch(`https://graph.facebook.com/v21.0/${pid}/posts?fields=id,message,story,created_time,full_picture,attachments{media_type,media},likes.summary(true),comments.summary(true),shares,insights.metric(post_impressions,post_reach,post_engaged_users,post_video_avg_time_watched,post_reactions_by_type_total)&limit=12&since=${range.since}&until=${range.until}&access_token=${tok}`),
+        // Posts sin filtro de fecha — siempre muestra los últimos 20
+        fetch(`https://graph.facebook.com/v21.0/${pid}/posts?fields=id,message,story,created_time,full_picture,attachments{media_type,media},likes.summary(true),comments.summary(true),shares,insights.metric(post_impressions,post_reach,post_engaged_users,post_video_avg_time_watched,post_reactions_by_type_total)&limit=20&access_token=${tok}`),
         fetch(`https://graph.facebook.com/v21.0/${pid}/insights?metric=page_impressions&period=day&since=${range.since}&until=${range.until}&access_token=${tok}`),
         fetch(`https://graph.facebook.com/v21.0/${pid}/insights?metric=page_impressions_by_country_unique&period=total_over_range&since=${range.since}&until=${range.until}&access_token=${tok}`),
         fetch(`https://graph.facebook.com/v21.0/${pid}/insights?metric=page_impressions_by_city_unique&period=total_over_range&since=${range.since}&until=${range.until}&access_token=${tok}`),
@@ -461,8 +462,60 @@ export default function FacebookPage() {
             </div>
           )}
 
+          {/* Recomendaciones automáticas */}
+          {(insights || posts.length > 0) && (() => {
+            const recs = []
+            const er = insights?.page_reach > 0 ? ((insights.page_post_engagements||0)/insights.page_reach*100) : 0
+            const bestDay = posts.length > 0 ? (() => {
+              const days = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb']
+              const counts = {}
+              posts.forEach(p => { const d = new Date(p.created_time).getDay(); counts[d] = (counts[d]||0) + p.totalEngagement })
+              const best = Object.entries(counts).sort((a,b)=>b[1]-a[1])[0]
+              return best ? days[+best[0]] : null
+            })() : null
+
+            if (er >= 3) recs.push({ icon:'🔥', title:'Excelente engagement rate', desc:`Tu tasa de engagement es ${er.toFixed(1)}%, muy por encima del promedio del sector (1-2%). Tu contenido está resonando con tu audiencia.`, color:'#10b981' })
+            else if (er > 0 && er < 1) recs.push({ icon:'⚠️', title:'Engagement rate bajo', desc:`Tu tasa es ${er.toFixed(1)}%. El promedio inmobiliario es 1-3%. Prueba publicar con más frecuencia y usa imágenes de propiedades de alta calidad.`, color:'#fbbf24' })
+            if (insights?.page_fan_removes_unique > insights?.page_fan_adds_unique) recs.push({ icon:'📉', title:'Estás perdiendo seguidores', desc:`Perdiste más seguidores de los que ganaste este período. Aumenta la frecuencia de publicación y mejora la calidad del contenido.`, color:'#f87171' })
+            if (insights?.page_impressions > 0 && insights?.page_reach > 0) {
+              const freq = ((insights.page_impressions||0)/(insights.page_reach||1)).toFixed(1)
+              if (+freq > 3) recs.push({ icon:'🔄', title:'Alta frecuencia de exposición', desc:`Tu audiencia ve tu contenido en promedio ${freq} veces. Considera variar el tipo de contenido para evitar saturación.`, color:'#a78bfa' })
+            }
+            if (bestDay) recs.push({ icon:'📅', title:`Publica los ${bestDay}`, desc:`Tus posts del ${bestDay} generan más engagement. Programa tu contenido más importante para ese día.`, color:'#6ee7b7' })
+            if (posts.length > 0) {
+              const videoCount = posts.filter(p=>p.mediaType==='video').length
+              const imgCount = posts.filter(p=>p.mediaType==='photo'||p.mediaType==='album').length
+              if (videoCount > 0 && imgCount > 0) {
+                const avgVideoEng = posts.filter(p=>p.mediaType==='video').reduce((s,p)=>s+p.totalEngagement,0)/videoCount
+                const avgImgEng = posts.filter(p=>p.mediaType==='photo'||p.mediaType==='album').reduce((s,p)=>s+p.totalEngagement,0)/imgCount
+                if (avgVideoEng > avgImgEng * 1.3) recs.push({ icon:'🎥', title:'Los videos te funcionan mejor', desc:`Tus videos generan ${Math.round(avgVideoEng)} interacciones en promedio vs ${Math.round(avgImgEng)} de las fotos. Aumenta la producción de video.`, color:'#f97316' })
+                else if (avgImgEng > avgVideoEng * 1.3) recs.push({ icon:'📸', title:'Las fotos generan más engagement', desc:`Para esta página, las imágenes funcionan mejor que los videos. Enfócate en fotos de alta calidad de las propiedades.`, color:'#60a5fa' })
+              }
+            }
+            if (recs.length === 0 && insights) recs.push({ icon:'💡', title:'Sigue publicando consistentemente', desc:'La consistencia es clave en redes sociales. Publica al menos 3-4 veces por semana para mantener el alcance orgánico activo.', color:'#a5b4fc' })
+
+            return recs.length > 0 ? (
+              <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'12px',padding:'16px',marginBottom:'16px'}}>
+                <div style={{fontSize:'10px',color:'var(--text4)',fontFamily:'monospace',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:'12px'}}>💡 Recomendaciones inteligentes</div>
+                <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+                  {recs.slice(0,4).map((r,i)=>(
+                    <div key={i} style={{display:'flex',gap:'10px',padding:'10px 12px',background:'rgba(255,255,255,.03)',borderRadius:'8px',border:'1px solid rgba(255,255,255,.06)'}}>
+                      <span style={{fontSize:'16px',flexShrink:0}}>{r.icon}</span>
+                      <div>
+                        <div style={{fontSize:'11px',fontWeight:'700',color:r.color,marginBottom:'2px'}}>{r.title}</div>
+                        <div style={{fontSize:'10px',color:'var(--text4)',lineHeight:'1.55'}}>{r.desc}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null
+          })()}
+
           {posts.length === 0 && !loading && (
-            <div style={{textAlign:'center',padding:'40px',color:'#333',fontFamily:'monospace'}}>Sin publicaciones en este periodo</div>
+            <div style={{textAlign:'center',padding:'40px',color:'var(--text4)',fontSize:'12px'}}>
+              Esta página no tiene publicaciones recientes. Comienza a publicar desde <a href="/dashboard/publicar" style={{color:'#a5b4fc',textDecoration:'none'}}>Crear Post →</a>
+            </div>
           )}
         </>
       )}
