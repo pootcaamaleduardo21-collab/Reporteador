@@ -12,7 +12,7 @@ const MONTHLY_LIMIT = 50
 // Llamada directa a la API REST de Google (v1 — más modelos disponibles)
 async function callGemini(systemPrompt, userPrompt) {
   const apiKey = process.env.GOOGLE_AI_API_KEY
-  const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`
 
   const res = await fetch(url, {
     method: 'POST',
@@ -133,6 +133,7 @@ Responde ÚNICAMENTE con JSON válido (sin markdown, sin bloques de código):
     return NextResponse.json({ posts: parsed.posts })
   } catch (err) {
     console.error('Generate post error:', err.message)
-    return NextResponse.json({ error: err.message || 'Error al generar el post' }, { status: 500 })
+    // Mostrar error exacto de Google para diagnóstico
+    return NextResponse.json({ error: `[Gemini] ${err.message || 'Error desconocido'}` }, { status: 500 })
   }
 }
