@@ -79,7 +79,7 @@ export async function GET(request) {
       }
     }
 
-    return NextResponse.redirect(`${APP_URL}/dashboard?success=meta_connected`)
+    return NextResponse.redirect(`${APP_URL}/dashboard/platforms?success=meta_connected`)
   } catch (err) {
     console.error('Meta OAuth callback error:', err)
     return NextResponse.redirect(`${APP_URL}/dashboard?error=meta_oauth_error`)

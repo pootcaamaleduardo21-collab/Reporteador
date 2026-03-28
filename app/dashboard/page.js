@@ -7,6 +7,7 @@ import { usePlan } from '../lib/usePlan'
 const fmtN = v => (+v||0)>=1e6?((+v/1e6).toFixed(1)+'M'):(+v||0)>=1e3?((+v/1e3).toFixed(1)+'K'):String(Math.round(+v||0))
 const fmtDate = d => { try { return new Date(d).toLocaleDateString('es-MX',{day:'numeric',month:'short'}) } catch{return ''} }
 const truncate = (str,n=85) => str&&str.length>n?str.slice(0,n)+'…':(str||'')
+const fmtMXN = v => '$'+Number(v||0).toLocaleString('es-MX',{minimumFractionDigits:0,maximumFractionDigits:0})
 const fmtCurrency = (v,dec=0) => '$'+Number(v||0).toLocaleString('es-MX',{minimumFractionDigits:dec,maximumFractionDigits:dec})
 
 const MetaSVG = ({size=18}) => (

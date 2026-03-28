@@ -187,7 +187,7 @@ export default function FacebookPage() {
         fetch(`https://graph.facebook.com/v21.0/${pid}/insights?metric=page_impressions_by_city_unique&period=total_over_range&since=${range.since}&until=${range.until}&access_token=${tok}`),
       ])
 
-      const [insJ, postsJ, dailyJ, geoCountryJ, geoRegionJ] = await Promise.all([insR.json(), postsR.json(), dailyR.json(), geoCountryR.json(), geoRegionJ.json()])
+      const [insJ, postsJ, dailyJ, geoCountryJ, geoRegionJ] = await Promise.all([insR.json(), postsR.json(), dailyR.json(), geoCountryR.json(), geoRegionR.json()])
 
       const ins = {}
       ;(insJ.data||[]).forEach(m => { ins[m.name] = m.values?.[0]?.value || 0 })

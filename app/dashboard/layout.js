@@ -108,8 +108,9 @@ export default function DashboardLayout({ children }) {
   const isGoogleAdsPage = pathname === '/dashboard/google-ads'
   const isTikTokAdsPage = pathname === '/dashboard/tiktok-ads'
   const isOverviewPage = pathname === '/dashboard' || pathname === '/dashboard/'
+  const isPublicarPage = pathname === '/dashboard/publicar'
 
-  const activeSection = isReportePage ? 'reportes' : isSettingsPage ? 'settings' : isFacebookPage ? 'facebook' : isInstagramPage ? 'instagram' : isTikTokOrganicPage ? 'tiktok-organic' : isGoogleAdsPage ? 'google-ads' : isTikTokAdsPage ? 'tiktok-ads' : 'overview'
+  const activeSection = isReportePage ? 'reportes' : isSettingsPage ? 'settings' : isFacebookPage ? 'facebook' : isInstagramPage ? 'instagram' : isTikTokOrganicPage ? 'tiktok-organic' : isGoogleAdsPage ? 'google-ads' : isTikTokAdsPage ? 'tiktok-ads' : isPublicarPage ? 'publicar' : 'overview'
 
   const topbarTitle = isReportePage
     ? (selectedAccount?.account_name || selectedAccount?.account_id || 'Reportes')
@@ -119,6 +120,7 @@ export default function DashboardLayout({ children }) {
     : activeSection === 'tiktok-organic' ? 'TikTok Orgánico'
     : activeSection === 'google-ads' ? 'Google Ads'
     : activeSection === 'tiktok-ads' ? 'TikTok Ads'
+    : activeSection === 'publicar' ? 'Crear Post'
     : 'Dashboard'
 
   if (!user) return <div style={{minHeight:'100vh',background:'var(--bg)'}}></div>
@@ -146,6 +148,21 @@ export default function DashboardLayout({ children }) {
 
           {[
             {id:'overview',icon:'▣',label:'Resumen',path:'/dashboard',sub:'Pagado + orgánico'},
+          ].map(s=>(
+            <div key={s.id} className="nav-hover" onClick={()=>navigate(s.path)}
+              style={{display:'flex',alignItems:'center',gap:'8px',padding:'7px 8px',borderRadius:'7px',cursor:'pointer',marginBottom:'1px',background:activeSection===s.id?'rgba(99,102,241,.14)':'transparent'}}>
+              <span style={{fontSize:'14px',width:'20px',textAlign:'center',flexShrink:0,fontWeight:'bold'}}>{s.icon}</span>
+              {sidebarOpen && <div style={{flex:1,overflow:'hidden'}}>
+                <div style={{fontSize:'11px',fontWeight:'600',color:activeSection===s.id?'#a5b4fc':'#888',whiteSpace:'nowrap'}}>{s.label}</div>
+                {s.sub && <div style={{fontSize:'9px',color:'var(--text4)',marginTop:'1px'}}>{s.sub}</div>}
+              </div>}
+            </div>
+          ))}
+
+          {sidebarOpen && <div style={{fontSize:'9px',color:'var(--text4)',fontWeight:'600',letterSpacing:'.08em',textTransform:'uppercase',padding:'10px 8px 3px'}}>Publicar</div>}
+
+          {[
+            {id:'publicar',icon:'✏️',label:'Crear Post',sub:'Facebook e Instagram',path:'/dashboard/publicar'},
           ].map(s=>(
             <div key={s.id} className="nav-hover" onClick={()=>navigate(s.path)}
               style={{display:'flex',alignItems:'center',gap:'8px',padding:'7px 8px',borderRadius:'7px',cursor:'pointer',marginBottom:'1px',background:activeSection===s.id?'rgba(99,102,241,.14)':'transparent'}}>
