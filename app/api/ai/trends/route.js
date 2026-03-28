@@ -1,9 +1,17 @@
 import { NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { createClient } from '@supabase/supabase-js'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
-// Cache simple en memoria (se reinicia con cada deploy, pero sirve para una sesión del servidor)
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+)
+
+const TRENDS_DAILY_LIMIT = 5 // refrescos de tendencias por día por usuario
+
+// Cache en memoria (por si múltiples requests en la misma instancia)
 let trendsCache = null
 let trendsCacheDate = null
 
@@ -14,19 +22,56 @@ export async function GET(request) {
 
   const today = new Date().toISOString().split('T')[0]
 
-  // Retornar caché si ya se generó hoy
+  // Retornar caché si ya se generó hoy (en esta instancia de servidor)
   if (trendsCache && trendsCacheDate === today) {
     return NextResponse.json({ trends: trendsCache, cached: true })
   }
 
+  // ── Intentar servir desde Supabase (persistente entre instancias) ──
+  const { data: dbCache } = await supabase
+    .from('ai_trends_cache')
+    .select('trends')
+    .eq('date', today)
+    .single()
+
+  if (dbCache?.trends) {
+    trendsCache = dbCache.trends
+    trendsCacheDate = today
+    return NextResponse.json({ trends: dbCache.trends, cached: true })
+  }
+
+  // ── Rate limiting por usuario ──
+  const { searchParams } = new URL(request.url)
+  const userId = searchParams.get('userId')
+
+  if (userId) {
+    const trendKey = `trends_${today}`
+    const { data: usageRow } = await supabase
+      .from('ai_usage')
+      .select('calls')
+      .eq('user_id', userId)
+      .eq('date', trendKey)
+      .single()
+
+    const trendCalls = usageRow?.calls || 0
+
+    if (trendCalls >= TRENDS_DAILY_LIMIT) {
+      // Si hay cache de hoy en memoria, usarlo de todas formas
+      if (trendsCache) return NextResponse.json({ trends: trendsCache, cached: true })
+      return NextResponse.json({
+        error: `Límite de actualizaciones de tendencias alcanzado (${TRENDS_DAILY_LIMIT}/día).`,
+        limitReached: true,
+      }, { status: 429 })
+    }
+  }
+
   try {
-    const { searchParams } = new URL(request.url)
     const location = searchParams.get('location') || 'México (Riviera Maya, CDMX, Monterrey)'
     const month = new Date().toLocaleString('es-MX', { month: 'long' })
     const year = new Date().getFullYear()
 
     const message = await client.messages.create({
-      model: 'claude-opus-4-5',
+      model: 'claude-haiku-3-5',
       max_tokens: 1024,
       messages: [{
         role: 'user',
@@ -61,13 +106,35 @@ Responde ÚNICAMENTE con un JSON válido con este formato exacto (sin markdown, 
     const raw = message.content[0].text.trim()
     const parsed = JSON.parse(raw)
 
+    // Guardar en caché en memoria
     trendsCache = parsed.trends
     trendsCacheDate = today
+
+    // Guardar en Supabase para persistir entre instancias serverless
+    await supabase.from('ai_trends_cache').upsert(
+      { date: today, trends: parsed.trends },
+      { onConflict: 'date' }
+    )
+
+    // Incrementar contador de tendencias del usuario
+    if (userId) {
+      const trendKey = `trends_${today}`
+      const { data: usageRow } = await supabase
+        .from('ai_usage')
+        .select('calls')
+        .eq('user_id', userId)
+        .eq('date', trendKey)
+        .single()
+      const prev = usageRow?.calls || 0
+      await supabase.from('ai_usage').upsert(
+        { user_id: userId, date: trendKey, calls: prev + 1 },
+        { onConflict: 'user_id,date' }
+      )
+    }
 
     return NextResponse.json({ trends: parsed.trends, cached: false })
   } catch (err) {
     console.error('Trends API error:', err)
-    // Tendencias de fallback si la API falla
     return NextResponse.json({
       trends: [
         { id: 1, emoji: '🏡', titulo: 'Consejos para primera vivienda', descripcion: 'Todo lo que necesitas saber antes de comprar tu primera casa.', hashtags: ['#PrimeraVivienda', '#BienesRaices', '#TuHogar'], tipo: 'educativo' },

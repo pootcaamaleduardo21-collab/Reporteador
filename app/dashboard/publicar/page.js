@@ -135,8 +135,11 @@ export default function PublicarPage() {
     setLoadingTrends(true)
     setAiError(null)
     try {
-      const res = await fetch('/api/ai/trends')
+      const params = new URLSearchParams()
+      if (user?.id) params.set('userId', user.id)
+      const res = await fetch(`/api/ai/trends?${params}`)
       const j = await res.json()
+      if (j.limitReached) { setAiError(j.error); setLoadingTrends(false); return }
       if (j.error) throw new Error(j.error)
       setTrends(j.trends || [])
     } catch (e) {
@@ -158,6 +161,7 @@ export default function PublicarPage() {
         followers: selectedPage?.fan_count || 0,
         style: aiStyle,
         customPrompt: aiMode === 'libre' ? customPrompt : null,
+        userId: user?.id || null,
       }
       const res = await fetch('/api/ai/generate-post', {
         method: 'POST',
@@ -165,6 +169,7 @@ export default function PublicarPage() {
         body: JSON.stringify(body),
       })
       const j = await res.json()
+      if (j.limitReached) { setAiError(j.error); setGeneratingPosts(false); return }
       if (j.error) throw new Error(j.error)
       setGeneratedPosts(j.posts || [])
     } catch (e) {

@@ -1,7 +1,16 @@
 import { NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { createClient } from '@supabase/supabase-js'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+)
+
+const DAILY_LIMIT = 10   // generaciones por día por usuario
+const MONTHLY_LIMIT = 50 // generaciones por mes por usuario
 
 export async function POST(request) {
   if (!process.env.ANTHROPIC_API_KEY) {
@@ -9,8 +18,53 @@ export async function POST(request) {
   }
 
   try {
-    const { topic, platform, accountName, followers, style, customPrompt } = await request.json()
+    const { topic, platform, accountName, followers, style, customPrompt, userId } = await request.json()
 
+    const today = new Date().toISOString().split('T')[0]
+    const monthStart = today.slice(0, 7) + '-01'
+    let todayCalls = 0
+
+    // ── Rate limiting por usuario ──
+    if (userId) {
+      const { data: todayRow } = await supabase
+        .from('ai_usage')
+        .select('calls')
+        .eq('user_id', userId)
+        .eq('date', today)
+        .single()
+
+      todayCalls = todayRow?.calls || 0
+
+      if (todayCalls >= DAILY_LIMIT) {
+        return NextResponse.json({
+          error: `Límite diario alcanzado (${DAILY_LIMIT} generaciones/día). Regresa mañana.`,
+          limitReached: true,
+          type: 'daily',
+          used: todayCalls,
+          limit: DAILY_LIMIT,
+        }, { status: 429 })
+      }
+
+      const { data: monthRows } = await supabase
+        .from('ai_usage')
+        .select('calls')
+        .eq('user_id', userId)
+        .gte('date', monthStart)
+
+      const monthlyCalls = (monthRows || []).reduce((s, r) => s + (r.calls || 0), 0)
+
+      if (monthlyCalls >= MONTHLY_LIMIT) {
+        return NextResponse.json({
+          error: `Límite mensual alcanzado (${MONTHLY_LIMIT} generaciones/mes). Se renueva el 1 del próximo mes.`,
+          limitReached: true,
+          type: 'monthly',
+          used: monthlyCalls,
+          limit: MONTHLY_LIMIT,
+        }, { status: 429 })
+      }
+    }
+
+    // ── Contextos ──
     const platformCtx = platform === 'instagram'
       ? 'Instagram (máximo 2,200 caracteres, usa emojis estratégicamente, formato visual con saltos de línea)'
       : 'Facebook (máximo 63,206 caracteres, puedes ser más detallado, incluye una llamada a la acción clara)'
@@ -25,8 +79,9 @@ export async function POST(request) {
       ? `Genera 3 variaciones de un post para ${platformCtx} con esta instrucción: "${customPrompt}".`
       : `Genera 3 variaciones de un post para ${platformCtx} sobre el tema: "${topic}".`
 
+    // ── Llamada a Claude Haiku (rápido y económico) ──
     const message = await client.messages.create({
-      model: 'claude-opus-4-5',
+      model: 'claude-haiku-3-5',
       max_tokens: 2048,
       system: `Eres un experto copywriter de marketing inmobiliario en México, especializado en redes sociales para agentes y desarrolladoras inmobiliarias.
 
@@ -64,6 +119,14 @@ Responde ÚNICAMENTE con JSON válido (sin markdown):
 
     const raw = message.content[0].text.trim()
     const parsed = JSON.parse(raw)
+
+    // ── Incrementar contador de uso ──
+    if (userId) {
+      await supabase.from('ai_usage').upsert(
+        { user_id: userId, date: today, calls: todayCalls + 1 },
+        { onConflict: 'user_id,date' }
+      )
+    }
 
     return NextResponse.json({ posts: parsed.posts })
   } catch (err) {
