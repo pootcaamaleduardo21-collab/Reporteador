@@ -39,8 +39,9 @@ export default function PublicarPage() {
   const [selectedPage, setSelectedPage] = useState(null)
   const [platform, setPlatform] = useState('facebook')
   const [caption, setCaption] = useState('')
-  const [imageUrl, setImageUrl] = useState('')
-  const [link, setLink] = useState('')
+  const [imageFile, setImageFile] = useState(null)
+  const [imagePreview, setImagePreview] = useState(null)
+  const [uploading, setUploading] = useState(false)
 
   const [posting, setPosting] = useState(false)
   const [success, setSuccess] = useState(null)
@@ -182,6 +183,33 @@ export default function PublicarPage() {
     setGeneratingPosts(false)
   }
 
+  // ── Manejo de imagen desde dispositivo ──
+  function handleImageSelect(file) {
+    if (!file) return
+    if (!file.type.startsWith('image/')) { setError('Solo se permiten imágenes (JPG, PNG, WEBP, GIF).'); return }
+    if (file.size > 10 * 1024 * 1024) { setError('La imagen no puede superar 10 MB.'); return }
+    setImageFile(file)
+    setImagePreview(URL.createObjectURL(file))
+    setError(null)
+  }
+
+  function clearImage() {
+    if (imagePreview) URL.revokeObjectURL(imagePreview)
+    setImageFile(null)
+    setImagePreview(null)
+  }
+
+  async function uploadImageToStorage(file) {
+    const ext  = file.name.split('.').pop() || 'jpg'
+    const path = `${user.id}/${Date.now()}.${ext}`
+    const { data, error } = await supabase.storage
+      .from('post-images')
+      .upload(path, file, { contentType: file.type, upsert: false })
+    if (error) throw new Error('Error al subir imagen: ' + error.message)
+    const { data: { publicUrl } } = supabase.storage.from('post-images').getPublicUrl(data.path)
+    return publicUrl
+  }
+
   // ── IA: Usar un post generado en el compositor ──
   function useGeneratedPost(texto) {
     setCaption(texto)
@@ -205,6 +233,7 @@ export default function PublicarPage() {
     }
 
     setPosting(true)
+    setUploading(false)
     setError(null)
     setSuccess(null)
 
@@ -213,16 +242,23 @@ export default function PublicarPage() {
       const isScheduling = scheduleMode === 'schedule' && scheduledFor
       const scheduledUnix = isScheduling ? Math.floor(new Date(scheduledFor).getTime() / 1000) : null
 
+      // ── Subir imagen a Supabase Storage si hay archivo ──
+      let publicImageUrl = null
+      if (imageFile) {
+        setUploading(true)
+        publicImageUrl = await uploadImageToStorage(imageFile)
+        setUploading(false)
+      }
+
       if (platform === 'facebook') {
         let endpoint, body
-        if (imageUrl.trim()) {
+        if (publicImageUrl) {
           endpoint = `https://graph.facebook.com/v21.0/${selectedPage.id}/photos`
-          body = new URLSearchParams({ caption: caption, url: imageUrl.trim(), access_token: pageTok })
+          body = new URLSearchParams({ caption, url: publicImageUrl, access_token: pageTok })
           if (isScheduling) { body.append('scheduled_publish_time', scheduledUnix); body.append('published', 'false') }
         } else {
           endpoint = `https://graph.facebook.com/v21.0/${selectedPage.id}/feed`
           body = new URLSearchParams({ message: caption, access_token: pageTok })
-          if (link.trim()) body.append('link', link.trim())
           if (isScheduling) { body.append('scheduled_publish_time', scheduledUnix); body.append('published', 'false') }
         }
         const res = await fetch(endpoint, { method: 'POST', body })
@@ -230,39 +266,35 @@ export default function PublicarPage() {
         if (data.error) throw new Error(data.error.message)
 
         if (isScheduling) {
-          // Guardar en Supabase también para el calendario
           await supabase.from('scheduled_posts').insert({
             user_id: user.id, page_id: selectedPage.id, page_name: selectedPage.name,
-            platform: 'facebook', caption, image_url: imageUrl.trim() || null,
-            link_url: link.trim() || null, scheduled_for: new Date(scheduledFor).toISOString(),
+            platform: 'facebook', caption, image_url: publicImageUrl || null,
+            scheduled_for: new Date(scheduledFor).toISOString(),
             status: 'scheduled', meta_post_id: data.id || null,
           })
           setSuccess(`Post programado para Facebook el ${new Date(scheduledFor).toLocaleString('es-MX', { dateStyle: 'medium', timeStyle: 'short' })}.`)
         } else {
           setSuccess('Post publicado en Facebook exitosamente.')
         }
-        setCaption(''); setImageUrl(''); setLink(''); setScheduledFor(''); setScheduleMode('now')
+        setCaption(''); clearImage(); setScheduledFor(''); setScheduleMode('now')
         loadRecentPosts()
 
       } else {
-        // Instagram: two-step
         const igId = selectedPage.instagram_business_account?.id
         if (!igId) throw new Error('Esta página no tiene una cuenta de Instagram Business vinculada.')
-        if (!imageUrl.trim()) throw new Error('Instagram requiere una URL de imagen para publicar.')
+        if (!publicImageUrl) throw new Error('Instagram requiere una imagen para publicar.')
 
         if (isScheduling) {
-          // Instagram no tiene scheduling nativo vía API pública — guardamos en Supabase
           await supabase.from('scheduled_posts').insert({
             user_id: user.id, page_id: selectedPage.id, page_name: selectedPage.name,
-            platform: 'instagram', caption, image_url: imageUrl.trim() || null,
+            platform: 'instagram', caption, image_url: publicImageUrl,
             ig_account_id: igId, scheduled_for: new Date(scheduledFor).toISOString(),
             status: 'pending',
           })
           setSuccess(`Post de Instagram guardado para ${new Date(scheduledFor).toLocaleString('es-MX', { dateStyle: 'medium', timeStyle: 'short' })}. Visible en el Calendario.`)
-          setCaption(''); setImageUrl(''); setScheduledFor(''); setScheduleMode('now')
+          setCaption(''); clearImage(); setScheduledFor(''); setScheduleMode('now')
         } else {
-          // Publicar inmediatamente
-          const mediaBody = new URLSearchParams({ caption, image_url: imageUrl.trim(), access_token: pageTok })
+          const mediaBody = new URLSearchParams({ caption, image_url: publicImageUrl, access_token: pageTok })
           const mediaRes = await fetch(`https://graph.facebook.com/v21.0/${igId}/media`, { method: 'POST', body: mediaBody })
           const mediaData = await mediaRes.json()
           if (mediaData.error) throw new Error(mediaData.error.message)
@@ -274,11 +306,12 @@ export default function PublicarPage() {
           if (pubData.error) throw new Error(pubData.error.message)
 
           setSuccess('Post publicado en Instagram exitosamente.')
-          setCaption(''); setImageUrl('')
+          setCaption(''); clearImage()
           loadRecentPosts()
         }
       }
     } catch (e) {
+      setUploading(false)
       setError(e.message || 'Error desconocido al publicar.')
     }
     setPosting(false)
@@ -633,41 +666,51 @@ export default function PublicarPage() {
             </div>
           </div>
 
-          {/* Image URL */}
+          {/* Selector de imagen desde dispositivo */}
           <div style={cardStyle}>
             <div style={{ fontSize: '11px', color: 'var(--text4)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '.07em', marginBottom: '10px' }}>
-              URL de Imagen <span style={{ color: platform === 'instagram' ? '#f87171' : 'var(--text4)', fontWeight: platform === 'instagram' ? '700' : '400' }}>{platform === 'instagram' ? '(requerida)' : '(opcional)'}</span>
+              Imagen&nbsp;
+              <span style={{ color: platform === 'instagram' ? '#f87171' : 'var(--text4)', fontWeight: platform === 'instagram' ? '700' : '400' }}>
+                {platform === 'instagram' ? '(requerida)' : '(opcional)'}
+              </span>
             </div>
-            <input
-              type="url"
-              value={imageUrl}
-              onChange={e => setImageUrl(e.target.value)}
-              placeholder="https://ejemplo.com/imagen.jpg"
-              style={{
-                width: '100%', background: 'rgba(255,255,255,.04)', border: '1px solid var(--border)',
-                borderRadius: '8px', color: 'var(--text)', fontSize: '12px', padding: '8px 12px',
-                fontFamily: '"Plus Jakarta Sans",system-ui,sans-serif', boxSizing: 'border-box',
-              }}
-            />
-          </div>
 
-          {/* Link (Facebook only) */}
-          {platform === 'facebook' && (
-            <div style={cardStyle}>
-              <div style={{ fontSize: '11px', color: 'var(--text4)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '.07em', marginBottom: '10px' }}>URL / Link (opcional)</div>
-              <input
-                type="url"
-                value={link}
-                onChange={e => setLink(e.target.value)}
-                placeholder="https://ejemplo.com/articulo"
-                style={{
-                  width: '100%', background: 'rgba(255,255,255,.04)', border: '1px solid var(--border)',
-                  borderRadius: '8px', color: 'var(--text)', fontSize: '12px', padding: '8px 12px',
-                  fontFamily: '"Plus Jakarta Sans",system-ui,sans-serif', boxSizing: 'border-box',
-                }}
-              />
-            </div>
-          )}
+            {!imagePreview ? (
+              <label style={{ display: 'block', cursor: 'pointer' }}
+                onDragOver={e => e.preventDefault()}
+                onDrop={e => { e.preventDefault(); handleImageSelect(e.dataTransfer.files?.[0]) }}>
+                <input type="file" accept="image/*" style={{ display: 'none' }}
+                  onChange={e => handleImageSelect(e.target.files?.[0])} />
+                <div style={{ border: '2px dashed var(--border)', borderRadius: '10px', padding: '28px 20px', textAlign: 'center', transition: 'border-color .15s' }}
+                  onMouseEnter={e => e.currentTarget.style.borderColor='rgba(99,102,241,.5)'}
+                  onMouseLeave={e => e.currentTarget.style.borderColor='var(--border)'}>
+                  <div style={{ fontSize: '28px', marginBottom: '8px' }}>🖼️</div>
+                  <div style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text)', marginBottom: '4px' }}>
+                    Haz clic o arrastra una imagen aquí
+                  </div>
+                  <div style={{ fontSize: '10px', color: 'var(--text4)' }}>JPG, PNG, WEBP, GIF · Máx 10 MB</div>
+                </div>
+              </label>
+            ) : (
+              <div style={{ position: 'relative', borderRadius: '10px', overflow: 'hidden', border: '1px solid var(--border)' }}>
+                <img src={imagePreview} alt="preview" style={{ width: '100%', maxHeight: '200px', objectFit: 'cover', display: 'block' }} />
+                <button onClick={clearImage}
+                  style={{ position: 'absolute', top: '8px', right: '8px', background: 'rgba(0,0,0,.7)', border: 'none', borderRadius: '50%', width: '28px', height: '28px', color: '#fff', fontSize: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}>
+                  ×
+                </button>
+                <div style={{ padding: '8px 10px', background: 'rgba(0,0,0,.4)', fontSize: '10px', color: '#aaa' }}>
+                  {imageFile?.name} · {(imageFile?.size / 1024).toFixed(0)} KB
+                </div>
+              </div>
+            )}
+
+            {uploading && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px', fontSize: '11px', color: '#a5b4fc' }}>
+                <div style={{ width: '10px', height: '10px', borderRadius: '50%', border: '2px solid rgba(99,102,241,.3)', borderTop: '2px solid #6366f1', animation: 'spin .8s linear infinite', flexShrink: 0 }} />
+                Subiendo imagen...
+              </div>
+            )}
+          </div>
 
           {/* Feedback */}
           {success && (
@@ -713,16 +756,16 @@ export default function PublicarPage() {
           <button
             className="pub-btn"
             onClick={handlePost}
-            disabled={posting || !caption.trim() || charOver || !selectedPage || (platform === 'instagram' && !igAccount) || (scheduleMode === 'schedule' && !scheduledFor)}
+            disabled={posting || uploading || !caption.trim() || charOver || !selectedPage || (platform === 'instagram' && (!igAccount || !imageFile)) || (scheduleMode === 'schedule' && !scheduledFor)}
             style={{
               padding: '11px 20px',
               background: scheduleMode === 'schedule' ? 'linear-gradient(135deg,#f59e0b,#d97706)' : 'linear-gradient(135deg,#6366f1,#8b5cf6)',
               color: '#fff', border: 'none', borderRadius: '9px', cursor: 'pointer', fontFamily: 'inherit', fontSize: '13px',
               fontWeight: '700', width: '100%',
-              opacity: (posting || !caption.trim() || charOver || !selectedPage || (platform === 'instagram' && !igAccount) || (scheduleMode === 'schedule' && !scheduledFor)) ? 0.5 : 1,
+              opacity: (posting || uploading || !caption.trim() || charOver || !selectedPage || (platform === 'instagram' && (!igAccount || !imageFile)) || (scheduleMode === 'schedule' && !scheduledFor)) ? 0.5 : 1,
               transition: 'opacity .15s',
             }}>
-            {posting
+            {uploading ? '⬆️ Subiendo imagen...' : posting
               ? (scheduleMode === 'schedule' ? 'Programando...' : 'Publicando...')
               : scheduleMode === 'schedule'
                 ? '⏰ Programar post'
@@ -757,23 +800,12 @@ export default function PublicarPage() {
                 </div>
               )}
               {/* Image preview */}
-              {imageUrl.trim() && (
+              {imagePreview && (
                 <div style={{ width: '100%', maxHeight: '200px', overflow: 'hidden', background: 'rgba(0,0,0,.2)' }}>
-                  <img
-                    src={imageUrl}
-                    alt="preview"
-                    style={{ width: '100%', objectFit: 'cover', display: 'block' }}
-                    onError={e => { e.target.style.display = 'none' }}
-                  />
+                  <img src={imagePreview} alt="preview" style={{ width: '100%', objectFit: 'cover', display: 'block' }} />
                 </div>
               )}
-              {/* Link preview (FB) */}
-              {platform === 'facebook' && link.trim() && !imageUrl.trim() && (
-                <div style={{ margin: '0 12px 12px', padding: '8px 10px', background: 'rgba(255,255,255,.04)', borderRadius: '6px', border: '1px solid var(--border)' }}>
-                  <div style={{ fontSize: '10px', color: 'var(--text4)', wordBreak: 'break-all' }}>{link}</div>
-                </div>
-              )}
-              {!caption && !imageUrl && (
+              {!caption && !imagePreview && (
                 <div style={{ padding: '0 12px 16px', fontSize: '12px', color: 'var(--text4)', fontStyle: 'italic' }}>
                   Escribe algo para ver la vista previa...
                 </div>
