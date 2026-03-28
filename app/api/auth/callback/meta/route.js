@@ -59,14 +59,41 @@ export async function GET(request) {
         { onConflict: 'user_id' }
       )
 
-    // 3. Fetch Meta Ads accounts
-    const adsRes = await fetch(
-      `https://graph.facebook.com/v21.0/me/adaccounts?fields=id,name,account_status,currency&access_token=${accessToken}&limit=25`
-    )
-    const adsData = await adsRes.json()
+    // 3. Fetch Meta Ads accounts — intenta directamente Y vía Business Manager
+    let adAccountsList = []
 
-    if (adsData.data && adsData.data.length > 0) {
-      for (const account of adsData.data) {
+    const [directRes, bizRes] = await Promise.all([
+      fetch(`https://graph.facebook.com/v21.0/me/adaccounts?fields=id,name,account_status,currency&access_token=${accessToken}&limit=25`),
+      fetch(`https://graph.facebook.com/v21.0/me/businesses?fields=id,name,owned_ad_accounts{id,name,account_status,currency}&access_token=${accessToken}&limit=10`),
+    ])
+    const directData = await directRes.json()
+    const bizData = await bizRes.json()
+
+    // Cuentas directas del usuario
+    if (directData.data?.length > 0) {
+      adAccountsList.push(...directData.data)
+    }
+
+    // Cuentas via Business Manager
+    if (bizData.data?.length > 0) {
+      for (const biz of bizData.data) {
+        if (biz.owned_ad_accounts?.data?.length > 0) {
+          adAccountsList.push(...biz.owned_ad_accounts.data)
+        }
+      }
+    }
+
+    // Deduplicar por ID
+    const seen = new Set()
+    adAccountsList = adAccountsList.filter(a => {
+      const id = a.id.replace('act_', '')
+      if (seen.has(id)) return false
+      seen.add(id)
+      return true
+    })
+
+    if (adAccountsList.length > 0) {
+      for (const account of adAccountsList) {
         const rawId = account.id.replace('act_', '')
         await supabase.from('ad_accounts').upsert(
           {

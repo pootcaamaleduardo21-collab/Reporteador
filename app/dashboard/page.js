@@ -95,23 +95,32 @@ export default function DashboardHome() {
     setLoadingRadar(true)
     try {
       const allPosts = []
-      await Promise.all(pages.slice(0,3).map(async page => {
-        if (!page.access_token || !page.fan_count) return
+      const now = Date.now()
+      // Fetch ALL pages with access_token (no limit — el usuario puede tener muchas)
+      await Promise.all(pages.filter(p=>p.access_token).map(async page => {
         try {
-          const res = await fetch(`https://graph.facebook.com/v21.0/${page.id}/posts?fields=id,message,created_time,full_picture,likes.limit(1).summary(true),comments.limit(1).summary(true),shares&limit=12&access_token=${page.access_token}`)
+          const res = await fetch(`https://graph.facebook.com/v21.0/${page.id}/posts?fields=id,message,created_time,full_picture,likes.limit(1).summary(true),comments.limit(1).summary(true),shares&limit=20&access_token=${page.access_token}`)
           const j = await res.json()
           if (!j.data) return
+          const fanCount = Math.max(page.fan_count || 0, 1)
           for (const post of j.data) {
             const likes = post.likes?.summary?.total_count || 0
             const comments = post.comments?.summary?.total_count || 0
             const shares = post.shares?.count || 0
             const engagement = likes + comments + shares
-            const er = page.fan_count > 0 ? (engagement / page.fan_count * 100) : 0
-            if (er > 0.3) allPosts.push({ post, page, likes, comments, shares, engagement, er: parseFloat(er.toFixed(2)) })
+            if (engagement < 2) continue // ignorar posts sin interacción mínima
+            const er = (engagement / fanCount * 100)
+            // Bonus de recencia: posts recientes son mejores candidatos para boost
+            const ageMs = now - new Date(post.created_time).getTime()
+            const ageDays = ageMs / 864e5
+            const recencyBonus = ageDays < 7 ? 1.4 : ageDays < 30 ? 1.15 : ageDays < 90 ? 0.9 : 0.65
+            const score = er * recencyBonus
+            allPosts.push({ post, page, likes, comments, shares, engagement, er: parseFloat(er.toFixed(2)), score, ageDays: Math.round(ageDays) })
           }
         } catch(e) {}
       }))
-      setBoostRadar(allPosts.sort((a,b)=>b.er-a.er).slice(0,6))
+      // Ordenar por score (er × recencia), mostrar top 6
+      setBoostRadar(allPosts.sort((a,b)=>b.score-a.score).slice(0,6))
     } catch(e) {}
     setLoadingRadar(false)
   }
@@ -640,13 +649,16 @@ export default function DashboardHome() {
             <>
               <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(290px,1fr))',gap:'10px',marginBottom:'16px'}}>
                 {boostRadar.map((item,i)=>{
-                  const isHot = item.er >= 3
-                  const isGood = item.er >= 1
+                  // Lógica inteligente: el top 1 por score es "Hot", el resto es "Recomendado"
+                  // Score = ER × recencyBonus — considera tanto engagement como frescura del post
+                  const isHot = i === 0 && item.er >= 1
+                  const isGood = item.er >= 0.5
                   const badgeColor = isHot?'#f59e0b':isGood?'#6ee7b7':'#a5b4fc'
                   const badgeBg = isHot?'rgba(245,158,11,.18)':isGood?'rgba(110,231,183,.12)':'rgba(165,180,252,.12)'
+                  const ageTxt = item.ageDays < 1 ? 'hoy' : item.ageDays === 1 ? 'ayer' : `hace ${item.ageDays}d`
                   return (
                     <div key={i} className="boost-item"
-                      style={{background:'rgba(255,255,255,.04)',border:'1px solid rgba(255,255,255,.08)',borderRadius:'11px',padding:'14px',display:'flex',gap:'12px',alignItems:'flex-start'}}>
+                      style={{background:'rgba(255,255,255,.04)',border:'1px solid '+(isHot?'rgba(245,158,11,.22)':'rgba(255,255,255,.08)'),borderRadius:'11px',padding:'14px',display:'flex',gap:'12px',alignItems:'flex-start'}}>
                       {item.post.full_picture && <img src={item.post.full_picture} alt="" style={{width:'54px',height:'54px',borderRadius:'8px',objectFit:'cover',flexShrink:0}}/>}
                       <div style={{flex:1,minWidth:0}}>
                         <div style={{display:'flex',alignItems:'center',gap:'6px',marginBottom:'6px',flexWrap:'wrap'}}>
@@ -659,7 +671,7 @@ export default function DashboardHome() {
                         <div style={{display:'flex',gap:'12px',fontSize:'10px',color:'var(--text4)',marginBottom:'4px'}}>
                           <span>👍 {fmtN(item.likes)}</span><span>💬 {fmtN(item.comments)}</span><span>↗ {fmtN(item.shares)}</span>
                         </div>
-                        <div style={{fontSize:'9px',color:'var(--text4)'}}>{item.page.name} · {fmtDate(item.post.created_time)}</div>
+                        <div style={{fontSize:'9px',color:'var(--text4)'}}>{item.page.name} · {ageTxt}</div>
                       </div>
                     </div>
                   )

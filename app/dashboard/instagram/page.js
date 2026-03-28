@@ -165,16 +165,18 @@ export default function InstagramPage() {
       // El token de usuario no tiene permiso para ver insights de IG ni métricas de audiencia
       const pageTok = activeIg.page_token || token
 
-      const [insR, mediaR, audienceCountryR, audienceCityR] = await Promise.all([
-        fetch(`https://graph.facebook.com/v21.0/${ig_id}/insights?metric=reach,impressions,profile_views,follower_count,website_clicks&period=day&since=${range.since}&until=${range.until}&access_token=${pageTok}`),
-        // Media sin filtro de fecha — siempre muestra los últimos 20
-        // avg_watch_time y plays solo aplican a Reels y fallan para fotos/videos normales
+      // Separar métricas seguras de las que pueden fallar
+      // follower_count y website_clicks en llamadas independientes para que no rompan reach/impressions
+      const [insR, mediaR, audienceCountryR, audienceCityR, followerR, websiteR] = await Promise.all([
+        fetch(`https://graph.facebook.com/v21.0/${ig_id}/insights?metric=reach,impressions,profile_views&period=day&since=${range.since}&until=${range.until}&access_token=${pageTok}`),
         fetch(`https://graph.facebook.com/v21.0/${ig_id}/media?fields=id,caption,media_type,timestamp,like_count,comments_count,media_url,thumbnail_url,permalink,insights.metric(reach,impressions,saved,video_views,shares)&limit=20&access_token=${pageTok}`),
         fetch(`https://graph.facebook.com/v21.0/${ig_id}/insights?metric=audience_country&period=lifetime&access_token=${pageTok}`),
         fetch(`https://graph.facebook.com/v21.0/${ig_id}/insights?metric=audience_city&period=lifetime&access_token=${pageTok}`),
+        fetch(`https://graph.facebook.com/v21.0/${ig_id}/insights?metric=follower_count&period=day&since=${range.since}&until=${range.until}&access_token=${pageTok}`),
+        fetch(`https://graph.facebook.com/v21.0/${ig_id}/insights?metric=profile_website_clicks&period=day&since=${range.since}&until=${range.until}&access_token=${pageTok}`),
       ])
 
-      const [insJ, mediaJ, audienceCountryJ, audienceCityJ] = await Promise.all([insR.json(),mediaR.json(),audienceCountryR.json(),audienceCityR.json()])
+      const [insJ, mediaJ, audienceCountryJ, audienceCityJ, followerJ, websiteJ] = await Promise.all([insR.json(),mediaR.json(),audienceCountryR.json(),audienceCityR.json(),followerR.json(),websiteR.json()])
 
       // Process insights - sum daily values
       const ins = {}
@@ -185,6 +187,15 @@ export default function InstagramPage() {
         if (m.name==='reach') {
           ;(m.values||[]).forEach(v => dailyReach.push({date:v.end_time?.slice(5,10),value:v.value}))
         }
+      })
+      // Procesar métricas separadas (follower_count y website_clicks — pueden fallar individualmente)
+      // follower_count: tomar último valor - primer valor = cambio neto en el período
+      const followerVals = followerJ.data?.[0]?.values || []
+      if (followerVals.length >= 2) {
+        ins.follower_count = (+followerVals[followerVals.length-1].value||0) - (+followerVals[0].value||0)
+      }
+      ;(websiteJ.data||[]).forEach(m => {
+        ins.website_clicks = (m.values||[]).reduce((s,v)=>s+(+v.value||0),0)
       })
       setInsights(ins)
       setDailyData(dailyReach)
@@ -441,11 +452,19 @@ export default function InstagramPage() {
             const avgEng = media.length > 0 ? totalEng/media.length : 0
             const reels = media.filter(m=>m.media_type==='REELS'||m.media_type==='VIDEO')
             const images = media.filter(m=>m.media_type==='IMAGE'||m.media_type==='CAROUSEL_ALBUM')
-            const avgReelEng = reels.length > 0 ? reels.reduce((s,m)=>s+m.totalEngagement,0)/reels.length : 0
-            const avgImgEng = images.length > 0 ? images.reduce((s,m)=>s+m.totalEngagement,0)/images.length : 0
+            // Comparar por tasa de engagement (ER%) normalizada por alcance, no por conteo bruto
+            const avgReelEr = reels.length > 0 ? reels.reduce((s,m)=>s+(+m.engagementRate||0),0)/reels.length : 0
+            const avgImgEr = images.length > 0 ? images.reduce((s,m)=>s+(+m.engagementRate||0),0)/images.length : 0
 
-            if (avgReelEng > avgImgEng * 1.5 && reels.length > 0) recs.push({ icon:'🎬', title:'Los Reels te funcionan mejor', desc:`Tus Reels generan ${Math.round(avgReelEng)} interacciones en promedio. Instagram prioriza el video en el algoritmo — publica más Reels.`, color:'#f97316' })
-            else if (avgImgEng > avgReelEng * 1.3 && images.length > 0) recs.push({ icon:'📸', title:'Las imágenes tienen mejor engagement', desc:`Tus fotos generan más interacciones que los videos. Para propiedades inmobiliarias, las fotos de alta calidad suelen funcionar bien.`, color:'#e1306c' })
+            if (reels.length > 0 && images.length > 0) {
+              if (avgReelEr > avgImgEr * 1.2) recs.push({ icon:'🎬', title:'Los Reels te funcionan mejor', desc:`Tus videos/Reels tienen un ER promedio de ${avgReelEr.toFixed(1)}% vs ${avgImgEr.toFixed(1)}% de las fotos. Instagram prioriza el video — publica más Reels.`, color:'#f97316' })
+              else if (avgImgEr > avgReelEr * 1.2) recs.push({ icon:'📸', title:'Las fotos tienen mejor engagement', desc:`Tus imágenes/carruseles tienen un ER de ${avgImgEr.toFixed(1)}% vs ${avgReelEr.toFixed(1)}% de los videos. Para propiedades inmobiliarias, las fotos de alta calidad conectan bien.`, color:'#e1306c' })
+              else recs.push({ icon:'📊', title:'Balance Reels y fotos', desc:`Tu audiencia responde bien a ambos formatos (Reels ${avgReelEr.toFixed(1)}% ER, fotos ${avgImgEr.toFixed(1)}% ER). Alterna para mantener variedad.`, color:'#a78bfa' })
+            } else if (reels.length > 0 && images.length === 0) {
+              recs.push({ icon:'🎬', title:'Todo tu contenido es video', desc:`ER promedio de tus videos: ${avgReelEr.toFixed(1)}%. Prueba agregar carruseles de propiedades para diversificar.`, color:'#f97316' })
+            } else if (images.length > 0 && reels.length === 0) {
+              recs.push({ icon:'📸', title:'Prueba publicar Reels', desc:`Solo tienes fotos. Los Reels tienen mayor alcance orgánico en Instagram — muestra tours de propiedades en video corto.`, color:'#e1306c' })
+            }
 
             if (insights?.profile_views > 0 && insights?.follower_count > 0) {
               const convRate = (insights.follower_count / insights.profile_views * 100).toFixed(1)
