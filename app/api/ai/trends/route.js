@@ -87,7 +87,7 @@ Responde ÚNICAMENTE con JSON válido (sin markdown, sin bloques de código):
 
     // ── Llamada a Gemini ──
     const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY)
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' })
 
     const result = await model.generateContent(prompt)
     let raw = result.response.text().trim()
