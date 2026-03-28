@@ -77,18 +77,22 @@ export default function MetaAdsPage() {
     if (!verifyResult?.ok || !user) return
     setSaving(true)
     try {
-      await supabase.from('ad_accounts').upsert(
-        {
-          user_id: user.id,
-          account_id: verifyResult.id,
-          account_name: verifyResult.name,
-          platform: 'meta_ads',
-          is_active: verifyResult.status === 1,
-        },
-        { onConflict: 'user_id,account_id' }
-      )
+      // Usar API route server-side para evitar restricciones de RLS en ad_accounts
+      const res = await fetch('/api/meta/save-account', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.id,
+          accountId: verifyResult.id,
+          accountName: verifyResult.name,
+          isActive: verifyResult.status === 1,
+        }),
+      })
+      const j = await res.json()
+      if (!j.ok) throw new Error(j.error || 'Save failed')
       router.push('/dashboard/reportes/' + verifyResult.id)
     } catch (e) {
+      console.error('Save account error:', e)
       setSaving(false)
     }
   }

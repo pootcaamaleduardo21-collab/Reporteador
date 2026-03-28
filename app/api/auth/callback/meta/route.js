@@ -59,27 +59,51 @@ export async function GET(request) {
         { onConflict: 'user_id' }
       )
 
-    // 3. Fetch Meta Ads accounts — intenta directamente Y vía Business Manager
+    // 3. Fetch Meta Ads accounts — múltiples métodos para máxima cobertura
     let adAccountsList = []
 
-    const [directRes, bizRes] = await Promise.all([
-      fetch(`https://graph.facebook.com/v21.0/me/adaccounts?fields=id,name,account_status,currency&access_token=${accessToken}&limit=25`),
-      fetch(`https://graph.facebook.com/v21.0/me/businesses?fields=id,name,owned_ad_accounts{id,name,account_status,currency}&access_token=${accessToken}&limit=10`),
+    const [directRes, bizRes, pagesRes] = await Promise.all([
+      // Método 1: cuentas directas del usuario
+      fetch(`https://graph.facebook.com/v21.0/me/adaccounts?fields=id,name,account_status,currency&access_token=${accessToken}&limit=50`),
+      // Método 2: Business Manager (propias Y de clientes)
+      fetch(`https://graph.facebook.com/v21.0/me/businesses?fields=id,name,owned_ad_accounts{id,name,account_status,currency},client_ad_accounts{id,name,account_status,currency}&access_token=${accessToken}&limit=20`),
+      // Método 3: páginas del usuario (para extraer ad_accounts relacionadas)
+      fetch(`https://graph.facebook.com/v21.0/me/accounts?fields=id,name,access_token&access_token=${accessToken}&limit=20`),
     ])
     const directData = await directRes.json()
     const bizData = await bizRes.json()
+    const pagesData = await pagesRes.json()
 
-    // Cuentas directas del usuario
+    // Método 1: cuentas directas
     if (directData.data?.length > 0) {
       adAccountsList.push(...directData.data)
     }
 
-    // Cuentas via Business Manager
+    // Método 2: Business Manager — owned AND client ad accounts
     if (bizData.data?.length > 0) {
       for (const biz of bizData.data) {
         if (biz.owned_ad_accounts?.data?.length > 0) {
           adAccountsList.push(...biz.owned_ad_accounts.data)
         }
+        if (biz.client_ad_accounts?.data?.length > 0) {
+          adAccountsList.push(...biz.client_ad_accounts.data)
+        }
+      }
+    }
+
+    // Método 3: para cada página, buscar ad accounts asociadas vía page token
+    // Esto cubre el caso donde el usuario gestiona ads desde sus páginas de FB
+    if (pagesData.data?.length > 0 && adAccountsList.length === 0) {
+      const pageAdFetches = await Promise.all(
+        (pagesData.data || []).slice(0, 5).map(page =>
+          page.access_token
+            ? fetch(`https://graph.facebook.com/v21.0/me/adaccounts?fields=id,name,account_status,currency&access_token=${page.access_token}&limit=25`)
+                .then(r => r.json()).catch(() => null)
+            : Promise.resolve(null)
+        )
+      )
+      for (const res of pageAdFetches) {
+        if (res?.data?.length > 0) adAccountsList.push(...res.data)
       }
     }
 
