@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server'
-import { GoogleGenerativeAI } from '@google/generative-ai'
 import { createClient } from '@supabase/supabase-js'
 
 const supabase = createClient(
@@ -10,9 +9,36 @@ const supabase = createClient(
 const DAILY_LIMIT   = 10
 const MONTHLY_LIMIT = 50
 
+// Llamada directa a la API REST de Google (v1 — más modelos disponibles)
+async function callGemini(systemPrompt, userPrompt) {
+  const apiKey = process.env.GOOGLE_AI_API_KEY
+  const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`
+
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      system_instruction: { parts: [{ text: systemPrompt }] },
+      contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
+      generationConfig: { maxOutputTokens: 2048, temperature: 0.9 },
+    }),
+  })
+
+  const data = await res.json()
+
+  if (!res.ok) {
+    const errMsg = data.error?.message || `HTTP ${res.status}`
+    throw new Error(errMsg)
+  }
+
+  const text = data.candidates?.[0]?.content?.parts?.[0]?.text || ''
+  if (!text) throw new Error('Respuesta vacía de Gemini')
+  return text
+}
+
 export async function POST(request) {
   if (!process.env.GOOGLE_AI_API_KEY) {
-    return NextResponse.json({ error: 'GOOGLE_AI_API_KEY no configurada' }, { status: 500 })
+    return NextResponse.json({ error: 'GOOGLE_AI_API_KEY no configurada en las variables de entorno.' }, { status: 500 })
   }
 
   try {
@@ -31,7 +57,7 @@ export async function POST(request) {
       if (todayCalls >= DAILY_LIMIT) {
         return NextResponse.json({
           error: `Límite diario alcanzado (${DAILY_LIMIT} generaciones/día). Regresa mañana.`,
-          limitReached: true, type: 'daily', used: todayCalls, limit: DAILY_LIMIT,
+          limitReached: true, type: 'daily',
         }, { status: 429 })
       }
 
@@ -42,7 +68,7 @@ export async function POST(request) {
       if (monthlyCalls >= MONTHLY_LIMIT) {
         return NextResponse.json({
           error: `Límite mensual alcanzado (${MONTHLY_LIMIT} generaciones/mes). Se renueva el 1 del próximo mes.`,
-          limitReached: true, type: 'monthly', used: monthlyCalls, limit: MONTHLY_LIMIT,
+          limitReached: true, type: 'monthly',
         }, { status: 429 })
       }
     }
@@ -63,7 +89,6 @@ export async function POST(request) {
       : `Tema: "${topic}"`
 
     const systemPrompt = `Eres un experto copywriter de marketing inmobiliario en México, especializado en redes sociales para agentes y desarrolladoras inmobiliarias.
-
 La cuenta es "${accountName || 'Agente Inmobiliario'}" con ${followers ? followers + ' seguidores' : 'audiencia en crecimiento'}.
 Usa ${styleCtx}.
 Eres experto en: hooks que detienen el scroll, storytelling inmobiliario, llamadas a la acción que generan leads, y tendencias de contenido en México.`
@@ -76,7 +101,7 @@ Cada variación debe tener:
 - Cuerpo del post con valor real
 - Llamada a la acción clara al final
 - Emojis estratégicos (no en exceso)
-- Hashtags relevantes al final (8-12 hashtags para Instagram, 3-5 para Facebook)
+- Hashtags relevantes al final (8-12 para Instagram, 3-5 para Facebook)
 
 Responde ÚNICAMENTE con JSON válido (sin markdown, sin bloques de código):
 {
@@ -94,20 +119,9 @@ Responde ÚNICAMENTE con JSON válido (sin markdown, sin bloques de código):
   ]
 }`
 
-    // ── Llamada a Gemini ──
-    const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY)
-    const model = genAI.getGenerativeModel({
-      model: 'gemini-1.5-flash-8b',
-      systemInstruction: systemPrompt,
-    })
-
-    const result = await model.generateContent(userPrompt)
-    let raw = result.response.text().trim()
-
-    // Limpiar por si Gemini envuelve en markdown
-    raw = raw.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim()
-
-    const parsed = JSON.parse(raw)
+    const raw    = await callGemini(systemPrompt, userPrompt)
+    const clean  = raw.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim()
+    const parsed = JSON.parse(clean)
 
     // ── Incrementar uso ──
     if (userId) {
@@ -119,18 +133,7 @@ Responde ÚNICAMENTE con JSON válido (sin markdown, sin bloques de código):
 
     return NextResponse.json({ posts: parsed.posts })
   } catch (err) {
-    console.error('Generate post error:', err)
-    const raw = err.message || 'Error al generar el post'
-    let message = raw
-    if (raw.includes('API_KEY') || raw.includes('API key') || raw.includes('invalid') || raw.includes('401'))
-      message = 'API Key de Google inválida o no configurada. Verifica GOOGLE_AI_API_KEY en Vercel → Settings → Environment Variables.'
-    else if (raw.includes('SAFETY') || raw.includes('safety'))
-      message = 'El contenido fue bloqueado por filtros de seguridad. Intenta con otro tema.'
-    else if (raw.includes('not found') || raw.includes('404'))
-      message = 'Modelo de Gemini no disponible. Contacta soporte.'
-    else if (raw.includes('quota') || raw.includes('QUOTA') || raw.includes('429') || raw.includes('RESOURCE_EXHAUSTED'))
-      message = 'Límite de requests alcanzado. Espera 1 minuto e intenta de nuevo.'
-    // Si no coincide ninguno, mostrar el error real para poder diagnosticar
-    return NextResponse.json({ error: message }, { status: 500 })
+    console.error('Generate post error:', err.message)
+    return NextResponse.json({ error: err.message || 'Error al generar el post' }, { status: 500 })
   }
 }

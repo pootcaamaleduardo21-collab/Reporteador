@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server'
-import { GoogleGenerativeAI } from '@google/generative-ai'
 import { createClient } from '@supabase/supabase-js'
 
 const supabase = createClient(
@@ -9,13 +8,38 @@ const supabase = createClient(
 
 const TRENDS_DAILY_LIMIT = 5
 
-// Cache en memoria (por instancia)
 let trendsCache     = null
 let trendsCacheDate = null
 
+// Llamada directa a la API REST de Google (v1)
+async function callGemini(prompt) {
+  const apiKey = process.env.GOOGLE_AI_API_KEY
+  const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`
+
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      generationConfig: { maxOutputTokens: 1024, temperature: 0.8 },
+    }),
+  })
+
+  const data = await res.json()
+
+  if (!res.ok) {
+    const errMsg = data.error?.message || `HTTP ${res.status}`
+    throw new Error(errMsg)
+  }
+
+  const text = data.candidates?.[0]?.content?.parts?.[0]?.text || ''
+  if (!text) throw new Error('Respuesta vacía de Gemini')
+  return text
+}
+
 export async function GET(request) {
   if (!process.env.GOOGLE_AI_API_KEY) {
-    return NextResponse.json({ error: 'GOOGLE_AI_API_KEY no configurada' }, { status: 500 })
+    return NextResponse.json({ error: 'GOOGLE_AI_API_KEY no configurada en las variables de entorno.' }, { status: 500 })
   }
 
   const today = new Date().toISOString().split('T')[0]
@@ -25,7 +49,7 @@ export async function GET(request) {
     return NextResponse.json({ trends: trendsCache, cached: true })
   }
 
-  // 2. Cache persistente en Supabase (sobrevive entre instancias serverless)
+  // 2. Cache persistente en Supabase
   const { data: dbCache } = await supabase
     .from('ai_trends_cache').select('trends').eq('date', today).single()
 
@@ -69,7 +93,6 @@ Considera:
 - Contenido educativo sobre el proceso de compra/renta
 - Lifestyle asociado a propiedades (Riviera Maya, playa, amenidades)
 - Temas sobre financiamiento, inversión, plusvalía
-- Noticias relevantes del sector inmobiliario en México
 
 Responde ÚNICAMENTE con JSON válido (sin markdown, sin bloques de código):
 {
@@ -85,19 +108,10 @@ Responde ÚNICAMENTE con JSON válido (sin markdown, sin bloques de código):
   ]
 }`
 
-    // ── Llamada a Gemini ──
-    const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY)
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash-8b' })
+    const raw    = await callGemini(prompt)
+    const clean  = raw.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim()
+    const parsed = JSON.parse(clean)
 
-    const result = await model.generateContent(prompt)
-    let raw = result.response.text().trim()
-
-    // Limpiar markdown si Gemini lo envuelve
-    raw = raw.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim()
-
-    const parsed = JSON.parse(raw)
-
-    // Guardar en caches
     trendsCache     = parsed.trends
     trendsCacheDate = today
 
@@ -106,7 +120,6 @@ Responde ÚNICAMENTE con JSON válido (sin markdown, sin bloques de código):
       { onConflict: 'date' }
     )
 
-    // Incrementar contador de tendencias
     if (userId) {
       const trendKey = `trends_${today}`
       const { data: usageRow } = await supabase
@@ -120,17 +133,17 @@ Responde ÚNICAMENTE con JSON válido (sin markdown, sin bloques de código):
 
     return NextResponse.json({ trends: parsed.trends, cached: false })
   } catch (err) {
-    console.error('Trends API error:', err)
+    console.error('Trends API error:', err.message)
     return NextResponse.json({
       trends: [
-        { id: 1, emoji: '🏡', titulo: 'Consejos para primera vivienda',        descripcion: 'Todo lo que necesitas saber antes de comprar tu primera casa.',       hashtags: ['#PrimeraVivienda', '#BienesRaices', '#TuHogar'],           tipo: 'educativo'  },
-        { id: 2, emoji: '📈', titulo: 'Plusvalía en la Riviera Maya',          descripcion: 'Las zonas con mayor crecimiento inmobiliario este año.',              hashtags: ['#RivieraMaya', '#Inversion', '#Plusvalia'],                tipo: 'inversion'  },
-        { id: 3, emoji: '🌊', titulo: 'Vivir cerca del mar',                  descripcion: 'El lifestyle que ofrece vivir en zona costera.',                      hashtags: ['#VidaEnPlaya', '#PlayaDelCarmen', '#Lifestyle'],           tipo: 'lifestyle'  },
-        { id: 4, emoji: '💰', titulo: 'Crédito hipotecario en 2025',          descripcion: 'Cómo acceder a crédito y qué opciones existen.',                      hashtags: ['#Hipoteca', '#Infonavit', '#CreditoVivienda'],             tipo: 'proceso'    },
-        { id: 5, emoji: '🏢', titulo: 'Inversión en departamentos',           descripcion: 'Por qué los departamentos son la mejor inversión ahora.',             hashtags: ['#Departamentos', '#InversionInmobiliaria', '#Renta'],      tipo: 'inversion'  },
-        { id: 6, emoji: '🔑', titulo: 'Proceso de compra paso a paso',        descripcion: 'Guía completa para comprar propiedad en México.',                     hashtags: ['#CompraTuCasa', '#GuiaInmobiliaria', '#BienesRaices'],     tipo: 'proceso'    },
-        { id: 7, emoji: '🏖️', titulo: 'Propiedades vacacionales rentables',   descripcion: 'Genera ingresos con una propiedad en zona turística.',               hashtags: ['#PropiedadVacacional', '#AirbnbMexico', '#Inversion'],     tipo: 'mercado'    },
-        { id: 8, emoji: '🌳', titulo: 'Amenidades más valoradas en 2025',     descripcion: 'Qué buscan hoy los compradores modernos en una propiedad.',           hashtags: ['#Amenidades', '#CalidadDeVida', '#HogarIdeal'],            tipo: 'mercado'    },
+        { id: 1, emoji: '🏡', titulo: 'Consejos para primera vivienda',       descripcion: 'Todo lo que necesitas saber antes de comprar tu primera casa.',      hashtags: ['#PrimeraVivienda', '#BienesRaices', '#TuHogar'],          tipo: 'educativo' },
+        { id: 2, emoji: '📈', titulo: 'Plusvalía en la Riviera Maya',         descripcion: 'Las zonas con mayor crecimiento inmobiliario este año.',             hashtags: ['#RivieraMaya', '#Inversion', '#Plusvalia'],               tipo: 'inversion' },
+        { id: 3, emoji: '🌊', titulo: 'Vivir cerca del mar',                 descripcion: 'El lifestyle que ofrece vivir en zona costera.',                     hashtags: ['#VidaEnPlaya', '#PlayaDelCarmen', '#Lifestyle'],          tipo: 'lifestyle' },
+        { id: 4, emoji: '💰', titulo: 'Crédito hipotecario en 2025',         descripcion: 'Cómo acceder a crédito y qué opciones existen.',                     hashtags: ['#Hipoteca', '#Infonavit', '#CreditoVivienda'],            tipo: 'proceso'   },
+        { id: 5, emoji: '🏢', titulo: 'Inversión en departamentos',          descripcion: 'Por qué los departamentos son la mejor inversión ahora.',            hashtags: ['#Departamentos', '#InversionInmobiliaria', '#Renta'],     tipo: 'inversion' },
+        { id: 6, emoji: '🔑', titulo: 'Proceso de compra paso a paso',       descripcion: 'Guía completa para comprar propiedad en México.',                    hashtags: ['#CompraTuCasa', '#GuiaInmobiliaria', '#BienesRaices'],    tipo: 'proceso'   },
+        { id: 7, emoji: '🏖️', titulo: 'Propiedades vacacionales rentables',  descripcion: 'Genera ingresos con una propiedad en zona turística.',              hashtags: ['#PropiedadVacacional', '#AirbnbMexico', '#Inversion'],    tipo: 'mercado'   },
+        { id: 8, emoji: '🌳', titulo: 'Amenidades más valoradas en 2025',    descripcion: 'Qué buscan hoy los compradores modernos en una propiedad.',          hashtags: ['#Amenidades', '#CalidadDeVida', '#HogarIdeal'],           tipo: 'mercado'   },
       ],
       cached: false,
       fallback: true,
