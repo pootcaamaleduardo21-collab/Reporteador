@@ -577,7 +577,7 @@ export default function Reportes() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { window.location.href = '/'; return }
       const { data: acc } = await supabase.from('ad_accounts').select('account_name,platform').eq('account_id', accountId).single()
-      if (!acc) { window.location.href = '/dashboard'; return }
+      if (!acc) { window.location.href = '/dashboard/meta-ads'; return }
       setAccountName(acc.account_name || accountId)
       setPlatform(acc.platform || 'meta_ads')
 
