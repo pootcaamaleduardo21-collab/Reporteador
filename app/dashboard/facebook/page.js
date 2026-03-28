@@ -161,7 +161,8 @@ export default function FacebookPage() {
 
   async function fetchPages() {
     try {
-      const res = await fetch('https://graph.facebook.com/v21.0/me/accounts?fields=id,name,fan_count,followers_count,picture&access_token='+token+'&limit=50')
+      // access_token field necesario para usar el token de página en los insights
+      const res = await fetch('https://graph.facebook.com/v21.0/me/accounts?fields=id,name,fan_count,followers_count,picture,access_token&access_token='+token+'&limit=50')
       const j = await res.json()
       const pagesData = j.data || []
       setPages(pagesData)
@@ -176,7 +177,9 @@ export default function FacebookPage() {
     try {
       const range = getDateRange(preset, customFrom, customTo)
       if (!range.since || !range.until) { setLoading(false); return }
-      const tok = token
+      // CRÍTICO: usar el token de la página, no el token de usuario
+      // El token de usuario no tiene permiso para ver insights de posts ni métricas de página
+      const tok = activePage.access_token || token
       const pid = activePage.id
 
       const [insR, postsR, dailyR, geoCountryR, geoRegionR] = await Promise.all([

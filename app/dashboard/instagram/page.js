@@ -137,15 +137,17 @@ export default function InstagramPage() {
 
   async function fetchIgAccounts() {
     try {
-      const pagesRes = await fetch('https://graph.facebook.com/v21.0/me/accounts?fields=id,name,instagram_business_account&access_token='+token+'&limit=50')
+      // CRÍTICO: incluir access_token en fields para obtener el token de página
+      const pagesRes = await fetch('https://graph.facebook.com/v21.0/me/accounts?fields=id,name,access_token,instagram_business_account{id,name,username,followers_count,media_count,profile_picture_url,biography}&access_token='+token+'&limit=50')
       const pagesJ = await pagesRes.json()
-      const igIds = (pagesJ.data||[]).filter(p=>p.instagram_business_account).map(p=>({ig_id:p.instagram_business_account.id,page_name:p.name}))
-      const withData = await Promise.all(igIds.map(async ({ig_id,page_name})=>{
-        const igR = await fetch('https://graph.facebook.com/v21.0/'+ig_id+'?fields=id,name,username,followers_count,media_count,profile_picture_url,biography&access_token='+token)
-        const igJ = await igR.json()
-        return {...igJ,page_name}
-      }))
-      const valid = withData.filter(a=>a.username)
+      const igIds = (pagesJ.data||[])
+        .filter(p=>p.instagram_business_account)
+        .map(p=>({
+          ...p.instagram_business_account,
+          page_name: p.name,
+          page_token: p.access_token  // token de página — requerido para insights
+        }))
+      const valid = igIds.filter(a=>a.username)
       setIgAccounts(valid)
       if (valid.length>0) setActiveIg(valid[0])
     } catch(e){console.error(e)}
@@ -159,13 +161,16 @@ export default function InstagramPage() {
       const range = getDateRange(preset, customFrom, customTo)
       if (!range.since||!range.until){setLoading(false);return}
       const ig_id = activeIg.id
+      // CRÍTICO: usar el token de la página, no el token de usuario
+      // El token de usuario no tiene permiso para ver insights de IG ni métricas de audiencia
+      const pageTok = activeIg.page_token || token
 
       const [insR, mediaR, audienceCountryR, audienceCityR] = await Promise.all([
-        fetch(`https://graph.facebook.com/v21.0/${ig_id}/insights?metric=reach,impressions,profile_views,follower_count,website_clicks&period=day&since=${range.since}&until=${range.until}&access_token=${token}`),
+        fetch(`https://graph.facebook.com/v21.0/${ig_id}/insights?metric=reach,impressions,profile_views,follower_count,website_clicks&period=day&since=${range.since}&until=${range.until}&access_token=${pageTok}`),
         // Posts sin filtro de fecha — siempre muestra los últimos 20
-        fetch(`https://graph.facebook.com/v21.0/${ig_id}/media?fields=id,caption,media_type,timestamp,like_count,comments_count,media_url,thumbnail_url,permalink,insights.metric(reach,impressions,saved,video_views,avg_watch_time,shares,plays)&limit=20&access_token=${token}`),
-        fetch(`https://graph.facebook.com/v21.0/${ig_id}/insights?metric=audience_country&period=lifetime&access_token=${token}`),
-        fetch(`https://graph.facebook.com/v21.0/${ig_id}/insights?metric=audience_city&period=lifetime&access_token=${token}`),
+        fetch(`https://graph.facebook.com/v21.0/${ig_id}/media?fields=id,caption,media_type,timestamp,like_count,comments_count,media_url,thumbnail_url,permalink,insights.metric(reach,impressions,saved,video_views,avg_watch_time,shares,plays)&limit=20&access_token=${pageTok}`),
+        fetch(`https://graph.facebook.com/v21.0/${ig_id}/insights?metric=audience_country&period=lifetime&access_token=${pageTok}`),
+        fetch(`https://graph.facebook.com/v21.0/${ig_id}/insights?metric=audience_city&period=lifetime&access_token=${pageTok}`),
       ])
 
       const [insJ, mediaJ, audienceCountryJ, audienceCityJ] = await Promise.all([insR.json(),mediaR.json(),audienceCountryR.json(),audienceCityR.json()])
