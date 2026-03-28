@@ -182,10 +182,11 @@ export default function FacebookPage() {
       const tok = activePage.access_token || token
       const pid = activePage.id
 
+      // Posts y page insights en paralelo — sin insights.metric en posts porque falla para posts no-video
       const [insR, postsR, dailyR, geoCountryR, geoRegionR] = await Promise.all([
         fetch(`https://graph.facebook.com/v21.0/${pid}/insights?metric=page_impressions,page_reach,page_engaged_users,page_post_engagements,page_fan_adds_unique,page_fan_removes_unique,page_views_total&period=total_over_range&since=${range.since}&until=${range.until}&access_token=${tok}`),
-        // Posts sin filtro de fecha — siempre muestra los últimos 20
-        fetch(`https://graph.facebook.com/v21.0/${pid}/posts?fields=id,message,story,created_time,full_picture,attachments{media_type,media},likes.summary(true),comments.summary(true),shares,insights.metric(post_impressions,post_reach,post_engaged_users,post_video_avg_time_watched,post_reactions_by_type_total)&limit=20&access_token=${tok}`),
+        // Posts sin filtro de fecha y sin insights.metric (que falla para posts no-video/no con permisos)
+        fetch(`https://graph.facebook.com/v21.0/${pid}/posts?fields=id,message,story,created_time,full_picture,attachments{media_type,media},likes.summary(true),comments.summary(true),shares&limit=20&access_token=${tok}`),
         fetch(`https://graph.facebook.com/v21.0/${pid}/insights?metric=page_impressions&period=day&since=${range.since}&until=${range.until}&access_token=${tok}`),
         fetch(`https://graph.facebook.com/v21.0/${pid}/insights?metric=page_impressions_by_country_unique&period=total_over_range&since=${range.since}&until=${range.until}&access_token=${tok}`),
         fetch(`https://graph.facebook.com/v21.0/${pid}/insights?metric=page_impressions_by_city_unique&period=total_over_range&since=${range.since}&until=${range.until}&access_token=${tok}`),
@@ -197,19 +198,16 @@ export default function FacebookPage() {
       ;(insJ.data||[]).forEach(m => { ins[m.name] = m.values?.[0]?.value || 0 })
       setInsights(ins)
 
-      // Process posts
+      // Process posts — ER calculado sobre fan_count ya que no tenemos reach por post
+      const fanCount = activePage.fan_count || activePage.followers_count || 1
       const processedPosts = (postsJ.data||[]).map(p => {
-        const postIns = {}
-        ;(p.insights?.data||[]).forEach(m => { postIns[m.name] = m.values?.[0]?.value || 0 })
         const likes = p.likes?.summary?.total_count || 0
         const comments = p.comments?.summary?.total_count || 0
         const shares = p.shares?.count || 0
-        const reach = postIns.post_reach || 0
-        const engagementRate = reach > 0 ? ((likes+comments+shares)/reach*100).toFixed(2) : 0
+        const engagementRate = ((likes+comments+shares)/fanCount*100).toFixed(2)
         const mediaType = p.attachments?.data?.[0]?.media_type || 'STATUS'
         const thumb = p.full_picture || null
-        const avgWatch = postIns.post_video_avg_time_watched || 0
-        return { ...p, postIns, likes, comments, shares, reach, engagementRate, mediaType, thumb, avgWatch, totalEngagement: likes+comments+shares }
+        return { ...p, likes, comments, shares, reach: 0, engagementRate, mediaType, thumb, avgWatch: 0, totalEngagement: likes+comments+shares }
       }).sort((a,b) => b.totalEngagement - a.totalEngagement)
       setPosts(processedPosts)
 

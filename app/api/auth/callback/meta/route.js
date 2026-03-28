@@ -18,11 +18,13 @@ export async function GET(request) {
     return NextResponse.redirect(`${APP_URL}/dashboard?error=meta_denied`)
   }
 
-  // Decode user ID from state (set by client before OAuth redirect)
+  // Decode user ID and optional returnTo from state (set by client before OAuth redirect)
   let userId = null
+  let returnTo = '/dashboard/meta-ads'
   try {
     const parsed = JSON.parse(atob(stateRaw))
     userId = parsed.uid
+    if (parsed.returnTo) returnTo = parsed.returnTo
   } catch (e) {}
 
   if (!userId) {
@@ -79,7 +81,7 @@ export async function GET(request) {
       }
     }
 
-    return NextResponse.redirect(`${APP_URL}/dashboard/platforms?success=meta_connected`)
+    return NextResponse.redirect(`${APP_URL}${returnTo}?success=meta_connected`)
   } catch (err) {
     console.error('Meta OAuth callback error:', err)
     return NextResponse.redirect(`${APP_URL}/dashboard?error=meta_oauth_error`)

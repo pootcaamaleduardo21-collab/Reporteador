@@ -167,8 +167,9 @@ export default function InstagramPage() {
 
       const [insR, mediaR, audienceCountryR, audienceCityR] = await Promise.all([
         fetch(`https://graph.facebook.com/v21.0/${ig_id}/insights?metric=reach,impressions,profile_views,follower_count,website_clicks&period=day&since=${range.since}&until=${range.until}&access_token=${pageTok}`),
-        // Posts sin filtro de fecha — siempre muestra los últimos 20
-        fetch(`https://graph.facebook.com/v21.0/${ig_id}/media?fields=id,caption,media_type,timestamp,like_count,comments_count,media_url,thumbnail_url,permalink,insights.metric(reach,impressions,saved,video_views,avg_watch_time,shares,plays)&limit=20&access_token=${pageTok}`),
+        // Media sin filtro de fecha — siempre muestra los últimos 20
+        // avg_watch_time y plays solo aplican a Reels y fallan para fotos/videos normales
+        fetch(`https://graph.facebook.com/v21.0/${ig_id}/media?fields=id,caption,media_type,timestamp,like_count,comments_count,media_url,thumbnail_url,permalink,insights.metric(reach,impressions,saved,video_views,shares)&limit=20&access_token=${pageTok}`),
         fetch(`https://graph.facebook.com/v21.0/${ig_id}/insights?metric=audience_country&period=lifetime&access_token=${pageTok}`),
         fetch(`https://graph.facebook.com/v21.0/${ig_id}/insights?metric=audience_city&period=lifetime&access_token=${pageTok}`),
       ])
@@ -197,8 +198,8 @@ export default function InstagramPage() {
           reach: mIns.reach||0,
           impressions: mIns.impressions||0,
           saved: mIns.saved||0,
-          video_views: mIns.video_views||mIns.plays||0,
-          avg_watch: mIns.avg_watch_time||0,
+          video_views: mIns.video_views||0,
+          avg_watch: 0,
           shares: mIns.shares||0,
           totalEngagement: (m.like_count||0)+(m.comments_count||0)+(mIns.saved||0)+(mIns.shares||0),
           engagementRate: mIns.reach>0?(((m.like_count||0)+(m.comments_count||0)+(mIns.saved||0))/mIns.reach*100).toFixed(2):0,
