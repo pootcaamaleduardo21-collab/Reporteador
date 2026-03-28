@@ -1,15 +1,18 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '../../lib/supabase'
 
 export default function PlatformsPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [user, setUser] = useState(null)
   const [accounts, setAccounts] = useState([])
   const [loading, setLoading] = useState(true)
   const [disconnecting, setDisconnecting] = useState(null)
+  const successMsg = searchParams?.get('success')
+  const errorMsg = searchParams?.get('error')
 
   const platforms = [
     {
@@ -71,11 +74,27 @@ export default function PlatformsPage() {
     init()
   }, [])
 
+  const [metaToken, setMetaToken] = useState(false) // organic meta connected
+
+  useEffect(() => {
+    // Also check meta_tokens for organic connection
+    if (!user) return
+    supabase.from('meta_tokens').select('user_id').eq('user_id', user.id).single()
+      .then(({ data }) => { if (data) setMetaToken(true) })
+  }, [user])
+
   const getAccountsByPlatform = (pid) => accounts.filter(a => a.platform === pid)
 
   const handleConnect = (platform) => {
     if (!platform.connectUrl) return
-    window.location.href = platform.connectUrl
+    if (platform.id === 'meta_ads') {
+      // Must pass user ID in state so the callback knows who to assign the token to
+      if (!user) return
+      const state = btoa(JSON.stringify({ uid: user.id, ts: Date.now() }))
+      window.location.href = `/api/auth/meta?state=${encodeURIComponent(state)}`
+    } else {
+      window.location.href = platform.connectUrl
+    }
   }
 
   const handleDisconnect = async (accountId) => {
@@ -108,6 +127,28 @@ export default function PlatformsPage() {
         <p style={{fontSize:'12px',color:'var(--text4)',margin:0}}>Conecta y administra tus cuentas de publicidad</p>
       </div>
 
+      {successMsg && (
+        <div style={{marginBottom:'16px',padding:'12px 16px',background:'rgba(110,231,183,.08)',border:'1px solid rgba(110,231,183,.25)',borderRadius:'10px',display:'flex',alignItems:'center',gap:'8px'}}>
+          <span style={{fontSize:'16px'}}>✅</span>
+          <div style={{fontSize:'12px',color:'#6ee7b7',fontWeight:'600'}}>
+            {successMsg==='meta_connected'?'¡Meta conectado exitosamente! Tus cuentas ya están disponibles.':'Plataforma conectada con éxito.'}
+          </div>
+        </div>
+      )}
+      {errorMsg && (
+        <div style={{marginBottom:'16px',padding:'12px 16px',background:'rgba(248,113,113,.08)',border:'1px solid rgba(248,113,113,.25)',borderRadius:'10px',display:'flex',alignItems:'center',gap:'8px'}}>
+          <span style={{fontSize:'16px'}}>⚠️</span>
+          <div>
+            <div style={{fontSize:'12px',color:'#f87171',fontWeight:'600',marginBottom:'2px'}}>
+              {errorMsg==='meta_denied'?'Conexión cancelada':'Error al conectar la plataforma'}
+            </div>
+            <div style={{fontSize:'11px',color:'var(--text4)'}}>
+              {errorMsg==='meta_no_user'?'Tu sesión expiró. Recarga la página e intenta de nuevo.':errorMsg==='meta_oauth_error'?'Error en la autenticación con Facebook. Verifica que tengas permisos de administrador.':'Intenta de nuevo o contacta soporte.'}
+            </div>
+          </div>
+        </div>
+      )}
+
       <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(280px,1fr))',gap:'16px',marginBottom:'32px'}}>
         {platforms.map(platform => {
           const connected = getAccountsByPlatform(platform.id)
@@ -136,6 +177,13 @@ export default function PlatformsPage() {
                     : <span style={{fontSize:'9px',color:'#f87171',background:'rgba(248,113,113,.08)',border:'1px solid rgba(248,113,113,.2)',padding:'3px 8px',borderRadius:'20px',fontWeight:'700',letterSpacing:'.05em'}}>NO CONECTADO</span>
                 }
               </div>
+
+              {/* Orgánico Meta badge */}
+              {platform.id === 'meta_ads' && metaToken && !isConnected && (
+                <div style={{padding:'8px 12px',background:'rgba(110,231,183,.06)',border:'1px solid rgba(110,231,183,.15)',borderRadius:'8px',fontSize:'11px',color:'#6ee7b7'}}>
+                  ✓ Meta orgánico conectado (Facebook e Instagram páginas). Conecta Meta Ads abajo para ver campañas pagadas.
+                </div>
+              )}
 
               {/* Cuentas conectadas */}
               {isConnected && (
