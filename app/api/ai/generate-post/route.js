@@ -97,7 +97,7 @@ Responde ÚNICAMENTE con JSON válido (sin markdown, sin bloques de código):
     // ── Llamada a Gemini ──
     const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY)
     const model = genAI.getGenerativeModel({
-      model: 'gemini-2.0-flash',
+      model: 'gemini-1.5-flash-8b',
       systemInstruction: systemPrompt,
     })
 
@@ -120,13 +120,17 @@ Responde ÚNICAMENTE con JSON válido (sin markdown, sin bloques de código):
     return NextResponse.json({ posts: parsed.posts })
   } catch (err) {
     console.error('Generate post error:', err)
-    let message = err.message || 'Error al generar el post'
-    if (message.includes('API_KEY') || message.includes('API key'))
-      message = 'API Key de Google inválida. Verifica la variable GOOGLE_AI_API_KEY en Vercel.'
-    else if (message.includes('quota') || message.includes('QUOTA'))
-      message = 'Cuota de la API de Google alcanzada. Intenta en unos minutos.'
-    else if (message.includes('SAFETY'))
-      message = 'El contenido fue bloqueado por los filtros de seguridad. Intenta con un tema diferente.'
+    const raw = err.message || 'Error al generar el post'
+    let message = raw
+    if (raw.includes('API_KEY') || raw.includes('API key') || raw.includes('invalid') || raw.includes('401'))
+      message = 'API Key de Google inválida o no configurada. Verifica GOOGLE_AI_API_KEY en Vercel → Settings → Environment Variables.'
+    else if (raw.includes('SAFETY') || raw.includes('safety'))
+      message = 'El contenido fue bloqueado por filtros de seguridad. Intenta con otro tema.'
+    else if (raw.includes('not found') || raw.includes('404'))
+      message = 'Modelo de Gemini no disponible. Contacta soporte.'
+    else if (raw.includes('quota') || raw.includes('QUOTA') || raw.includes('429') || raw.includes('RESOURCE_EXHAUSTED'))
+      message = 'Límite de requests alcanzado. Espera 1 minuto e intenta de nuevo.'
+    // Si no coincide ninguno, mostrar el error real para poder diagnosticar
     return NextResponse.json({ error: message }, { status: 500 })
   }
 }
