@@ -108,10 +108,11 @@ export default function DashboardLayout({ children }) {
   const isGoogleAdsPage = pathname === '/dashboard/google-ads'
   const isTikTokAdsPage = pathname === '/dashboard/tiktok-ads'
   const isOverviewPage = pathname === '/dashboard' || pathname === '/dashboard/'
-  const isPublicarPage = pathname === '/dashboard/publicar'
-  const isMetaAdsPage = pathname === '/dashboard/meta-ads'
+  const isPublicarPage    = pathname === '/dashboard/publicar'
+  const isCalendarioPage  = pathname === '/dashboard/calendario'
+  const isMetaAdsPage     = pathname === '/dashboard/meta-ads'
 
-  const activeSection = isReportePage ? 'reportes' : isSettingsPage ? 'settings' : isFacebookPage ? 'facebook' : isInstagramPage ? 'instagram' : isTikTokOrganicPage ? 'tiktok-organic' : isGoogleAdsPage ? 'google-ads' : isTikTokAdsPage ? 'tiktok-ads' : isPublicarPage ? 'publicar' : isMetaAdsPage ? 'meta-ads' : 'overview'
+  const activeSection = isReportePage ? 'reportes' : isSettingsPage ? 'settings' : isFacebookPage ? 'facebook' : isInstagramPage ? 'instagram' : isTikTokOrganicPage ? 'tiktok-organic' : isGoogleAdsPage ? 'google-ads' : isTikTokAdsPage ? 'tiktok-ads' : isPublicarPage ? 'publicar' : isCalendarioPage ? 'calendario' : isMetaAdsPage ? 'meta-ads' : 'overview'
 
   const topbarTitle = isReportePage
     ? (selectedAccount?.account_name || selectedAccount?.account_id || 'Reportes')
@@ -122,6 +123,7 @@ export default function DashboardLayout({ children }) {
     : activeSection === 'google-ads' ? 'Google Ads'
     : activeSection === 'tiktok-ads' ? 'TikTok Ads'
     : activeSection === 'publicar' ? 'Crear Post'
+    : activeSection === 'calendario' ? 'Calendario'
     : 'Dashboard'
 
   if (!user) return <div style={{minHeight:'100vh',background:'var(--bg)'}}></div>
@@ -163,7 +165,8 @@ export default function DashboardLayout({ children }) {
           {sidebarOpen && <div style={{fontSize:'9px',color:'var(--text4)',fontWeight:'600',letterSpacing:'.08em',textTransform:'uppercase',padding:'10px 8px 3px'}}>Publicar</div>}
 
           {[
-            {id:'publicar',icon:'✏️',label:'Crear Post',sub:'Facebook e Instagram',path:'/dashboard/publicar'},
+            {id:'publicar',   icon:'✏️', label:'Crear Post',  sub:'Facebook e Instagram', path:'/dashboard/publicar'},
+            {id:'calendario', icon:'📅', label:'Calendario',  sub:'Posts y programados',  path:'/dashboard/calendario'},
           ].map(s=>(
             <div key={s.id} className="nav-hover" onClick={()=>navigate(s.path)}
               style={{display:'flex',alignItems:'center',gap:'8px',padding:'7px 8px',borderRadius:'7px',cursor:'pointer',marginBottom:'1px',background:activeSection===s.id?'rgba(99,102,241,.14)':'transparent'}}>

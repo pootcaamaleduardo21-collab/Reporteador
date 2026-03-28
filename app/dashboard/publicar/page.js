@@ -46,6 +46,10 @@ export default function PublicarPage() {
   const [success, setSuccess] = useState(null)
   const [error, setError] = useState(null)
 
+  // ── Programar ──
+  const [scheduleMode, setScheduleMode] = useState('now') // 'now' | 'schedule'
+  const [scheduledFor, setScheduledFor] = useState('')
+
   const [recentPosts, setRecentPosts] = useState([])
   const [loadingPosts, setLoadingPosts] = useState(false)
 
@@ -189,59 +193,90 @@ export default function PublicarPage() {
   async function handlePost() {
     if (!selectedPage || !caption.trim()) return
     if (charOver) return
+
+    // Validar fecha si está programando
+    if (scheduleMode === 'schedule') {
+      if (!scheduledFor) { setError('Selecciona la fecha y hora para programar el post.'); return }
+      const scheduled = new Date(scheduledFor)
+      const minTime = new Date(Date.now() + 10 * 60 * 1000) // mínimo 10 minutos
+      const maxTime = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // máximo 30 días
+      if (scheduled < minTime) { setError('La hora programada debe ser al menos 10 minutos en el futuro.'); return }
+      if (scheduled > maxTime) { setError('No se puede programar más de 30 días en el futuro.'); return }
+    }
+
     setPosting(true)
     setError(null)
     setSuccess(null)
 
     try {
       const pageTok = selectedPage.access_token
+      const isScheduling = scheduleMode === 'schedule' && scheduledFor
+      const scheduledUnix = isScheduling ? Math.floor(new Date(scheduledFor).getTime() / 1000) : null
 
       if (platform === 'facebook') {
         let endpoint, body
         if (imageUrl.trim()) {
           endpoint = `https://graph.facebook.com/v21.0/${selectedPage.id}/photos`
           body = new URLSearchParams({ caption: caption, url: imageUrl.trim(), access_token: pageTok })
+          if (isScheduling) { body.append('scheduled_publish_time', scheduledUnix); body.append('published', 'false') }
         } else {
           endpoint = `https://graph.facebook.com/v21.0/${selectedPage.id}/feed`
           body = new URLSearchParams({ message: caption, access_token: pageTok })
           if (link.trim()) body.append('link', link.trim())
+          if (isScheduling) { body.append('scheduled_publish_time', scheduledUnix); body.append('published', 'false') }
         }
         const res = await fetch(endpoint, { method: 'POST', body })
         const data = await res.json()
         if (data.error) throw new Error(data.error.message)
-        setSuccess('Post publicado en Facebook exitosamente.')
-        setCaption('')
-        setImageUrl('')
-        setLink('')
+
+        if (isScheduling) {
+          // Guardar en Supabase también para el calendario
+          await supabase.from('scheduled_posts').insert({
+            user_id: user.id, page_id: selectedPage.id, page_name: selectedPage.name,
+            platform: 'facebook', caption, image_url: imageUrl.trim() || null,
+            link_url: link.trim() || null, scheduled_for: new Date(scheduledFor).toISOString(),
+            status: 'scheduled', meta_post_id: data.id || null,
+          })
+          setSuccess(`Post programado para Facebook el ${new Date(scheduledFor).toLocaleString('es-MX', { dateStyle: 'medium', timeStyle: 'short' })}.`)
+        } else {
+          setSuccess('Post publicado en Facebook exitosamente.')
+        }
+        setCaption(''); setImageUrl(''); setLink(''); setScheduledFor(''); setScheduleMode('now')
         loadRecentPosts()
+
       } else {
         // Instagram: two-step
         const igId = selectedPage.instagram_business_account?.id
         if (!igId) throw new Error('Esta página no tiene una cuenta de Instagram Business vinculada.')
+        if (!imageUrl.trim()) throw new Error('Instagram requiere una URL de imagen para publicar.')
 
-        // Step 1: create media container
-        const mediaBody = new URLSearchParams({ caption, access_token: pageTok })
-        if (imageUrl.trim()) {
-          mediaBody.append('image_url', imageUrl.trim())
+        if (isScheduling) {
+          // Instagram no tiene scheduling nativo vía API pública — guardamos en Supabase
+          await supabase.from('scheduled_posts').insert({
+            user_id: user.id, page_id: selectedPage.id, page_name: selectedPage.name,
+            platform: 'instagram', caption, image_url: imageUrl.trim() || null,
+            ig_account_id: igId, scheduled_for: new Date(scheduledFor).toISOString(),
+            status: 'pending',
+          })
+          setSuccess(`Post de Instagram guardado para ${new Date(scheduledFor).toLocaleString('es-MX', { dateStyle: 'medium', timeStyle: 'short' })}. Visible en el Calendario.`)
+          setCaption(''); setImageUrl(''); setScheduledFor(''); setScheduleMode('now')
         } else {
-          throw new Error('Instagram requiere una URL de imagen para publicar.')
+          // Publicar inmediatamente
+          const mediaBody = new URLSearchParams({ caption, image_url: imageUrl.trim(), access_token: pageTok })
+          const mediaRes = await fetch(`https://graph.facebook.com/v21.0/${igId}/media`, { method: 'POST', body: mediaBody })
+          const mediaData = await mediaRes.json()
+          if (mediaData.error) throw new Error(mediaData.error.message)
+          if (!mediaData.id) throw new Error('No se pudo crear el contenedor de media en Instagram.')
+
+          const pubBody = new URLSearchParams({ creation_id: mediaData.id, access_token: pageTok })
+          const pubRes = await fetch(`https://graph.facebook.com/v21.0/${igId}/media_publish`, { method: 'POST', body: pubBody })
+          const pubData = await pubRes.json()
+          if (pubData.error) throw new Error(pubData.error.message)
+
+          setSuccess('Post publicado en Instagram exitosamente.')
+          setCaption(''); setImageUrl('')
+          loadRecentPosts()
         }
-        const mediaRes = await fetch(`https://graph.facebook.com/v21.0/${igId}/media`, { method: 'POST', body: mediaBody })
-        const mediaData = await mediaRes.json()
-        if (mediaData.error) throw new Error(mediaData.error.message)
-        const creationId = mediaData.id
-        if (!creationId) throw new Error('No se pudo crear el contenedor de media en Instagram.')
-
-        // Step 2: publish
-        const pubBody = new URLSearchParams({ creation_id: creationId, access_token: pageTok })
-        const pubRes = await fetch(`https://graph.facebook.com/v21.0/${igId}/media_publish`, { method: 'POST', body: pubBody })
-        const pubData = await pubRes.json()
-        if (pubData.error) throw new Error(pubData.error.message)
-
-        setSuccess('Post publicado en Instagram exitosamente.')
-        setCaption('')
-        setImageUrl('')
-        loadRecentPosts()
       }
     } catch (e) {
       setError(e.message || 'Error desconocido al publicar.')
@@ -646,18 +681,52 @@ export default function PublicarPage() {
             </div>
           )}
 
+          {/* Programar / Publicar ahora toggle */}
+          <div style={cardStyle}>
+            <div style={{ fontSize: '11px', color: 'var(--text4)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '.07em', marginBottom: '10px' }}>Cuándo publicar</div>
+            <div style={{ display: 'flex', gap: '4px', background: 'rgba(255,255,255,.04)', padding: '3px', borderRadius: '7px', border: '1px solid var(--border)', marginBottom: '10px' }}>
+              {[{ id: 'now', label: '⚡ Ahora' }, { id: 'schedule', label: '⏰ Programar' }].map(m => (
+                <button key={m.id} onClick={() => setScheduleMode(m.id)}
+                  style={{ flex: 1, padding: '6px 8px', borderRadius: '5px', border: 'none', cursor: 'pointer', fontSize: '11px', fontWeight: '600', fontFamily: 'inherit', transition: 'all .15s',
+                    background: scheduleMode === m.id ? 'rgba(255,255,255,.1)' : 'transparent',
+                    color: scheduleMode === m.id ? 'var(--text)' : 'var(--text4)' }}>
+                  {m.label}
+                </button>
+              ))}
+            </div>
+            {scheduleMode === 'schedule' && (
+              <div>
+                <input type="datetime-local" value={scheduledFor} onChange={e => setScheduledFor(e.target.value)}
+                  min={new Date(Date.now() + 10 * 60000).toISOString().slice(0, 16)}
+                  max={new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 16)}
+                  style={{ width: '100%', background: 'rgba(255,255,255,.04)', border: '1px solid var(--border)', borderRadius: '7px', color: 'var(--text)', fontSize: '12px', padding: '8px 10px', fontFamily: 'inherit', boxSizing: 'border-box', colorScheme: 'dark' }} />
+                {platform === 'instagram' && (
+                  <div style={{ marginTop: '7px', fontSize: '10px', color: '#fbbf24', lineHeight: '1.4' }}>
+                    ℹ️ Instagram no permite scheduling nativo vía API. El post quedará guardado en el Calendario para publicarlo manualmente cuando llegue la hora.
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
           {/* Post button */}
           <button
             className="pub-btn"
             onClick={handlePost}
-            disabled={posting || !caption.trim() || charOver || !selectedPage || (platform === 'instagram' && !igAccount)}
+            disabled={posting || !caption.trim() || charOver || !selectedPage || (platform === 'instagram' && !igAccount) || (scheduleMode === 'schedule' && !scheduledFor)}
             style={{
-              padding: '11px 20px', background: 'linear-gradient(135deg,#6366f1,#8b5cf6)', color: '#fff',
-              border: 'none', borderRadius: '9px', cursor: 'pointer', fontFamily: 'inherit', fontSize: '13px',
-              fontWeight: '700', width: '100%', opacity: (posting || !caption.trim() || charOver || !selectedPage || (platform === 'instagram' && !igAccount)) ? 0.5 : 1,
+              padding: '11px 20px',
+              background: scheduleMode === 'schedule' ? 'linear-gradient(135deg,#f59e0b,#d97706)' : 'linear-gradient(135deg,#6366f1,#8b5cf6)',
+              color: '#fff', border: 'none', borderRadius: '9px', cursor: 'pointer', fontFamily: 'inherit', fontSize: '13px',
+              fontWeight: '700', width: '100%',
+              opacity: (posting || !caption.trim() || charOver || !selectedPage || (platform === 'instagram' && !igAccount) || (scheduleMode === 'schedule' && !scheduledFor)) ? 0.5 : 1,
               transition: 'opacity .15s',
             }}>
-            {posting ? 'Publicando...' : platform === 'instagram' ? '📸 Publicar en Instagram' : '📘 Publicar en Facebook'}
+            {posting
+              ? (scheduleMode === 'schedule' ? 'Programando...' : 'Publicando...')
+              : scheduleMode === 'schedule'
+                ? '⏰ Programar post'
+                : platform === 'instagram' ? '📸 Publicar en Instagram' : '📘 Publicar en Facebook'}
           </button>
         </div>
 

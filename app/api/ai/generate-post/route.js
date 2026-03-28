@@ -131,6 +131,19 @@ Responde ÚNICAMENTE con JSON válido (sin markdown):
     return NextResponse.json({ posts: parsed.posts })
   } catch (err) {
     console.error('Generate post error:', err)
-    return NextResponse.json({ error: err.message || 'Error generating post' }, { status: 500 })
+    // Extraer mensaje limpio de errores de Anthropic (pueden venir como JSON crudo)
+    let message = err.message || 'Error al generar el post'
+    try {
+      const parsed = JSON.parse(message)
+      if (parsed?.error?.message) message = parsed.error.message
+    } catch {}
+    // Mensajes amigables para errores comunes
+    if (message.includes('credit balance') || message.includes('billing'))
+      message = 'Saldo insuficiente en la cuenta de Anthropic. Agrega créditos en console.anthropic.com → Plans & Billing.'
+    else if (message.includes('rate_limit') || message.includes('rate limit'))
+      message = 'Límite de velocidad de la API alcanzado. Espera unos segundos e intenta de nuevo.'
+    else if (message.includes('invalid_api_key') || message.includes('authentication'))
+      message = 'API Key de Anthropic inválida. Verifica la variable ANTHROPIC_API_KEY en Vercel.'
+    return NextResponse.json({ error: message }, { status: err.status || 500 })
   }
 }
