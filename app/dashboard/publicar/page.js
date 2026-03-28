@@ -183,14 +183,50 @@ export default function PublicarPage() {
     setGeneratingPosts(false)
   }
 
+  // ── Compresión automática de imagen (Canvas API, sin librerías) ──
+  function compressImage(file, maxWidth = 1200, quality = 0.82) {
+    return new Promise((resolve) => {
+      const img = new Image()
+      img.onload = () => {
+        let { width, height } = img
+        if (width > maxWidth) {
+          height = Math.round(height * maxWidth / width)
+          width = maxWidth
+        }
+        const canvas = document.createElement('canvas')
+        canvas.width = width
+        canvas.height = height
+        const ctx = canvas.getContext('2d')
+        ctx.drawImage(img, 0, 0, width, height)
+        canvas.toBlob(
+          (blob) => {
+            const compressed = new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' })
+            URL.revokeObjectURL(img.src)
+            resolve(compressed)
+          },
+          'image/jpeg',
+          quality
+        )
+      }
+      img.src = URL.createObjectURL(file)
+    })
+  }
+
   // ── Manejo de imagen desde dispositivo ──
-  function handleImageSelect(file) {
+  async function handleImageSelect(file) {
     if (!file) return
     if (!file.type.startsWith('image/')) { setError('Solo se permiten imágenes (JPG, PNG, WEBP, GIF).'); return }
-    if (file.size > 10 * 1024 * 1024) { setError('La imagen no puede superar 10 MB.'); return }
-    setImageFile(file)
-    setImagePreview(URL.createObjectURL(file))
+    if (file.size > 30 * 1024 * 1024) { setError('La imagen no puede superar 30 MB.'); return }
     setError(null)
+
+    // Comprimir automáticamente antes de hacer nada
+    const before = (file.size / 1024).toFixed(0)
+    const compressed = await compressImage(file)
+    const after = (compressed.size / 1024).toFixed(0)
+    console.log(`[IMG] Comprimida: ${before} KB → ${after} KB`)
+
+    setImageFile(compressed)
+    setImagePreview(URL.createObjectURL(compressed))
   }
 
   function clearImage() {
