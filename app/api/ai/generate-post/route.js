@@ -1,65 +1,48 @@
 import { NextResponse } from 'next/server'
-import Anthropic from '@anthropic-ai/sdk'
+import { GoogleGenerativeAI } from '@google/generative-ai'
 import { createClient } from '@supabase/supabase-js'
-
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
 )
 
-const DAILY_LIMIT = 10   // generaciones por día por usuario
-const MONTHLY_LIMIT = 50 // generaciones por mes por usuario
+const DAILY_LIMIT   = 10
+const MONTHLY_LIMIT = 50
 
 export async function POST(request) {
-  if (!process.env.ANTHROPIC_API_KEY) {
-    return NextResponse.json({ error: 'ANTHROPIC_API_KEY not configured' }, { status: 500 })
+  if (!process.env.GOOGLE_AI_API_KEY) {
+    return NextResponse.json({ error: 'GOOGLE_AI_API_KEY no configurada' }, { status: 500 })
   }
 
   try {
     const { topic, platform, accountName, followers, style, customPrompt, userId } = await request.json()
 
-    const today = new Date().toISOString().split('T')[0]
+    const today      = new Date().toISOString().split('T')[0]
     const monthStart = today.slice(0, 7) + '-01'
-    let todayCalls = 0
+    let todayCalls   = 0
 
     // ── Rate limiting por usuario ──
     if (userId) {
       const { data: todayRow } = await supabase
-        .from('ai_usage')
-        .select('calls')
-        .eq('user_id', userId)
-        .eq('date', today)
-        .single()
-
+        .from('ai_usage').select('calls').eq('user_id', userId).eq('date', today).single()
       todayCalls = todayRow?.calls || 0
 
       if (todayCalls >= DAILY_LIMIT) {
         return NextResponse.json({
           error: `Límite diario alcanzado (${DAILY_LIMIT} generaciones/día). Regresa mañana.`,
-          limitReached: true,
-          type: 'daily',
-          used: todayCalls,
-          limit: DAILY_LIMIT,
+          limitReached: true, type: 'daily', used: todayCalls, limit: DAILY_LIMIT,
         }, { status: 429 })
       }
 
       const { data: monthRows } = await supabase
-        .from('ai_usage')
-        .select('calls')
-        .eq('user_id', userId)
-        .gte('date', monthStart)
-
+        .from('ai_usage').select('calls').eq('user_id', userId).gte('date', monthStart)
       const monthlyCalls = (monthRows || []).reduce((s, r) => s + (r.calls || 0), 0)
 
       if (monthlyCalls >= MONTHLY_LIMIT) {
         return NextResponse.json({
           error: `Límite mensual alcanzado (${MONTHLY_LIMIT} generaciones/mes). Se renueva el 1 del próximo mes.`,
-          limitReached: true,
-          type: 'monthly',
-          used: monthlyCalls,
-          limit: MONTHLY_LIMIT,
+          limitReached: true, type: 'monthly', used: monthlyCalls, limit: MONTHLY_LIMIT,
         }, { status: 429 })
       }
     }
@@ -75,22 +58,18 @@ export async function POST(request) {
       ? 'tono cercano y conversacional, como hablarle a un amigo'
       : 'tono equilibrado — profesional pero amigable'
 
-    const prompt = customPrompt
-      ? `Genera 3 variaciones de un post para ${platformCtx} con esta instrucción: "${customPrompt}".`
-      : `Genera 3 variaciones de un post para ${platformCtx} sobre el tema: "${topic}".`
+    const topicLine = customPrompt
+      ? `Instrucción del usuario: "${customPrompt}"`
+      : `Tema: "${topic}"`
 
-    // ── Llamada a Claude Haiku (rápido y económico) ──
-    const message = await client.messages.create({
-      model: 'claude-haiku-3-5',
-      max_tokens: 2048,
-      system: `Eres un experto copywriter de marketing inmobiliario en México, especializado en redes sociales para agentes y desarrolladoras inmobiliarias.
+    const systemPrompt = `Eres un experto copywriter de marketing inmobiliario en México, especializado en redes sociales para agentes y desarrolladoras inmobiliarias.
 
 La cuenta es "${accountName || 'Agente Inmobiliario'}" con ${followers ? followers + ' seguidores' : 'audiencia en crecimiento'}.
 Usa ${styleCtx}.
-Eres experto en: hooks que detienen el scroll, storytelling inmobiliario, llamadas a la acción que generan leads, y tendencias de contenido en México.`,
-      messages: [{
-        role: 'user',
-        content: `${prompt}
+Eres experto en: hooks que detienen el scroll, storytelling inmobiliario, llamadas a la acción que generan leads, y tendencias de contenido en México.`
+
+    const userPrompt = `Genera 3 variaciones de un post para ${platformCtx}.
+${topicLine}
 
 Cada variación debe tener:
 - Hook poderoso en la primera línea (que haga parar el scroll)
@@ -99,7 +78,7 @@ Cada variación debe tener:
 - Emojis estratégicos (no en exceso)
 - Hashtags relevantes al final (8-12 hashtags para Instagram, 3-5 para Facebook)
 
-Responde ÚNICAMENTE con JSON válido (sin markdown):
+Responde ÚNICAMENTE con JSON válido (sin markdown, sin bloques de código):
 {
   "posts": [
     {
@@ -114,13 +93,23 @@ Responde ÚNICAMENTE con JSON válido (sin markdown):
     }
   ]
 }`
-      }]
+
+    // ── Llamada a Gemini ──
+    const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY)
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-1.5-flash',
+      systemInstruction: systemPrompt,
     })
 
-    const raw = message.content[0].text.trim()
+    const result = await model.generateContent(userPrompt)
+    let raw = result.response.text().trim()
+
+    // Limpiar por si Gemini envuelve en markdown
+    raw = raw.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim()
+
     const parsed = JSON.parse(raw)
 
-    // ── Incrementar contador de uso ──
+    // ── Incrementar uso ──
     if (userId) {
       await supabase.from('ai_usage').upsert(
         { user_id: userId, date: today, calls: todayCalls + 1 },
@@ -131,19 +120,13 @@ Responde ÚNICAMENTE con JSON válido (sin markdown):
     return NextResponse.json({ posts: parsed.posts })
   } catch (err) {
     console.error('Generate post error:', err)
-    // Extraer mensaje limpio de errores de Anthropic (pueden venir como JSON crudo)
     let message = err.message || 'Error al generar el post'
-    try {
-      const parsed = JSON.parse(message)
-      if (parsed?.error?.message) message = parsed.error.message
-    } catch {}
-    // Mensajes amigables para errores comunes
-    if (message.includes('credit balance') || message.includes('billing'))
-      message = 'Saldo insuficiente en la cuenta de Anthropic. Agrega créditos en console.anthropic.com → Plans & Billing.'
-    else if (message.includes('rate_limit') || message.includes('rate limit'))
-      message = 'Límite de velocidad de la API alcanzado. Espera unos segundos e intenta de nuevo.'
-    else if (message.includes('invalid_api_key') || message.includes('authentication'))
-      message = 'API Key de Anthropic inválida. Verifica la variable ANTHROPIC_API_KEY en Vercel.'
-    return NextResponse.json({ error: message }, { status: err.status || 500 })
+    if (message.includes('API_KEY') || message.includes('API key'))
+      message = 'API Key de Google inválida. Verifica la variable GOOGLE_AI_API_KEY en Vercel.'
+    else if (message.includes('quota') || message.includes('QUOTA'))
+      message = 'Cuota de la API de Google alcanzada. Intenta en unos minutos.'
+    else if (message.includes('SAFETY'))
+      message = 'El contenido fue bloqueado por los filtros de seguridad. Intenta con un tema diferente.'
+    return NextResponse.json({ error: message }, { status: 500 })
   }
 }
