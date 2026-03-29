@@ -183,12 +183,12 @@ export default function DashboardHome() {
               Hola, {user?.email?.split('@')[0]}
             </h1>
           </div>
-          <p style={{fontSize:'13px',color:'var(--text4)',margin:'0 0 14px',lineHeight:'1.5'}}>
+          <p style={{fontSize:'14px',color:'var(--text3)',margin:'0 0 16px',lineHeight:'1.6'}}>
             Tu centro de control inmobiliario — orgánico + pagado en un solo lugar
           </p>
           <div style={{display:'flex',gap:'8px',flexWrap:'wrap'}}>
-            {(hasMeta||hasFbPages) && <span style={{fontSize:'10px',fontWeight:'700',padding:'3px 10px',borderRadius:'20px',background:'rgba(24,119,242,.15)',border:'1px solid rgba(24,119,242,.25)',color:'#60a5fa'}}>✓ Meta conectado</span>}
-            {hasGoogle && <span style={{fontSize:'10px',fontWeight:'700',padding:'3px 10px',borderRadius:'20px',background:'rgba(66,133,244,.12)',border:'1px solid rgba(66,133,244,.25)',color:'#93c5fd'}}>✓ Google Ads</span>}
+            {(hasMeta||hasFbPages) && <span style={{fontSize:'12px',fontWeight:'600',padding:'4px 12px',borderRadius:'20px',background:'rgba(24,119,242,.1)',border:'1px solid rgba(24,119,242,.2)',color:'#7faee8'}}>✓ Meta conectado</span>}
+            {hasGoogle && <span style={{fontSize:'12px',fontWeight:'600',padding:'4px 12px',borderRadius:'20px',background:'rgba(66,133,244,.08)',border:'1px solid rgba(66,133,244,.18)',color:'#8ab0e0'}}>✓ Google Ads</span>}
             {!hasAnyAccount && !metaToken && <span style={{fontSize:'10px',color:'var(--text4)'}}>Sin plataformas conectadas aún</span>}
           </div>
         </div>
@@ -223,18 +223,18 @@ export default function DashboardHome() {
       {(hasAnyAccount || hasFbPages || hasIG) && (
         <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:'12px',marginBottom:'24px',animation:'fadeIn .4s ease'}}>
           {[
-            {label:'Seguidores orgánicos',value:fmtN(totalOrgFollowers),icon:'👥',sub:'Facebook + Instagram',gradient:'linear-gradient(135deg,rgba(16,185,129,.15),rgba(6,78,59,.1))',accent:'#6ee7b7'},
-            {label:'Plataformas activas',value:String(activePlatformsCount),icon:'🔗',sub:'redes conectadas',gradient:'linear-gradient(135deg,rgba(99,102,241,.15),rgba(67,56,202,.1))',accent:'#a5b4fc'},
-            {label:'Cuentas de ads',value:String(accounts.length),icon:'💰',sub:'campañas pagadas',gradient:'linear-gradient(135deg,rgba(251,191,36,.15),rgba(180,83,9,.1))',accent:'#fbbf24'},
-            {label:'Boost Radar',value:loadingRadar?'…':String(boostCandidates),icon:'🚀',sub:loadingRadar?'Analizando…':'posts con potencial',gradient:'linear-gradient(135deg,rgba(244,114,182,.15),rgba(157,23,77,.1))',accent:'#f472b6'},
+            {label:'Seguidores orgánicos',value:fmtN(totalOrgFollowers),icon:'👥',sub:'Facebook + Instagram',gradient:'linear-gradient(135deg,rgba(52,211,153,.1),rgba(6,78,59,.06))',accent:'#6fcf97'},
+            {label:'Plataformas activas',value:String(activePlatformsCount),icon:'🔗',sub:'redes conectadas',gradient:'linear-gradient(135deg,rgba(99,102,241,.1),rgba(67,56,202,.06))',accent:'#a5b4fc'},
+            {label:'Cuentas de ads',value:String(accounts.length),icon:'💰',sub:'campañas pagadas',gradient:'linear-gradient(135deg,rgba(212,168,83,.12),rgba(150,100,20,.07))',accent:'#c49a45'},
+            {label:'Boost Radar',value:loadingRadar?'…':String(boostCandidates),icon:'🚀',sub:loadingRadar?'Analizando…':'posts con potencial',gradient:'linear-gradient(135deg,rgba(192,120,160,.1),rgba(120,40,80,.06))',accent:'#c07898'},
           ].map((s,i)=>(
             <div key={i} style={{background:s.gradient,border:'1px solid rgba(255,255,255,.08)',borderRadius:'14px',padding:'18px 20px'}}>
               <div style={{display:'flex',alignItems:'center',gap:'6px',marginBottom:'10px'}}>
                 <span style={{fontSize:'15px'}}>{s.icon}</span>
-                <span style={{fontSize:'9px',color:'var(--text4)',fontWeight:'700',textTransform:'uppercase',letterSpacing:'.07em'}}>{s.label}</span>
+                <span style={{fontSize:'11px',color:'var(--text3)',fontWeight:'600',textTransform:'uppercase',letterSpacing:'.05em'}}>{s.label}</span>
               </div>
-              <div style={{fontSize:'32px',fontWeight:'800',color:s.accent,lineHeight:'1',marginBottom:'5px'}}>{s.value}</div>
-              <div style={{fontSize:'10px',color:'var(--text4)'}}>{s.sub}</div>
+              <div style={{fontSize:'34px',fontWeight:'800',color:s.accent,lineHeight:'1',marginBottom:'6px'}}>{s.value}</div>
+              <div style={{fontSize:'12px',color:'var(--text3)'}}>{s.sub}</div>
             </div>
           ))}
         </div>
@@ -246,7 +246,7 @@ export default function DashboardHome() {
 
           {/* IZQUIERDA: Orgánico */}
           <div>
-            <div style={{fontSize:'9px',fontWeight:'700',color:'var(--text4)',letterSpacing:'.09em',textTransform:'uppercase',marginBottom:'10px',paddingLeft:'2px'}}>Redes Orgánicas</div>
+            <div style={{fontSize:'11px',fontWeight:'600',color:'var(--text3)',letterSpacing:'.06em',textTransform:'uppercase',marginBottom:'12px',paddingLeft:'2px'}}>Redes Orgánicas</div>
             <div style={{display:'flex',flexDirection:'column',gap:'10px'}}>
 
               {metaToken && (
@@ -258,17 +258,17 @@ export default function DashboardHome() {
                     </div>
                     <div style={{flex:1}}>
                       <div style={{fontSize:'14px',fontWeight:'700',color:'var(--text)'}}>Facebook</div>
-                      <div style={{fontSize:'10px',color:'var(--text4)'}}>Páginas y publicaciones</div>
+                      <div style={{fontSize:'12px',color:'var(--text3)'}}>Páginas y publicaciones</div>
                     </div>
                     {loadingOrganic
                       ? <div style={{width:'14px',height:'14px',borderRadius:'50%',border:'2px solid rgba(99,102,241,.3)',borderTop:'2px solid #6366f1',animation:'spin .8s linear infinite',flexShrink:0}}></div>
-                      : <span style={{fontSize:'11px',color:'#a5b4fc',fontWeight:'600',flexShrink:0}}>Ver →</span>
+                      : <span style={{fontSize:'12px',color:'var(--text2)',fontWeight:'600',flexShrink:0}}>Ver →</span>
                     }
                   </div>
                   {hasFbPages && (
                     <div style={{display:'flex',gap:'24px'}}>
-                      <div><div style={{fontSize:'26px',fontWeight:'800',color:'var(--text)',lineHeight:'1'}}>{fmtN(fbPages.reduce((s,p)=>s+(p.fan_count||0),0))}</div><div style={{fontSize:'10px',color:'var(--text4)',marginTop:'3px'}}>seguidores</div></div>
-                      <div><div style={{fontSize:'26px',fontWeight:'800',color:'#60a5fa',lineHeight:'1'}}>{fbPages.length}</div><div style={{fontSize:'10px',color:'var(--text4)',marginTop:'3px'}}>página{fbPages.length!==1?'s':''}</div></div>
+                      <div><div style={{fontSize:'26px',fontWeight:'800',color:'var(--text)',lineHeight:'1'}}>{fmtN(fbPages.reduce((s,p)=>s+(p.fan_count||0),0))}</div><div style={{fontSize:'12px',color:'var(--text3)',marginTop:'4px'}}>seguidores</div></div>
+                      <div><div style={{fontSize:'26px',fontWeight:'800',color:'#60a5fa',lineHeight:'1'}}>{fbPages.length}</div><div style={{fontSize:'12px',color:'var(--text3)',marginTop:'4px'}}>página{fbPages.length!==1?'s':''}</div></div>
                     </div>
                   )}
                   {!loadingOrganic && !hasFbPages && <div style={{fontSize:'11px',color:'var(--text4)',marginTop:'8px'}}>No se encontraron páginas. <a href="/api/auth/meta" style={{color:'#a5b4fc',textDecoration:'none'}}>Reconectar →</a></div>}
@@ -284,14 +284,14 @@ export default function DashboardHome() {
                     </div>
                     <div style={{flex:1}}>
                       <div style={{fontSize:'14px',fontWeight:'700',color:'var(--text)'}}>Instagram</div>
-                      <div style={{fontSize:'10px',color:'var(--text4)'}}>Cuentas de negocio</div>
+                      <div style={{fontSize:'12px',color:'var(--text3)'}}>Cuentas de negocio</div>
                     </div>
-                    <span style={{fontSize:'11px',color:'#a5b4fc',fontWeight:'600',flexShrink:0}}>Ver →</span>
+                    <span style={{fontSize:'12px',color:'var(--text2)',fontWeight:'600',flexShrink:0}}>Ver →</span>
                   </div>
                   {hasIG && (
                     <div style={{display:'flex',gap:'24px'}}>
-                      <div><div style={{fontSize:'26px',fontWeight:'800',color:'var(--text)',lineHeight:'1'}}>{fmtN(igAccounts.reduce((s,a)=>s+(a.followers_count||0),0))}</div><div style={{fontSize:'10px',color:'var(--text4)',marginTop:'3px'}}>seguidores</div></div>
-                      <div><div style={{fontSize:'26px',fontWeight:'800',color:'#e1306c',lineHeight:'1'}}>{igAccounts.reduce((s,a)=>s+(a.media_count||0),0)}</div><div style={{fontSize:'10px',color:'var(--text4)',marginTop:'3px'}}>posts</div></div>
+                      <div><div style={{fontSize:'26px',fontWeight:'800',color:'var(--text)',lineHeight:'1'}}>{fmtN(igAccounts.reduce((s,a)=>s+(a.followers_count||0),0))}</div><div style={{fontSize:'12px',color:'var(--text3)',marginTop:'4px'}}>seguidores</div></div>
+                      <div><div style={{fontSize:'26px',fontWeight:'800',color:'#e1306c',lineHeight:'1'}}>{igAccounts.reduce((s,a)=>s+(a.media_count||0),0)}</div><div style={{fontSize:'12px',color:'var(--text3)',marginTop:'4px'}}>posts</div></div>
                     </div>
                   )}
                   {!loadingOrganic && !hasIG && <div style={{fontSize:'11px',color:'var(--text4)',marginTop:'8px'}}>Conecta una cuenta Instagram Business vinculada a una Página.</div>}
@@ -311,7 +311,7 @@ export default function DashboardHome() {
 
           {/* DERECHA: Pagado */}
           <div>
-            <div style={{fontSize:'9px',fontWeight:'700',color:'var(--text4)',letterSpacing:'.09em',textTransform:'uppercase',marginBottom:'10px',paddingLeft:'2px'}}>Campañas Pagadas</div>
+            <div style={{fontSize:'11px',fontWeight:'600',color:'var(--text3)',letterSpacing:'.06em',textTransform:'uppercase',marginBottom:'12px',paddingLeft:'2px'}}>Campañas Pagadas</div>
             <div style={{display:'flex',flexDirection:'column',gap:'10px'}}>
 
               {hasMeta && (
@@ -322,7 +322,7 @@ export default function DashboardHome() {
                     </div>
                     <div>
                       <div style={{fontSize:'14px',fontWeight:'700',color:'var(--text)'}}>Meta Ads</div>
-                      <div style={{fontSize:'10px',color:'var(--text4)'}}>{metaAccounts.length} cuenta{metaAccounts.length!==1?'s':''} · Facebook & Instagram</div>
+                      <div style={{fontSize:'12px',color:'var(--text3)'}}>{metaAccounts.length} cuenta{metaAccounts.length!==1?'s':''} · Facebook & Instagram</div>
                     </div>
                   </div>
                   <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'6px'}}>
@@ -337,7 +337,7 @@ export default function DashboardHome() {
                         onClick={()=>router.push('/dashboard/reportes/'+metaAccounts[0].account_id+'?tab='+t.tab)}
                         style={{display:'flex',alignItems:'center',gap:'7px',padding:'9px 11px',background:'rgba(255,255,255,.03)',border:'1px solid rgba(255,255,255,.07)',borderRadius:'8px',cursor:'pointer',fontFamily:'inherit',textAlign:'left'}}>
                         <span style={{fontSize:'13px'}}>{t.icon}</span>
-                        <span style={{fontSize:'11px',color:'#999',fontWeight:'600'}}>{t.label}</span>
+                        <span style={{fontSize:'13px',color:'var(--text2)',fontWeight:'600'}}>{t.label}</span>
                       </button>
                     ))}
                   </div>
@@ -353,9 +353,9 @@ export default function DashboardHome() {
                     </div>
                     <div style={{flex:1}}>
                       <div style={{fontSize:'14px',fontWeight:'700',color:'var(--text)'}}>Google Ads</div>
-                      <div style={{fontSize:'10px',color:'var(--text4)'}}>Search · Display · YouTube</div>
+                      <div style={{fontSize:'12px',color:'var(--text3)'}}>Search · Display · YouTube</div>
                     </div>
-                    <span style={{fontSize:'11px',color:'#a5b4fc',fontWeight:'600',flexShrink:0}}>Ver →</span>
+                    <span style={{fontSize:'12px',color:'var(--text2)',fontWeight:'600',flexShrink:0}}>Ver →</span>
                   </div>
                 </div>
               )}
@@ -369,9 +369,9 @@ export default function DashboardHome() {
                     </div>
                     <div style={{flex:1}}>
                       <div style={{fontSize:'14px',fontWeight:'700',color:'var(--text)'}}>TikTok Ads</div>
-                      <div style={{fontSize:'10px',color:'var(--text4)'}}>Campañas de TikTok</div>
+                      <div style={{fontSize:'12px',color:'var(--text3)'}}>Campañas de TikTok</div>
                     </div>
-                    <span style={{fontSize:'11px',color:'#a5b4fc',fontWeight:'600',flexShrink:0}}>Ver →</span>
+                    <span style={{fontSize:'12px',color:'var(--text2)',fontWeight:'600',flexShrink:0}}>Ver →</span>
                   </div>
                 </div>
               )}
@@ -399,8 +399,8 @@ export default function DashboardHome() {
           ══════════════════════════════════════════════════ */}
       <div style={{marginBottom:'24px',animation:'fadeIn .5s ease'}}>
         <div style={{display:'flex',alignItems:'center',gap:'12px',marginBottom:'16px'}}>
-          <span style={{fontSize:'10px',fontWeight:'700',padding:'4px 12px',borderRadius:'20px',background:'linear-gradient(135deg,rgba(16,185,129,.15),rgba(5,150,105,.1))',border:'1px solid rgba(16,185,129,.25)',color:'#10b981',letterSpacing:'.06em',whiteSpace:'nowrap'}}>
-            🏠 HERRAMIENTAS INMOBILIARIAS
+          <span style={{fontSize:'11px',fontWeight:'600',padding:'5px 14px',borderRadius:'20px',background:'rgba(52,160,120,.08)',border:'1px solid rgba(52,160,120,.2)',color:'#5fad8c',letterSpacing:'.04em',whiteSpace:'nowrap'}}>
+            🏠 Herramientas Inmobiliarias
           </span>
           <div style={{flex:1,height:'1px',background:'var(--border)'}}></div>
         </div>

@@ -217,11 +217,11 @@ export default function CalendarioPage() {
       {/* Header */}
       <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:'12px',marginBottom:'20px'}}>
         <div>
-          <div style={{fontSize:'18px',fontWeight:'800',color:'var(--text)',marginBottom:'4px'}}>Calendario de Contenido</div>
-          <div style={{fontSize:'12px',color:'var(--text4)'}}>Publicaciones y programaciones de Facebook e Instagram</div>
+          <div style={{fontSize:'20px',fontWeight:'800',color:'var(--text)',marginBottom:'5px'}}>Calendario de Contenido</div>
+          <div style={{fontSize:'13px',color:'var(--text3)'}}>Publicaciones y programaciones de Facebook e Instagram</div>
         </div>
         <button onClick={() => router.push('/dashboard/publicar')}
-          style={{padding:'8px 16px',background:'linear-gradient(135deg,#6366f1,#8b5cf6)',border:'none',borderRadius:'8px',color:'#fff',fontSize:'12px',fontWeight:'700',cursor:'pointer',fontFamily:'inherit'}}>
+          style={{padding:'10px 20px',background:'linear-gradient(135deg,#5a5cdb,#7c55c8)',border:'none',borderRadius:'9px',color:'#fff',fontSize:'13px',fontWeight:'700',cursor:'pointer',fontFamily:'inherit',boxShadow:'0 2px 10px rgba(90,92,219,.3)'}}>
           ✏️ Crear / Programar post
         </button>
       </div>
@@ -237,23 +237,23 @@ export default function CalendarioPage() {
               {p.picture?.data?.url
                 ? <img src={p.picture.data.url} alt="" style={{width:'18px',height:'18px',borderRadius:'50%',objectFit:'cover'}} />
                 : <div style={{width:'18px',height:'18px',borderRadius:'50%',background:'#1877f2',fontSize:'9px',color:'#fff',display:'flex',alignItems:'center',justifyContent:'center'}}>f</div>}
-              <span style={{fontSize:'11px',fontWeight:'600',color:selectedPage?.id===p.id?'#a5b4fc':'var(--text)'}}>{p.name}</span>
+              <span style={{fontSize:'13px',fontWeight:'600',color:selectedPage?.id===p.id?'#9096e0':'var(--text)'}}>{p.name}</span>
             </div>
           ))}
         </div>
       )}
 
       {/* Stats bar */}
-      <div style={{display:'flex',gap:'10px',flexWrap:'wrap',marginBottom:'16px'}}>
+      <div style={{display:'flex',gap:'10px',flexWrap:'wrap',marginBottom:'18px'}}>
         {[
-          { label:'Facebook publicados', value: publishedFb, color:'#1877f2', bg:'rgba(24,119,242,.1)' },
-          { label:'Instagram publicados', value: publishedIg, color:'#dc2743', bg:'rgba(220,39,67,.1)' },
-          { label:'Programados', value: scheduled, color:'#f59e0b', bg:'rgba(245,158,11,.1)' },
-          { label:'Total del mes', value: posts.length, color:'#a5b4fc', bg:'rgba(99,102,241,.1)' },
+          { label:'Facebook publicados', value: publishedFb, color:'#5a8fd4', bg:'rgba(24,119,242,.08)' },
+          { label:'Instagram publicados', value: publishedIg, color:'#c06070', bg:'rgba(180,60,80,.08)' },
+          { label:'Programados', value: scheduled, color:'#c49a45', bg:'rgba(180,140,60,.08)' },
+          { label:'Total del mes', value: posts.length, color:'#9096e0', bg:'rgba(110,108,240,.08)' },
         ].map(s => (
-          <div key={s.label} style={{padding:'8px 14px',background:s.bg,border:`1px solid ${s.color}30`,borderRadius:'8px',display:'flex',gap:'8px',alignItems:'center'}}>
-            <span style={{fontSize:'16px',fontWeight:'800',color:s.color}}>{s.value}</span>
-            <span style={{fontSize:'10px',color:'var(--text4)',fontWeight:'600'}}>{s.label}</span>
+          <div key={s.label} style={{padding:'10px 16px',background:s.bg,border:`1px solid ${s.color}40`,borderRadius:'10px',display:'flex',gap:'10px',alignItems:'center'}}>
+            <span style={{fontSize:'20px',fontWeight:'800',color:s.color}}>{s.value}</span>
+            <span style={{fontSize:'12px',color:'var(--text3)',fontWeight:'600'}}>{s.label}</span>
           </div>
         ))}
         {loading && <div style={{fontSize:'11px',color:'var(--text4)',display:'flex',alignItems:'center',gap:'6px'}}>
@@ -272,7 +272,7 @@ export default function CalendarioPage() {
               style={{padding:'5px 10px',background:'rgba(255,255,255,.05)',border:'1px solid var(--border)',borderRadius:'6px',color:'var(--text4)',fontSize:'13px',cursor:'pointer',fontFamily:'inherit',lineHeight:1}}>
               ‹
             </button>
-            <div style={{fontSize:'14px',fontWeight:'800',color:'var(--text)'}}>
+            <div style={{fontSize:'17px',fontWeight:'800',color:'var(--text)'}}>
               {MONTHS_ES[month]} {year}
             </div>
             <button onClick={nextMonth}
@@ -284,7 +284,7 @@ export default function CalendarioPage() {
           {/* Day headers */}
           <div style={{display:'grid',gridTemplateColumns:'repeat(7,1fr)',borderBottom:'1px solid var(--border)'}}>
             {DAYS_ES.map(d => (
-              <div key={d} style={{textAlign:'center',padding:'8px 4px',fontSize:'10px',fontWeight:'700',color:'var(--text4)',letterSpacing:'.05em',textTransform:'uppercase'}}>
+              <div key={d} style={{textAlign:'center',padding:'10px 4px',fontSize:'11px',fontWeight:'700',color:'var(--text3)',letterSpacing:'.04em',textTransform:'uppercase'}}>
                 {d}
               </div>
             ))}
@@ -313,33 +313,33 @@ export default function CalendarioPage() {
               return (
                 <div key={dayNum} className={`cal-day${isSelected?' cal-day-selected':''}`}
                   onClick={() => setSelectedDay(isSelected ? null : dateStr)}
-                  style={{minHeight:'72px',padding:'6px',cursor:'pointer',transition:'background .12s',
+                  style={{minHeight:'84px',padding:'8px 6px',cursor:'pointer',transition:'background .12s',
                     borderRight:isBorderRight?'1px solid var(--border)':'none',
                     borderBottom:'1px solid var(--border)',
-                    background:isToday?'rgba(99,102,241,.07)':'transparent',
-                    border:isSelected?'1px solid rgba(99,102,241,.4)':''}}>
+                    background:isToday?'rgba(90,92,219,.08)':'transparent',
+                    border:isSelected?'1px solid rgba(110,108,240,.45)':''}}>
 
-                  <div style={{fontSize:'11px',fontWeight:isToday?'800':'600',
-                    color:isToday?'#a5b4fc':'var(--text4)',marginBottom:'4px',
-                    background:isToday?'rgba(99,102,241,.2)':'transparent',
-                    borderRadius:'50%',width:'20px',height:'20px',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                  <div style={{fontSize:'13px',fontWeight:isToday?'800':'600',
+                    color:isToday?'#9096e0':'var(--text3)',marginBottom:'6px',
+                    background:isToday?'rgba(90,92,219,.18)':'transparent',
+                    borderRadius:'50%',width:'24px',height:'24px',display:'flex',alignItems:'center',justifyContent:'center'}}>
                     {dayNum}
                   </div>
 
-                  <div style={{display:'flex',flexDirection:'column',gap:'2px'}}>
+                  <div style={{display:'flex',flexDirection:'column',gap:'3px'}}>
                     {fbCount > 0 && (
-                      <div style={{height:'4px',borderRadius:'2px',background:'#1877f2',fontSize:'0'}} title={`${fbCount} Facebook`} />
+                      <div style={{height:'5px',borderRadius:'3px',background:'#5a8fd4',fontSize:'0'}} title={`${fbCount} Facebook`} />
                     )}
                     {igCount > 0 && (
-                      <div style={{height:'4px',borderRadius:'2px',background:'linear-gradient(90deg,#f09433,#dc2743)',fontSize:'0'}} title={`${igCount} Instagram`} />
+                      <div style={{height:'5px',borderRadius:'3px',background:'linear-gradient(90deg,#d4844a,#b03050)',fontSize:'0'}} title={`${igCount} Instagram`} />
                     )}
                     {schCount > 0 && (
-                      <div style={{height:'4px',borderRadius:'2px',background:'#f59e0b',fontSize:'0'}} title={`${schCount} Programados`} />
+                      <div style={{height:'5px',borderRadius:'3px',background:'#c49a45',fontSize:'0'}} title={`${schCount} Programados`} />
                     )}
                   </div>
 
                   {dayPostList.length > 0 && (
-                    <div style={{fontSize:'9px',color:'var(--text4)',marginTop:'3px',fontWeight:'600'}}>
+                    <div style={{fontSize:'11px',color:'var(--text3)',marginTop:'4px',fontWeight:'600'}}>
                       {dayPostList.length} post{dayPostList.length>1?'s':''}
                     </div>
                   )}
@@ -349,15 +349,15 @@ export default function CalendarioPage() {
           </div>
 
           {/* Legend */}
-          <div style={{padding:'10px 14px',borderTop:'1px solid var(--border)',display:'flex',gap:'14px',flexWrap:'wrap'}}>
+          <div style={{padding:'12px 16px',borderTop:'1px solid var(--border)',display:'flex',gap:'16px',flexWrap:'wrap'}}>
             {[
-              { color:'#1877f2', label:'Facebook publicado' },
-              { color:'#dc2743', label:'Instagram publicado' },
-              { color:'#f59e0b', label:'Programado' },
+              { color:'#5a8fd4', label:'Facebook publicado' },
+              { color:'#b03050', label:'Instagram publicado' },
+              { color:'#c49a45', label:'Programado' },
             ].map(l => (
-              <div key={l.label} style={{display:'flex',alignItems:'center',gap:'5px'}}>
-                <div style={{width:'10px',height:'4px',borderRadius:'2px',background:l.color}} />
-                <span style={{fontSize:'9px',color:'var(--text4)'}}>{l.label}</span>
+              <div key={l.label} style={{display:'flex',alignItems:'center',gap:'6px'}}>
+                <div style={{width:'12px',height:'5px',borderRadius:'3px',background:l.color}} />
+                <span style={{fontSize:'11px',color:'var(--text3)',fontWeight:'500'}}>{l.label}</span>
               </div>
             ))}
           </div>
@@ -366,10 +366,10 @@ export default function CalendarioPage() {
         {/* Day detail panel */}
         <div style={{flex:'0 1 300px',minWidth:'260px',display:'flex',flexDirection:'column',gap:'12px'}}>
           {!selectedDay ? (
-            <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'12px',padding:'32px 20px',textAlign:'center'}}>
-              <div style={{fontSize:'32px',marginBottom:'10px'}}>📅</div>
-              <div style={{fontSize:'13px',fontWeight:'600',color:'var(--text)',marginBottom:'6px'}}>Selecciona un día</div>
-              <div style={{fontSize:'11px',color:'var(--text4)',lineHeight:'1.6'}}>
+            <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'14px',padding:'36px 24px',textAlign:'center'}}>
+              <div style={{fontSize:'40px',marginBottom:'14px'}}>📅</div>
+              <div style={{fontSize:'15px',fontWeight:'700',color:'var(--text)',marginBottom:'8px'}}>Selecciona un día</div>
+              <div style={{fontSize:'13px',color:'var(--text3)',lineHeight:'1.7'}}>
                 Haz clic en cualquier día del calendario para ver los posts publicados y programados.
               </div>
             </div>
@@ -377,10 +377,10 @@ export default function CalendarioPage() {
             <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'12px',overflow:'hidden'}}>
               <div style={{padding:'12px 14px',borderBottom:'1px solid var(--border)',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
                 <div>
-                  <div style={{fontSize:'13px',fontWeight:'800',color:'var(--text)'}}>
+                  <div style={{fontSize:'14px',fontWeight:'800',color:'var(--text)'}}>
                     {new Date(selectedDay + 'T12:00:00').toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'})}
                   </div>
-                  <div style={{fontSize:'10px',color:'var(--text4)',marginTop:'1px'}}>{dayPosts.length} publicaciones</div>
+                  <div style={{fontSize:'12px',color:'var(--text3)',marginTop:'3px'}}>{dayPosts.length} publicaciones</div>
                 </div>
                 <button onClick={() => setSelectedDay(null)}
                   style={{background:'transparent',border:'none',color:'var(--text4)',cursor:'pointer',fontSize:'16px',padding:'2px 6px'}}>×</button>
@@ -391,7 +391,7 @@ export default function CalendarioPage() {
                   Sin publicaciones este día.
                   <br />
                   <button onClick={() => router.push('/dashboard/publicar')}
-                    style={{marginTop:'10px',padding:'6px 12px',background:'rgba(99,102,241,.15)',border:'1px solid rgba(99,102,241,.3)',borderRadius:'6px',color:'#a5b4fc',fontSize:'11px',fontWeight:'600',cursor:'pointer',fontFamily:'inherit'}}>
+                    style={{marginTop:'12px',padding:'8px 16px',background:'rgba(90,92,219,.14)',border:'1px solid rgba(110,108,240,.3)',borderRadius:'8px',color:'#9096e0',fontSize:'13px',fontWeight:'600',cursor:'pointer',fontFamily:'inherit'}}>
                     + Crear post
                   </button>
                 </div>
@@ -403,8 +403,8 @@ export default function CalendarioPage() {
                       <div key={p.id} style={{padding:'12px 14px',borderBottom:i<dayPosts.length-1?'1px solid var(--border)':'none'}}>
                         <div style={{display:'flex',alignItems:'center',gap:'7px',marginBottom:'6px'}}>
                           <div style={{width:'6px',height:'6px',borderRadius:'50%',background:s.bg.includes('gradient')?'#dc2743':s.bg,flexShrink:0}} />
-                          <span style={{fontSize:'10px',fontWeight:'700',color:'var(--text4)',textTransform:'uppercase',letterSpacing:'.05em'}}>{s.name}</span>
-                          {p.mediaType && <span style={{fontSize:'9px',color:'var(--text4)',background:'rgba(255,255,255,.06)',padding:'1px 5px',borderRadius:'3px'}}>{p.mediaType}</span>}
+                          <span style={{fontSize:'12px',fontWeight:'700',color:'var(--text3)',textTransform:'uppercase',letterSpacing:'.04em'}}>{s.name}</span>
+                          {p.mediaType && <span style={{fontSize:'10px',color:'var(--text3)',background:'rgba(255,255,255,.06)',padding:'2px 6px',borderRadius:'4px'}}>{p.mediaType}</span>}
                         </div>
 
                         {p.image && (
@@ -417,7 +417,7 @@ export default function CalendarioPage() {
                           {p.text.length > 140 ? p.text.slice(0,140)+'…' : p.text}
                         </div>
 
-                        <div style={{fontSize:'10px',color:'var(--text4)'}}>
+                        <div style={{fontSize:'12px',color:'var(--text3)'}}>
                           {(p.status==='scheduled'||p.status==='pending')
                             ? `⏰ Programado: ${fmtTime(p.scheduledFor)}`
                             : `✓ ${fmtTime(p.time)}`}
@@ -425,7 +425,7 @@ export default function CalendarioPage() {
 
                         {p.url && (
                           <a href={p.url} target="_blank" rel="noopener noreferrer"
-                            style={{display:'inline-block',marginTop:'6px',fontSize:'10px',color:'#60a5fa',textDecoration:'none',fontWeight:'600'}}>
+                            style={{display:'inline-block',marginTop:'7px',fontSize:'12px',color:'#7a9ec0',textDecoration:'none',fontWeight:'600'}}>
                             Ver post ↗
                           </a>
                         )}

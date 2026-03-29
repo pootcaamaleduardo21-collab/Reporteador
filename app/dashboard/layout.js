@@ -134,7 +134,7 @@ export default function DashboardLayout({ children }) {
 
       {/* SIDEBAR */}
       <aside style={{
-        width:sidebarOpen?'210px':'52px',minWidth:sidebarOpen?'210px':'52px',
+        width:sidebarOpen?'224px':'54px',minWidth:sidebarOpen?'224px':'54px',
         background:'var(--sidebar)',borderRight:'1px solid var(--border)',
         display:'flex',flexDirection:'column',height:'100vh',
         overflow:'hidden',flexShrink:0,transition:'width .2s ease,min-width .2s ease',
@@ -147,7 +147,7 @@ export default function DashboardLayout({ children }) {
 
         {/* Nav */}
         <nav style={{padding:'6px 5px',flex:1,overflowY:'auto',overflowX:'hidden'}}>
-          {sidebarOpen && <div style={{fontSize:'9px',color:'var(--text4)',fontWeight:'600',letterSpacing:'.08em',textTransform:'uppercase',padding:'8px 8px 3px'}}>Panel</div>}
+          {sidebarOpen && <div style={{fontSize:'10px',color:'var(--text3)',fontWeight:'600',letterSpacing:'.07em',textTransform:'uppercase',padding:'10px 8px 4px'}}>Panel</div>}
 
           {[
             {id:'overview',icon:'▣',label:'Resumen',path:'/dashboard',sub:'Pagado + orgánico'},
@@ -156,13 +156,13 @@ export default function DashboardLayout({ children }) {
               style={{display:'flex',alignItems:'center',gap:'8px',padding:'7px 8px',borderRadius:'7px',cursor:'pointer',marginBottom:'1px',background:activeSection===s.id?'rgba(99,102,241,.14)':'transparent'}}>
               <span style={{fontSize:'14px',width:'20px',textAlign:'center',flexShrink:0,fontWeight:'bold'}}>{s.icon}</span>
               {sidebarOpen && <div style={{flex:1,overflow:'hidden'}}>
-                <div style={{fontSize:'11px',fontWeight:'600',color:activeSection===s.id?'#a5b4fc':'#888',whiteSpace:'nowrap'}}>{s.label}</div>
-                {s.sub && <div style={{fontSize:'9px',color:'var(--text4)',marginTop:'1px'}}>{s.sub}</div>}
+                <div style={{fontSize:'13px',fontWeight:'600',color:activeSection===s.id?'#a5b4fc':'var(--text2)',whiteSpace:'nowrap'}}>{s.label}</div>
+                {s.sub && <div style={{fontSize:'11px',color:'var(--text3)',marginTop:'2px'}}>{s.sub}</div>}
               </div>}
             </div>
           ))}
 
-          {sidebarOpen && <div style={{fontSize:'9px',color:'var(--text4)',fontWeight:'600',letterSpacing:'.08em',textTransform:'uppercase',padding:'10px 8px 3px'}}>Publicar</div>}
+          {sidebarOpen && <div style={{fontSize:'10px',color:'var(--text3)',fontWeight:'600',letterSpacing:'.07em',textTransform:'uppercase',padding:'12px 8px 4px'}}>Publicar</div>}
 
           {[
             {id:'publicar',   icon:'✏️', label:'Crear Post',  sub:'Facebook e Instagram', path:'/dashboard/publicar'},
@@ -172,13 +172,13 @@ export default function DashboardLayout({ children }) {
               style={{display:'flex',alignItems:'center',gap:'8px',padding:'7px 8px',borderRadius:'7px',cursor:'pointer',marginBottom:'1px',background:activeSection===s.id?'rgba(99,102,241,.14)':'transparent'}}>
               <span style={{fontSize:'14px',width:'20px',textAlign:'center',flexShrink:0,fontWeight:'bold'}}>{s.icon}</span>
               {sidebarOpen && <div style={{flex:1,overflow:'hidden'}}>
-                <div style={{fontSize:'11px',fontWeight:'600',color:activeSection===s.id?'#a5b4fc':'#888',whiteSpace:'nowrap'}}>{s.label}</div>
-                {s.sub && <div style={{fontSize:'9px',color:'var(--text4)',marginTop:'1px'}}>{s.sub}</div>}
+                <div style={{fontSize:'13px',fontWeight:'600',color:activeSection===s.id?'#a5b4fc':'var(--text2)',whiteSpace:'nowrap'}}>{s.label}</div>
+                {s.sub && <div style={{fontSize:'11px',color:'var(--text3)',marginTop:'2px'}}>{s.sub}</div>}
               </div>}
             </div>
           ))}
 
-          {sidebarOpen && <div style={{fontSize:'9px',color:'var(--text4)',fontWeight:'600',letterSpacing:'.08em',textTransform:'uppercase',padding:'10px 8px 3px'}}>Redes Orgánicas</div>}
+          {sidebarOpen && <div style={{fontSize:'10px',color:'var(--text3)',fontWeight:'600',letterSpacing:'.07em',textTransform:'uppercase',padding:'12px 8px 4px'}}>Redes Orgánicas</div>}
 
           {[
             {id:'facebook',label:'Facebook',sub:'Orgánico',path:'/dashboard/facebook',iconBg:'#1877f2',Icon:()=><FbLogoSVG size={13}/>},
@@ -189,13 +189,13 @@ export default function DashboardLayout({ children }) {
               style={{display:'flex',alignItems:'center',gap:'8px',padding:'7px 8px',borderRadius:'7px',cursor:'pointer',marginBottom:'1px',background:activeSection===s.id?'rgba(99,102,241,.14)':'transparent'}}>
               <div style={{width:'20px',height:'20px',borderRadius:'5px',background:s.iconBg,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}><s.Icon/></div>
               {sidebarOpen && <div style={{flex:1,overflow:'hidden'}}>
-                <div style={{fontSize:'11px',fontWeight:'600',color:activeSection===s.id?'#a5b4fc':'#888',whiteSpace:'nowrap'}}>{s.label}</div>
-                {s.sub && <div style={{fontSize:'9px',color:'var(--text4)',marginTop:'1px'}}>{s.sub}</div>}
+                <div style={{fontSize:'13px',fontWeight:'600',color:activeSection===s.id?'#a5b4fc':'var(--text2)',whiteSpace:'nowrap'}}>{s.label}</div>
+                {s.sub && <div style={{fontSize:'11px',color:'var(--text3)',marginTop:'2px'}}>{s.sub}</div>}
               </div>}
             </div>
           ))}
 
-          {sidebarOpen && <div style={{fontSize:'9px',color:'var(--text4)',fontWeight:'600',letterSpacing:'.08em',textTransform:'uppercase',padding:'10px 8px 3px'}}>Campañas Pagadas</div>}
+          {sidebarOpen && <div style={{fontSize:'10px',color:'var(--text3)',fontWeight:'600',letterSpacing:'.07em',textTransform:'uppercase',padding:'12px 8px 4px'}}>Campañas Pagadas</div>}
 
           {/* META ADS - siempre visible si hay cuentas meta */}
           {accounts.some(a=>a.platform==='meta_ads') && (() => {
@@ -209,8 +209,8 @@ export default function DashboardLayout({ children }) {
                   <div style={{width:'20px',height:'20px',borderRadius:'5px',background:'#1877f2',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}><FbLogoSVG size={12}/></div>
                   {sidebarOpen && <>
                     <div style={{flex:1,minWidth:0}}>
-                      <div style={{fontSize:'11px',fontWeight:'600',color:isActiveMeta?'#a5b4fc':'#888',textAlign:'left'}}>Meta Ads</div>
-                      <div style={{fontSize:'9px',color:'var(--text4)',marginTop:'1px'}}>{metaAccs.length} cuenta{metaAccs.length!==1?'s':''}</div>
+                      <div style={{fontSize:'13px',fontWeight:'600',color:isActiveMeta?'#a5b4fc':'var(--text2)',textAlign:'left'}}>Meta Ads</div>
+                      <div style={{fontSize:'11px',color:'var(--text3)',marginTop:'2px'}}>{metaAccs.length} cuenta{metaAccs.length!==1?'s':''}</div>
                     </div>
                     <span style={{fontSize:'10px',color:'var(--text4)',transition:'transform .2s',transform:reportsOpen?'rotate(180deg)':'rotate(0deg)',flexShrink:0}}>▾</span>
                   </>}
@@ -230,7 +230,7 @@ export default function DashboardLayout({ children }) {
                         onClick={()=>navigate('/dashboard/reportes/'+targetAcc.account_id+'?tab='+r.tab)}
                         style={{display:'flex',alignItems:'center',gap:'7px',padding:'5px 8px 5px 28px',borderRadius:'6px',cursor:'pointer',marginBottom:'1px'}}>
                         <span style={{fontSize:'11px'}}>{r.icon}</span>
-                        <div style={{fontSize:'10px',color:'#666',fontWeight:'500',whiteSpace:'nowrap'}}>{r.label}</div>
+                        <div style={{fontSize:'12px',color:'var(--text3)',fontWeight:'500',whiteSpace:'nowrap'}}>{r.label}</div>
                       </div>
                     )
                   })}
@@ -265,8 +265,8 @@ export default function DashboardLayout({ children }) {
                   <div style={{width:'20px',height:'20px',borderRadius:'5px',background:'#fff',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}><GoogleLogoSVG size={13}/></div>
                   {sidebarOpen && <>
                     <div style={{flex:1,minWidth:0}}>
-                      <div style={{fontSize:'11px',fontWeight:'600',color:isActiveGoogle?'#a5b4fc':'#888',textAlign:'left'}}>Google Ads</div>
-                      <div style={{fontSize:'9px',color:'var(--text4)',marginTop:'1px'}}>{gAccs.length} cuenta{gAccs.length!==1?'s':''}</div>
+                      <div style={{fontSize:'13px',fontWeight:'600',color:isActiveGoogle?'#a5b4fc':'var(--text2)',textAlign:'left'}}>Google Ads</div>
+                      <div style={{fontSize:'11px',color:'var(--text3)',marginTop:'2px'}}>{gAccs.length} cuenta{gAccs.length!==1?'s':''}</div>
                     </div>
                     <span style={{fontSize:'10px',color:'var(--text4)',transition:'transform .2s',transform:googleAdsOpen?'rotate(180deg)':'rotate(0deg)',flexShrink:0}}>▾</span>
                   </>}
@@ -282,7 +282,7 @@ export default function DashboardLayout({ children }) {
                         onClick={()=>navigate('/dashboard/reportes/'+targetAcc.account_id+'?tab='+r.tab)}
                         style={{display:'flex',alignItems:'center',gap:'7px',padding:'5px 8px 5px 28px',borderRadius:'6px',cursor:'pointer',marginBottom:'1px'}}>
                         <span style={{fontSize:'11px'}}>{r.icon}</span>
-                        <div style={{fontSize:'10px',color:'#666',fontWeight:'500',whiteSpace:'nowrap'}}>{r.label}</div>
+                        <div style={{fontSize:'12px',color:'var(--text3)',fontWeight:'500',whiteSpace:'nowrap'}}>{r.label}</div>
                       </div>
                     )
                   })}
@@ -315,8 +315,8 @@ export default function DashboardLayout({ children }) {
                   <div style={{width:'20px',height:'20px',borderRadius:'5px',background:'#010101',border:'1px solid rgba(255,255,255,.15)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}><TTLogoSVG size={11}/></div>
                   {sidebarOpen && <>
                     <div style={{flex:1,minWidth:0}}>
-                      <div style={{fontSize:'11px',fontWeight:'600',color:isActiveTT?'#a5b4fc':'#888',textAlign:'left'}}>TikTok Ads</div>
-                      <div style={{fontSize:'9px',color:'var(--text4)',marginTop:'1px'}}>{ttAccs.length} cuenta{ttAccs.length!==1?'s':''}</div>
+                      <div style={{fontSize:'13px',fontWeight:'600',color:isActiveTT?'#a5b4fc':'var(--text2)',textAlign:'left'}}>TikTok Ads</div>
+                      <div style={{fontSize:'11px',color:'var(--text3)',marginTop:'2px'}}>{ttAccs.length} cuenta{ttAccs.length!==1?'s':''}</div>
                     </div>
                     <span style={{fontSize:'10px',color:'var(--text4)',transition:'transform .2s',transform:tiktokAdsOpen?'rotate(180deg)':'rotate(0deg)',flexShrink:0}}>▾</span>
                   </>}
@@ -341,8 +341,8 @@ export default function DashboardLayout({ children }) {
                 <FbLogoSVG size={11}/>
               </div>
               {sidebarOpen && <div style={{flex:1,minWidth:0}}>
-                <div style={{fontSize:'11px',fontWeight:'600',color:activeSection==='meta-ads'?'#60a5fa':'#555'}}>Meta Ads</div>
-                <div style={{fontSize:'9px',color:'#a5b4fc',marginTop:'1px'}}>Sin cuentas de ads →</div>
+                <div style={{fontSize:'13px',fontWeight:'600',color:activeSection==='meta-ads'?'#a0a8f0':'var(--text3)'}}>Meta Ads</div>
+                <div style={{fontSize:'11px',color:'var(--text3)',marginTop:'2px'}}>Sin cuentas de ads →</div>
               </div>}
             </div>
           )}
@@ -353,8 +353,8 @@ export default function DashboardLayout({ children }) {
                 <GoogleLogoSVG size={12}/>
               </div>
               {sidebarOpen && <div style={{flex:1,minWidth:0}}>
-                <div style={{fontSize:'11px',fontWeight:'600',color:'#555'}}>Google Ads</div>
-                <div style={{fontSize:'9px',color:'#a5b4fc',marginTop:'1px'}}>Conectar →</div>
+                <div style={{fontSize:'13px',fontWeight:'600',color:'var(--text3)'}}>Google Ads</div>
+                <div style={{fontSize:'11px',color:'var(--text3)',marginTop:'2px'}}>Conectar →</div>
               </div>}
             </a>
           )}
@@ -364,17 +364,17 @@ export default function DashboardLayout({ children }) {
                 <TTLogoSVG size={10}/>
               </div>
               {sidebarOpen && <div style={{flex:1,minWidth:0}}>
-                <div style={{fontSize:'11px',fontWeight:'600',color:'#444'}}>TikTok Ads</div>
-                <div style={{fontSize:'9px',color:'#555',marginTop:'1px'}}>Próximamente</div>
+                <div style={{fontSize:'13px',fontWeight:'600',color:'var(--text3)'}}>TikTok Ads</div>
+                <div style={{fontSize:'11px',color:'var(--text4)',marginTop:'2px'}}>Próximamente</div>
               </div>}
             </div>
           )}
 
-          {sidebarOpen && <div style={{fontSize:'9px',color:'var(--text4)',fontWeight:'600',letterSpacing:'.08em',textTransform:'uppercase',padding:'10px 8px 3px'}}>Sistema</div>}
+          {sidebarOpen && <div style={{fontSize:'10px',color:'var(--text3)',fontWeight:'600',letterSpacing:'.07em',textTransform:'uppercase',padding:'12px 8px 4px'}}>Sistema</div>}
           <div className="nav-hover" onClick={()=>navigate('/dashboard/settings')}
             style={{display:'flex',alignItems:'center',gap:'8px',padding:'7px 8px',borderRadius:'7px',cursor:'pointer',background:activeSection==='settings'?'rgba(99,102,241,.14)':'transparent'}}>
             <span style={{fontSize:'14px',width:'20px',textAlign:'center',flexShrink:0,fontWeight:'bold'}}>⚙</span>
-            {sidebarOpen && <div style={{fontSize:'11px',fontWeight:'600',color:activeSection==='settings'?'#a5b4fc':'#888'}}>Ajustes</div>}
+            {sidebarOpen && <div style={{fontSize:'13px',fontWeight:'600',color:activeSection==='settings'?'#a5b4fc':'var(--text2)'}}>Ajustes</div>}
           </div>
         </nav>
 
@@ -385,14 +385,14 @@ export default function DashboardLayout({ children }) {
               {user.email?.[0]?.toUpperCase()}
             </div>
             {sidebarOpen && <div style={{flex:1,minWidth:0}}>
-              <div style={{fontSize:'10px',color:'var(--text3)',fontFamily:'monospace',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{user.email}</div>
-              <div style={{fontSize:'9px',color:isPro?'#6366f1':'#555',fontWeight:'700',marginTop:'1px'}}>{isPro===null?'':isPro?'Pro ✦':'Free'}</div>
+              <div style={{fontSize:'12px',color:'var(--text2)',fontFamily:'monospace',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{user.email}</div>
+              <div style={{fontSize:'11px',color:isPro?'#9096e0':'var(--text3)',fontWeight:'700',marginTop:'2px'}}>{isPro===null?'':isPro?'Pro ✦':'Free'}</div>
             </div>}
           </div>
           <div className="nav-hover" onClick={handleLogout}
             style={{display:'flex',alignItems:'center',gap:'8px',padding:'6px 8px',borderRadius:'7px',cursor:'pointer',border:'none',background:'transparent',width:'100%'}}>
             <span style={{fontSize:'13px',width:'20px',textAlign:'center',flexShrink:0,fontWeight:'bold'}}>⊗</span>
-            {sidebarOpen && <span style={{fontSize:'11px',color:'var(--text3)',whiteSpace:'nowrap'}}>Cerrar sesión</span>}
+            {sidebarOpen && <span style={{fontSize:'13px',color:'var(--text3)',whiteSpace:'nowrap'}}>Cerrar sesión</span>}
           </div>
         </div>
       </aside>
@@ -407,7 +407,7 @@ export default function DashboardLayout({ children }) {
 
           {/* Breadcrumb */}
           <div style={{flex:1,display:'flex',alignItems:'center',gap:'6px',minWidth:0}}>
-            <span style={{fontSize:'13px',fontWeight:'700',color:'var(--text)',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{topbarTitle}</span>
+            <span style={{fontSize:'15px',fontWeight:'700',color:'var(--text)',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{topbarTitle}</span>
             {isReportePage && selectedAccount && (
               <span style={{fontSize:'10px',color:'var(--text4)',background:'rgba(255,255,255,.05)',padding:'2px 7px',borderRadius:'4px',fontFamily:'monospace',flexShrink:0}}>{selectedAccount.platform==='meta_ads'?'Meta':selectedAccount.platform==='google_ads'?'Google':selectedAccount.platform==='tiktok_ads'?'TikTok':'Ads'}</span>
             )}

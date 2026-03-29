@@ -405,21 +405,23 @@ export default function PublicarPage() {
       {/* Header + tab switcher */}
       <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
         <div>
-          <div style={{ fontSize: '18px', fontWeight: '800', color: 'var(--text)', marginBottom: '4px' }}>Crear Post</div>
-          <div style={{ fontSize: '12px', color: 'var(--text4)' }}>Publica contenido orgánico en Facebook e Instagram</div>
+          <div style={{ fontSize: '20px', fontWeight: '800', color: 'var(--text)', marginBottom: '4px' }}>Crear Post</div>
+          <div style={{ fontSize: '13px', color: 'var(--text3)' }}>Publica contenido orgánico en Facebook e Instagram</div>
         </div>
-        <div style={{ display: 'flex', gap: '4px', background: 'rgba(255,255,255,.04)', padding: '3px', borderRadius: '9px', border: '1px solid var(--border)' }}>
-          {[
-            { id: 'compositor', label: '✏️ Compositor' },
-            { id: 'ia', label: '🤖 Asistente IA' },
-          ].map(t => (
-            <button key={t.id} onClick={() => setMainTab(t.id)}
-              style={{ padding: '6px 14px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: '600', fontFamily: 'inherit', transition: 'all .15s',
-                background: mainTab === t.id ? (t.id === 'ia' ? 'linear-gradient(135deg,#6366f1,#8b5cf6)' : 'rgba(255,255,255,.1)') : 'transparent',
-                color: mainTab === t.id ? '#fff' : 'var(--text4)' }}>
-              {t.label}
-            </button>
-          ))}
+        <div style={{ display: 'flex', gap: '5px', background: 'rgba(255,255,255,.04)', padding: '4px', borderRadius: '11px', border: '1px solid var(--border)' }}>
+          <button onClick={() => setMainTab('compositor')}
+            style={{ padding: '8px 18px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: '600', fontFamily: 'inherit', transition: 'all .15s',
+              background: mainTab === 'compositor' ? 'rgba(255,255,255,.1)' : 'transparent',
+              color: mainTab === 'compositor' ? 'var(--text)' : 'var(--text3)' }}>
+            ✏️ Compositor
+          </button>
+          <button onClick={() => setMainTab('ia')}
+            style={{ padding: '8px 18px', borderRadius: '8px', border: mainTab === 'ia' ? 'none' : '1px solid rgba(110,108,240,.3)', cursor: 'pointer', fontSize: '13px', fontWeight: '700', fontFamily: 'inherit', transition: 'all .15s',
+              background: mainTab === 'ia' ? 'linear-gradient(135deg,#5a5cdb,#7c55c8)' : 'rgba(110,108,240,.07)',
+              color: mainTab === 'ia' ? '#fff' : '#9096e0',
+              boxShadow: mainTab === 'ia' ? '0 2px 12px rgba(90,92,219,.35)' : 'none' }}>
+            ✦ Asistente IA
+          </button>
         </div>
       </div>
 
@@ -431,14 +433,14 @@ export default function PublicarPage() {
           <div style={{ flex: '1 1 340px', minWidth: '300px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
 
             {/* Tendencias del día */}
-            <div style={{ ...cardStyle, background: 'linear-gradient(135deg,rgba(99,102,241,.08),rgba(139,92,246,.05))' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+            <div style={{ ...cardStyle, background: 'linear-gradient(135deg,rgba(90,92,219,.1),rgba(124,85,200,.07))', border: '1px solid rgba(110,108,240,.2)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
                 <div>
-                  <div style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text)', marginBottom: '2px' }}>🔥 Tendencias del día</div>
-                  <div style={{ fontSize: '10px', color: 'var(--text4)' }}>Temas relevantes para el mercado inmobiliario hoy</div>
+                  <div style={{ fontSize: '15px', fontWeight: '800', color: 'var(--text)', marginBottom: '3px' }}>🔥 Tendencias del día</div>
+                  <div style={{ fontSize: '12px', color: 'var(--text3)' }}>Temas relevantes para el mercado inmobiliario hoy</div>
                 </div>
                 <button onClick={loadTrends} disabled={loadingTrends}
-                  style={{ padding: '6px 12px', background: 'rgba(99,102,241,.2)', border: '1px solid rgba(99,102,241,.3)', borderRadius: '6px', color: '#a5b4fc', fontSize: '11px', fontWeight: '600', cursor: 'pointer', fontFamily: 'inherit', opacity: loadingTrends ? 0.6 : 1 }}>
+                  style={{ padding: '8px 14px', background: 'rgba(90,92,219,.2)', border: '1px solid rgba(110,108,240,.35)', borderRadius: '8px', color: '#9096e0', fontSize: '12px', fontWeight: '600', cursor: 'pointer', fontFamily: 'inherit', opacity: loadingTrends ? 0.6 : 1, whiteSpace: 'nowrap' }}>
                   {loadingTrends ? '⏳ Cargando...' : trends.length > 0 ? '↻ Actualizar' : '✦ Generar tendencias'}
                 </button>
               </div>
@@ -463,15 +465,16 @@ export default function PublicarPage() {
                     const isSelected = selectedTrend?.id === t.id
                     return (
                       <div key={t.id} onClick={() => { setSelectedTrend(t); setAiMode('tendencia') }}
-                        style={{ padding: '10px 12px', borderRadius: '8px', cursor: 'pointer', transition: 'all .15s',
+                        style={{ padding: '12px 14px', borderRadius: '10px', cursor: 'pointer', transition: 'all .15s',
                           background: isSelected ? colors.bg : 'rgba(255,255,255,.03)',
-                          border: `1px solid ${isSelected ? colors.border : 'rgba(255,255,255,.06)'}` }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '3px' }}>
-                          <span style={{ fontSize: '14px', flexShrink: 0 }}>{t.emoji}</span>
-                          <span style={{ fontSize: '12px', fontWeight: '700', color: isSelected ? colors.text : 'var(--text)', flex: 1 }}>{t.titulo}</span>
-                          {isSelected && <span style={{ fontSize: '10px', color: colors.text, flexShrink: 0 }}>✓</span>}
+                          border: `1px solid ${isSelected ? colors.border : 'rgba(255,255,255,.06)'}`,
+                          boxShadow: isSelected ? `0 2px 12px ${colors.bg}` : 'none' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '5px' }}>
+                          <span style={{ fontSize: '18px', flexShrink: 0 }}>{t.emoji}</span>
+                          <span style={{ fontSize: '13px', fontWeight: '700', color: isSelected ? colors.text : 'var(--text)', flex: 1 }}>{t.titulo}</span>
+                          {isSelected && <span style={{ fontSize: '13px', color: colors.text, flexShrink: 0 }}>✓</span>}
                         </div>
-                        <div style={{ fontSize: '10px', color: 'var(--text4)', lineHeight: '1.4', marginLeft: '22px' }}>{t.descripcion}</div>
+                        <div style={{ fontSize: '12px', color: 'var(--text3)', lineHeight: '1.5', marginLeft: '28px' }}>{t.descripcion}</div>
                       </div>
                     )
                   })}
@@ -481,7 +484,7 @@ export default function PublicarPage() {
 
             {/* Generador */}
             <div style={cardStyle}>
-              <div style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text)', marginBottom: '12px' }}>✨ Generar ideas de post</div>
+              <div style={{ fontSize: '15px', fontWeight: '800', color: 'var(--text)', marginBottom: '14px' }}>✨ Generar ideas de post</div>
 
               {/* Modo */}
               <div style={{ display: 'flex', gap: '4px', marginBottom: '12px', background: 'rgba(255,255,255,.04)', padding: '3px', borderRadius: '7px', border: '1px solid var(--border)' }}>
@@ -512,14 +515,14 @@ export default function PublicarPage() {
 
               {/* Estilo */}
               <div style={{ marginBottom: '12px' }}>
-                <div style={{ fontSize: '10px', color: 'var(--text4)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: '6px' }}>Tono del copy</div>
+                <div style={{ fontSize: '11px', color: 'var(--text3)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: '8px' }}>Tono del copy</div>
                 <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
                   {[{ id: 'equilibrado', label: '⚖️ Equilibrado' }, { id: 'profesional', label: '👔 Profesional' }, { id: 'casual', label: '😊 Cercano' }].map(s => (
                     <button key={s.id} onClick={() => setAiStyle(s.id)}
-                      style={{ padding: '4px 10px', borderRadius: '5px', border: '1px solid', cursor: 'pointer', fontSize: '11px', fontWeight: '600', fontFamily: 'inherit', transition: 'all .15s',
-                        borderColor: aiStyle === s.id ? '#a5b4fc' : 'rgba(255,255,255,.08)',
-                        background: aiStyle === s.id ? 'rgba(99,102,241,.15)' : 'transparent',
-                        color: aiStyle === s.id ? '#a5b4fc' : 'var(--text4)' }}>
+                      style={{ padding: '6px 12px', borderRadius: '7px', border: '1px solid', cursor: 'pointer', fontSize: '12px', fontWeight: '600', fontFamily: 'inherit', transition: 'all .15s',
+                        borderColor: aiStyle === s.id ? 'rgba(140,135,240,.5)' : 'rgba(255,255,255,.08)',
+                        background: aiStyle === s.id ? 'rgba(110,108,240,.14)' : 'transparent',
+                        color: aiStyle === s.id ? '#9096e0' : 'var(--text3)' }}>
                       {s.label}
                     </button>
                   ))}
@@ -528,14 +531,14 @@ export default function PublicarPage() {
 
               {/* Plataforma target */}
               <div style={{ marginBottom: '14px' }}>
-                <div style={{ fontSize: '10px', color: 'var(--text4)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: '6px' }}>Generar para</div>
-                <div style={{ display: 'flex', gap: '5px' }}>
+                <div style={{ fontSize: '11px', color: 'var(--text3)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: '8px' }}>Generar para</div>
+                <div style={{ display: 'flex', gap: '6px' }}>
                   {[{ id: 'facebook', label: '📘 Facebook' }, { id: 'instagram', label: '📸 Instagram' }].map(p => (
                     <button key={p.id} onClick={() => setPlatform(p.id)}
-                      style={{ padding: '4px 12px', borderRadius: '5px', border: '1px solid', cursor: 'pointer', fontSize: '11px', fontWeight: '600', fontFamily: 'inherit', transition: 'all .15s',
-                        borderColor: platform === p.id ? '#60a5fa' : 'rgba(255,255,255,.08)',
-                        background: platform === p.id ? 'rgba(96,165,250,.12)' : 'transparent',
-                        color: platform === p.id ? '#60a5fa' : 'var(--text4)' }}>
+                      style={{ padding: '6px 14px', borderRadius: '7px', border: '1px solid', cursor: 'pointer', fontSize: '12px', fontWeight: '600', fontFamily: 'inherit', transition: 'all .15s',
+                        borderColor: platform === p.id ? 'rgba(100,140,220,.5)' : 'rgba(255,255,255,.08)',
+                        background: platform === p.id ? 'rgba(100,140,220,.12)' : 'transparent',
+                        color: platform === p.id ? '#8ab0e0' : 'var(--text3)' }}>
                       {p.label}
                     </button>
                   ))}
@@ -550,8 +553,8 @@ export default function PublicarPage() {
 
               <button onClick={generatePosts}
                 disabled={generatingPosts || (aiMode === 'tendencia' && !selectedTrend) || (aiMode === 'libre' && !customPrompt.trim())}
-                style={{ width: '100%', padding: '10px', background: 'linear-gradient(135deg,#6366f1,#8b5cf6)', border: 'none', borderRadius: '8px', color: '#fff', fontSize: '13px', fontWeight: '700', cursor: 'pointer', fontFamily: 'inherit', opacity: (generatingPosts || (aiMode === 'tendencia' && !selectedTrend) || (aiMode === 'libre' && !customPrompt.trim())) ? 0.5 : 1, transition: 'opacity .15s' }}>
-                {generatingPosts ? '⏳ Generando 3 variaciones...' : '✨ Generar ideas de post'}
+                style={{ width: '100%', padding: '13px', background: 'linear-gradient(135deg,#5a5cdb,#7c55c8)', border: 'none', borderRadius: '10px', color: '#fff', fontSize: '14px', fontWeight: '700', cursor: 'pointer', fontFamily: 'inherit', opacity: (generatingPosts || (aiMode === 'tendencia' && !selectedTrend) || (aiMode === 'libre' && !customPrompt.trim())) ? 0.45 : 1, transition: 'opacity .15s', boxShadow: '0 2px 14px rgba(90,92,219,.3)' }}>
+                {generatingPosts ? '⏳ Generando variaciones...' : '✨ Generar ideas de post'}
               </button>
             </div>
           </div>
@@ -568,15 +571,15 @@ export default function PublicarPage() {
 
             {generatedPosts.length > 0 && !generatingPosts && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                <div style={{ fontSize: '12px', color: 'var(--text4)', fontFamily: 'monospace' }}>3 variaciones generadas — elige la que más te guste:</div>
+                <div style={{ fontSize: '13px', color: 'var(--text3)', fontWeight: '500' }}>3 variaciones generadas — elige la que más te guste:</div>
                 {generatedPosts.map((p, i) => (
                   <div key={i} style={{ ...cardStyle, border: '1px solid rgba(99,102,241,.2)', position: 'relative' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <span style={{ fontSize: '16px' }}>{p.emoji_principal || '✍️'}</span>
                         <div>
-                          <div style={{ fontSize: '11px', fontWeight: '700', color: '#a5b4fc' }}>{p.variacion}</div>
-                          <div style={{ fontSize: '10px', color: 'var(--text4)', fontFamily: 'monospace' }}>{p.caracteres || p.texto?.length || 0} chars</div>
+                          <div style={{ fontSize: '13px', fontWeight: '700', color: '#9096e0' }}>{p.variacion}</div>
+                          <div style={{ fontSize: '11px', color: 'var(--text3)' }}>{p.caracteres || p.texto?.length || 0} caracteres</div>
                         </div>
                       </div>
                       <button onClick={() => useGeneratedPost(p.texto)}
@@ -585,7 +588,7 @@ export default function PublicarPage() {
                       </button>
                     </div>
                     {p.hook && (
-                      <div style={{ fontSize: '11px', color: '#fbbf24', fontWeight: '600', marginBottom: '6px', padding: '5px 8px', background: 'rgba(251,191,36,.08)', borderRadius: '5px', borderLeft: '2px solid #fbbf24' }}>
+                      <div style={{ fontSize: '12px', color: '#c49a45', fontWeight: '600', marginBottom: '8px', padding: '7px 10px', background: 'rgba(180,140,60,.08)', borderRadius: '7px', borderLeft: '3px solid rgba(180,140,60,.4)' }}>
                         🪝 {p.hook}
                       </div>
                     )}
@@ -595,7 +598,7 @@ export default function PublicarPage() {
                     {p.hashtags?.length > 0 && (
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
                         {p.hashtags.slice(0,8).map((h, hi) => (
-                          <span key={hi} style={{ fontSize: '10px', color: '#60a5fa', background: 'rgba(96,165,250,.1)', padding: '2px 6px', borderRadius: '4px', fontFamily: 'monospace' }}>{h}</span>
+                          <span key={hi} style={{ fontSize: '11px', color: '#7a9ec0', background: 'rgba(100,140,190,.1)', padding: '3px 7px', borderRadius: '5px' }}>{h}</span>
                         ))}
                       </div>
                     )}
@@ -605,10 +608,10 @@ export default function PublicarPage() {
             )}
 
             {generatedPosts.length === 0 && !generatingPosts && (
-              <div style={{ ...cardStyle, textAlign: 'center', padding: '40px 20px', color: 'var(--text4)' }}>
-                <div style={{ fontSize: '36px', marginBottom: '12px' }}>🤖</div>
-                <div style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text)', marginBottom: '8px' }}>Asistente IA Copywriter</div>
-                <div style={{ fontSize: '12px', lineHeight: '1.6' }}>
+              <div style={{ ...cardStyle, textAlign: 'center', padding: '48px 24px', background: 'linear-gradient(160deg,rgba(90,92,219,.07),rgba(124,85,200,.04))', border: '1px solid rgba(110,108,240,.15)', color: 'var(--text3)' }}>
+                <div style={{ fontSize: '48px', marginBottom: '16px' }}>✦</div>
+                <div style={{ fontSize: '16px', fontWeight: '800', color: 'var(--text)', marginBottom: '10px' }}>Asistente IA Copywriter</div>
+                <div style={{ fontSize: '13px', lineHeight: '1.7', maxWidth: '280px', margin: '0 auto' }}>
                   Selecciona una tendencia del día o escribe tu propio prompt, elige el tono y genera 3 variaciones de post listas para publicar.
                 </div>
               </div>
@@ -626,7 +629,7 @@ export default function PublicarPage() {
 
           {/* Page selector */}
           <div style={cardStyle}>
-            <div style={{ fontSize: '11px', color: 'var(--text4)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '.07em', marginBottom: '10px' }}>Página</div>
+            <div style={{ fontSize: '12px', color: 'var(--text3)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: '12px' }}>Página</div>
             {pages.length === 0 ? (
               <div style={{ fontSize: '12px', color: 'var(--text4)' }}>No se encontraron páginas de Facebook conectadas a este token.</div>
             ) : (
