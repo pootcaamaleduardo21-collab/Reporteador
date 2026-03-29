@@ -65,6 +65,15 @@ export default function PublicarPage() {
   const [customPrompt, setCustomPrompt] = useState('')
   const [aiError, setAiError] = useState(null)
   const [aiMode, setAiMode] = useState('tendencia') // 'tendencia' | 'libre'
+  const [userNiche, setUserNiche] = useState('real_estate')
+
+  // Leer nicho desde preferencias guardadas
+  useEffect(() => {
+    try {
+      const prefs = JSON.parse(localStorage.getItem('kaan_prefs') || '{}')
+      if (prefs.niche) setUserNiche(prefs.niche)
+    } catch(e) {}
+  }, [])
 
   const charLimit = platform === 'instagram' ? IG_MAX : FB_MAX
   const charCount = caption.length
@@ -142,6 +151,7 @@ export default function PublicarPage() {
     try {
       const params = new URLSearchParams()
       if (user?.id) params.set('userId', user.id)
+      params.set('niche', userNiche)
       const res = await fetch(`/api/ai/trends?${params}`)
       const j = await res.json()
       if (j.limitReached) { setAiError(j.error); setLoadingTrends(false); return }
@@ -162,11 +172,12 @@ export default function PublicarPage() {
       const body = {
         topic: aiMode === 'tendencia' && selectedTrend ? selectedTrend.titulo : null,
         platform,
-        accountName: selectedPage?.name || 'Agente Inmobiliario',
+        accountName: selectedPage?.name || 'Mi negocio',
         followers: selectedPage?.fan_count || 0,
         style: aiStyle,
         customPrompt: aiMode === 'libre' ? customPrompt : null,
         userId: user?.id || null,
+        niche: userNiche,
       }
       const res = await fetch('/api/ai/generate-post', {
         method: 'POST',

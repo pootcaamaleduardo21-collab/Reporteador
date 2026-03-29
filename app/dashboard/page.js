@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '../lib/supabase'
 import { usePlan } from '../lib/usePlan'
+import { NICHES, DEFAULT_NICHE } from '../lib/niches'
 
 const fmtN = v => (+v||0)>=1e6?((+v/1e6).toFixed(1)+'M'):(+v||0)>=1e3?((+v/1e3).toFixed(1)+'K'):String(Math.round(+v||0))
 const fmtDate = d => { try { return new Date(d).toLocaleDateString('es-MX',{day:'numeric',month:'short'}) } catch{return ''} }
@@ -47,6 +48,33 @@ export default function DashboardHome() {
   const [pipMeta, setPipMeta] = useState('')
   const { isPro } = usePlan()
   const router = useRouter()
+
+  // ── Onboarding de nicho (solo primera vez) ──
+  const [showNicheModal, setShowNicheModal] = useState(false)
+  const [selectedNiche, setSelectedNiche] = useState(DEFAULT_NICHE)
+  const [activeNiche, setActiveNiche] = useState(DEFAULT_NICHE)
+
+  useEffect(() => {
+    try {
+      const prefs = JSON.parse(localStorage.getItem('kaan_prefs') || '{}')
+      if (!prefs.niche) {
+        setShowNicheModal(true)
+      } else {
+        setSelectedNiche(prefs.niche)
+        setActiveNiche(prefs.niche)
+      }
+    } catch(e) {}
+  }, [])
+
+  function saveNiche() {
+    try {
+      const prefs = JSON.parse(localStorage.getItem('kaan_prefs') || '{}')
+      prefs.niche = selectedNiche
+      localStorage.setItem('kaan_prefs', JSON.stringify(prefs))
+    } catch(e) {}
+    setActiveNiche(selectedNiche)
+    setShowNicheModal(false)
+  }
 
   function connectMeta() {
     if (!user) return
@@ -149,16 +177,21 @@ export default function DashboardHome() {
   const boostCandidates = boostRadar.filter(p=>p.er>=1).length
 
 
+  const activeNicheData = NICHES.find(n => n.id === activeNiche) || NICHES[0]
+
   return (
     <div style={{padding:'24px 28px',maxWidth:'1160px',fontFamily:'"Plus Jakarta Sans",sans-serif'}}>
       <style>{`
         @keyframes spin{to{transform:rotate(360deg)}}
         @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes modalIn{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
         .hov-card{transition:border-color .2s,transform .15s,box-shadow .15s}
         .hov-card:hover{border-color:rgba(99,102,241,.38)!important;transform:translateY(-2px);box-shadow:0 6px 24px rgba(0,0,0,.25)}
         .tab-shortcut:hover{background:rgba(255,255,255,.08)!important;border-color:rgba(255,255,255,.14)!important}
         .tab-shortcut{transition:background .15s,border-color .15s}
         .boost-item:hover{border-color:rgba(250,204,21,.38)!important}
+        .niche-opt{transition:all .15s;cursor:pointer}
+        .niche-opt:hover{border-color:rgba(110,108,240,.4)!important;background:rgba(90,92,219,.08)!important}
         .boost-item{transition:border-color .2s}
         .plat-cta:hover{opacity:.85}
         .plat-cta{transition:opacity .15s}
@@ -168,6 +201,52 @@ export default function DashboardHome() {
         .funnel-step{transition:opacity .2s}
         .funnel-step:hover{opacity:.85}
       `}</style>
+
+      {/* ══ MODAL DE ONBOARDING: selector de nicho ══ */}
+      {showNicheModal && (
+        <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,.75)',zIndex:200,display:'flex',alignItems:'center',justifyContent:'center',padding:'20px',backdropFilter:'blur(4px)'}}>
+          <div style={{background:'var(--card)',border:'1px solid var(--border)',borderRadius:'20px',padding:'36px 32px',maxWidth:'600px',width:'100%',animation:'modalIn .25s ease',boxShadow:'0 20px 60px rgba(0,0,0,.5)'}}>
+
+            {/* Encabezado */}
+            <div style={{textAlign:'center',marginBottom:'28px'}}>
+              <div style={{fontSize:'44px',marginBottom:'14px'}}>✦</div>
+              <div style={{fontSize:'22px',fontWeight:'800',color:'var(--text)',marginBottom:'8px'}}>¿En qué industria trabajas?</div>
+              <div style={{fontSize:'14px',color:'var(--text3)',lineHeight:'1.6',maxWidth:'380px',margin:'0 auto'}}>
+                El Asistente IA, las tendencias del día y el contenido sugerido se adaptarán automáticamente a tu sector.
+              </div>
+            </div>
+
+            {/* Grid de nichos */}
+            <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:'8px',marginBottom:'24px'}}>
+              {NICHES.map(n => (
+                <div key={n.id} className="niche-opt" onClick={() => setSelectedNiche(n.id)}
+                  style={{padding:'14px 16px',borderRadius:'12px',
+                    border:`1px solid ${selectedNiche===n.id?'rgba(110,108,240,.55)':'rgba(255,255,255,.07)'}`,
+                    background:selectedNiche===n.id?'rgba(90,92,219,.13)':'rgba(255,255,255,.02)',
+                    boxShadow:selectedNiche===n.id?'0 2px 14px rgba(90,92,219,.18)':'none'}}>
+                  <div style={{display:'flex',alignItems:'center',gap:'10px'}}>
+                    <span style={{fontSize:'22px',flexShrink:0}}>{n.emoji}</span>
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{fontSize:'13px',fontWeight:'700',color:selectedNiche===n.id?'#9096e0':'var(--text)'}}>{n.label}</div>
+                      <div style={{fontSize:'11px',color:'var(--text3)',marginTop:'1px'}}>{n.desc}</div>
+                    </div>
+                    {selectedNiche===n.id && <span style={{fontSize:'14px',color:'#9096e0',flexShrink:0}}>✓</span>}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* CTA */}
+            <button onClick={saveNiche}
+              style={{width:'100%',padding:'14px',background:'linear-gradient(135deg,#5a5cdb,#7c55c8)',border:'none',borderRadius:'11px',color:'#fff',fontSize:'15px',fontWeight:'800',cursor:'pointer',fontFamily:'inherit',boxShadow:'0 4px 18px rgba(90,92,219,.35)',transition:'opacity .15s'}}>
+              Comenzar con {NICHES.find(n=>n.id===selectedNiche)?.label} {NICHES.find(n=>n.id===selectedNiche)?.emoji}
+            </button>
+            <div style={{textAlign:'center',marginTop:'10px',fontSize:'11px',color:'var(--text4)'}}>
+              Puedes cambiarlo en cualquier momento desde Ajustes
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ══ HERO HEADER con gradiente ══ */}
       <div style={{
@@ -184,7 +263,7 @@ export default function DashboardHome() {
             </h1>
           </div>
           <p style={{fontSize:'14px',color:'var(--text3)',margin:'0 0 16px',lineHeight:'1.6'}}>
-            Tu centro de control inmobiliario — orgánico + pagado en un solo lugar
+            {activeNicheData.emoji} Tu centro de control de marketing · {activeNicheData.label} — orgánico + pagado en un solo lugar
           </p>
           <div style={{display:'flex',gap:'8px',flexWrap:'wrap'}}>
             {(hasMeta||hasFbPages) && <span style={{fontSize:'12px',fontWeight:'600',padding:'4px 12px',borderRadius:'20px',background:'rgba(24,119,242,.1)',border:'1px solid rgba(24,119,242,.2)',color:'#7faee8'}}>✓ Meta conectado</span>}

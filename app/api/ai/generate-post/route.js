@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { NICHE_AI_CONTEXT, DEFAULT_NICHE } from '@/app/lib/niches'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -40,7 +41,7 @@ export async function POST(request) {
   }
 
   try {
-    const { topic, platform, accountName, followers, style, customPrompt, userId } = await request.json()
+    const { topic, platform, accountName, followers, style, customPrompt, userId, niche } = await request.json()
 
     const today      = new Date().toISOString().split('T')[0]
     const monthStart = today.slice(0, 7) + '-01'
@@ -71,11 +72,16 @@ export async function POST(request) {
       }
     }
 
-    // ── Contextos ──
+    // ── Contexto de nicho ──
+    const nicheKey  = niche && NICHE_AI_CONTEXT[niche] ? niche : DEFAULT_NICHE
+    const nicheCtx  = NICHE_AI_CONTEXT[nicheKey]
+
+    // ── Contexto de plataforma ──
     const platformCtx = platform === 'instagram'
       ? 'Instagram (máximo 2,200 caracteres, usa emojis estratégicamente, formato visual con saltos de línea)'
       : 'Facebook (máximo 63,206 caracteres, puedes ser más detallado, incluye una llamada a la acción clara)'
 
+    // ── Contexto de tono ──
     const styleCtx = style === 'profesional'
       ? 'tono profesional y de autoridad, lenguaje formal pero accesible'
       : style === 'casual'
@@ -86,17 +92,18 @@ export async function POST(request) {
       ? `Instrucción del usuario: "${customPrompt}"`
       : `Tema: "${topic}"`
 
-    const systemPrompt = `Eres un experto copywriter de marketing inmobiliario en México, especializado en redes sociales para agentes y desarrolladoras inmobiliarias.
-La cuenta es "${accountName || 'Agente Inmobiliario'}" con ${followers ? followers + ' seguidores' : 'audiencia en crecimiento'}.
+    const systemPrompt = `Eres un experto copywriter de ${nicheCtx.expertiseDesc} especializado en redes sociales.
+La cuenta es "${accountName || 'Mi negocio'}" con ${followers ? followers + ' seguidores' : 'audiencia en crecimiento'}.
+Tu audiencia objetivo: ${nicheCtx.audience}.
 Usa ${styleCtx}.
-Eres experto en: hooks que detienen el scroll, storytelling inmobiliario, llamadas a la acción que generan leads, y tendencias de contenido en México.`
+Eres experto en: ${nicheCtx.expertise}.`
 
     const userPrompt = `Genera 3 variaciones de un post para ${platformCtx}.
 ${topicLine}
 
 Cada variación debe tener:
 - Hook poderoso en la primera línea (que haga parar el scroll)
-- Cuerpo del post con valor real
+- Cuerpo del post con valor real para la audiencia
 - Llamada a la acción clara al final
 - Emojis estratégicos (no en exceso)
 - Hashtags relevantes al final (8-12 para Instagram, 3-5 para Facebook)
@@ -106,7 +113,7 @@ Responde ÚNICAMENTE con JSON válido (sin markdown, sin bloques de código):
   "posts": [
     {
       "id": 1,
-      "variacion": "Hook emocional",
+      "variacion": "Nombre de la variación (ej: Hook emocional, Dato curioso, Pregunta directa)",
       "texto": "El texto completo del post listo para publicar",
       "hook": "Solo la primera línea/gancho",
       "cta": "La llamada a la acción",

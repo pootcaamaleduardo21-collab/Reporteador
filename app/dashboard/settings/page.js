@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { usePlan } from '../../lib/usePlan'
+import { NICHES, DEFAULT_NICHE } from '../../lib/niches'
 
 export default function SettingsPage() {
   const [accounts, setAccounts] = useState([])
@@ -9,6 +10,7 @@ export default function SettingsPage() {
   const [language, setLanguage] = useState('Español')
   const [currency, setCurrency] = useState('MXN $')
   const [defaultPeriod, setDefaultPeriod] = useState('Este mes')
+  const [niche, setNiche] = useState(DEFAULT_NICHE)
   const [saved, setSaved] = useState(false)
   const [cancelLoading, setCancelLoading] = useState(false)
   const { plan, isPro } = usePlan()
@@ -28,6 +30,7 @@ export default function SettingsPage() {
       if (prefs.language) setLanguage(prefs.language)
       if (prefs.currency) setCurrency(prefs.currency)
       if (prefs.defaultPeriod) setDefaultPeriod(prefs.defaultPeriod)
+      if (prefs.niche) setNiche(prefs.niche)
     } catch(e) {}
   }, [])
 
@@ -42,7 +45,7 @@ export default function SettingsPage() {
 
   function savePrefs() {
     try {
-      localStorage.setItem('kaan_prefs', JSON.stringify({ theme, language, currency, defaultPeriod }))
+      localStorage.setItem('kaan_prefs', JSON.stringify({ theme, language, currency, defaultPeriod, niche }))
     } catch(e) {}
     if (theme === 'Claro') { document.documentElement.setAttribute('data-theme', 'light') } else { document.documentElement.removeAttribute('data-theme') }
     setSaved(true)
@@ -92,9 +95,44 @@ export default function SettingsPage() {
       </div>
 
       {/* Live preview banner */}
-      <div style={{background:'rgba(99,102,241,.08)',border:'1px solid rgba(99,102,241,.2)',borderRadius:'9px',padding:'10px 14px',marginBottom:'16px',fontSize:'11px',color:'#a5b4fc',fontFamily:'monospace',display:'flex',alignItems:'center',gap:'8px'}}>
+      <div style={{background:'rgba(90,92,219,.08)',border:'1px solid rgba(110,108,240,.2)',borderRadius:'9px',padding:'10px 14px',marginBottom:'16px',fontSize:'12px',color:'#9096e0',display:'flex',alignItems:'center',gap:'8px'}}>
         <span>💡</span>
-        El tema se aplica en tiempo real · Presiona <strong>Guardar cambios</strong> para que persistan al recargar
+        El tema y el nicho se aplican de inmediato · Presiona <strong>Guardar cambios</strong> para que persistan
+      </div>
+
+      {/* ── Nicho (full width) ── */}
+      <div style={{background:'var(--card)',border:'1px solid var(--border)',borderRadius:'14px',padding:'22px',marginBottom:'14px'}}>
+        <div style={{display:'flex',alignItems:'center',gap:'10px',marginBottom:'6px'}}>
+          <span style={{fontSize:'20px'}}>🏷️</span>
+          <div>
+            <div style={{fontSize:'14px',fontWeight:'800',color:'var(--text)'}}>Industria / Nicho</div>
+            <div style={{fontSize:'12px',color:'var(--text3)',marginTop:'2px'}}>El Asistente IA y las tendencias se adaptan automáticamente a tu sector</div>
+          </div>
+        </div>
+
+        <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:'8px',marginTop:'16px'}}>
+          {NICHES.map(n => (
+            <div key={n.id} onClick={() => setNiche(n.id)}
+              style={{padding:'12px 8px',borderRadius:'10px',cursor:'pointer',textAlign:'center',transition:'all .15s',
+                border:`1px solid ${niche===n.id?'rgba(110,108,240,.5)':'rgba(255,255,255,.07)'}`,
+                background:niche===n.id?'rgba(90,92,219,.12)':'rgba(255,255,255,.02)',
+                boxShadow:niche===n.id?'0 2px 10px rgba(90,92,219,.15)':'none'}}>
+              <div style={{fontSize:'24px',marginBottom:'6px'}}>{n.emoji}</div>
+              <div style={{fontSize:'11px',fontWeight:'700',color:niche===n.id?'#9096e0':'var(--text2)',lineHeight:'1.3'}}>{n.label}</div>
+              <div style={{fontSize:'10px',color:'var(--text4)',marginTop:'3px',lineHeight:'1.3'}}>{n.desc}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Indicador del nicho activo */}
+        <div style={{marginTop:'14px',padding:'10px 14px',borderRadius:'8px',background:'rgba(90,92,219,.06)',border:'1px solid rgba(110,108,240,.15)',display:'flex',alignItems:'center',gap:'8px'}}>
+          <span style={{fontSize:'16px'}}>{NICHES.find(n=>n.id===niche)?.emoji}</span>
+          <div>
+            <span style={{fontSize:'12px',color:'var(--text3)'}}>Nicho activo: </span>
+            <span style={{fontSize:'12px',fontWeight:'700',color:'#9096e0'}}>{NICHES.find(n=>n.id===niche)?.label}</span>
+            <span style={{fontSize:'11px',color:'var(--text4)'}}> — {NICHES.find(n=>n.id===niche)?.desc}</span>
+          </div>
+        </div>
       </div>
 
       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'14px'}}>
