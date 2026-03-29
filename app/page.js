@@ -4,51 +4,193 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { DM_Sans } from 'next/font/google'
 
-const dm = DM_Sans({ subsets: ['latin'], weight: ['400', '500', '700'], display: 'swap' })
+const dm = DM_Sans({ subsets: ['latin'], weight: ['400', '500', '600', '700', '800'], display: 'swap' })
 
-const ACC = '#7c6ef5'
-const ACC2 = '#5de8b4'
-const BG = '#0a0a0c'
-const SURF = '#111114'
+const ACC   = '#7c6ef5'
+const ACC2  = '#5de8b4'
+const BG    = '#0a0a0c'
+const SURF  = '#111114'
 const SURF2 = '#18181c'
-const BOR = 'rgba(255,255,255,0.07)'
-const TEXT = '#f0f0f2'
+const BOR   = 'rgba(255,255,255,0.07)'
+const TEXT  = '#f0f0f2'
 const MUTED = '#888890'
 
-const LOGO = <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="16" height="16"><path d="M16 4 L4 26 L16 21 L28 26 Z" fill="white"/><path d="M16 4 L16 21" stroke="white" strokeWidth="1.5" opacity=".35"/><circle cx="16" cy="21" r="2.2" fill="#a5b4fc"/></svg>
+const LOGO = (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="16" height="16">
+    <path d="M16 4 L4 26 L16 21 L28 26 Z" fill="white"/>
+    <path d="M16 4 L16 21" stroke="white" strokeWidth="1.5" opacity=".35"/>
+    <circle cx="16" cy="21" r="2.2" fill="#a5b4fc"/>
+  </svg>
+)
 
-const CHECK = <svg viewBox="0 0 16 16" fill="none" width="14" height="14" style={{flexShrink:0}}><circle cx="8" cy="8" r="7" stroke="#5de8b4" strokeWidth="1.2"/><path d="M5 8l2 2 4-4" stroke="#5de8b4" strokeWidth="1.4"/></svg>
-const CROSS = <svg viewBox="0 0 16 16" fill="none" width="14" height="14" style={{flexShrink:0}}><circle cx="8" cy="8" r="7" stroke="#333" strokeWidth="1.2"/><path d="M6 6l4 4M10 6l-4 4" stroke="#444" strokeWidth="1.4"/></svg>
+const CHECK = (
+  <svg viewBox="0 0 16 16" fill="none" width="14" height="14" style={{flexShrink:0}}>
+    <circle cx="8" cy="8" r="7" stroke="#5de8b4" strokeWidth="1.2"/>
+    <path d="M5 8l2 2 4-4" stroke="#5de8b4" strokeWidth="1.4"/>
+  </svg>
+)
+const CROSS = (
+  <svg viewBox="0 0 16 16" fill="none" width="14" height="14" style={{flexShrink:0}}>
+    <circle cx="8" cy="8" r="7" stroke="#333" strokeWidth="1.2"/>
+    <path d="M6 6l4 4M10 6l-4 4" stroke="#444" strokeWidth="1.4"/>
+  </svg>
+)
 
 const FEATURES = [
-  { bg:'rgba(124,110,245,0.12)', title:'Dashboard multi-plataforma', desc:'Meta, Google y TikTok en una sola vista. Compara métricas entre plataformas sin abrir una pestaña más.', tag:'Multi-canal', icon:<svg viewBox="0 0 24 24" fill="none" stroke="#9d8ff5" strokeWidth="1.8" width="17" height="17"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg> },
-  { bg:'rgba(93,232,180,0.09)', title:'Análisis de creativos', desc:'Hook rate, hold rate, CTR y conversión por anuncio. Sabes exactamente qué creativo está jalando y cuál está quemado.', tag:'Creativos', icon:<svg viewBox="0 0 24 24" fill="none" stroke="#5de8b4" strokeWidth="1.8" width="17" height="17"><path d="M15 10l-4 4-2-2"/><circle cx="12" cy="12" r="9"/></svg> },
-  { bg:'rgba(239,159,39,0.09)', title:'Reportes para clientes', desc:'Genera PDFs con tu branding en un clic. Programa envíos automáticos semanales o mensuales directamente a tu cliente.', tag:'White-label', icon:<svg viewBox="0 0 24 24" fill="none" stroke="#ef9f27" strokeWidth="1.8" width="17" height="17"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> },
-  { bg:'rgba(55,138,221,0.1)', title:'Segmentación demográfica', desc:'Rendimiento por edad, género y ubicación en todas las plataformas. Sin exportar a Excel, sin armarlo tú a mano.', tag:'Audiencias', icon:<svg viewBox="0 0 24 24" fill="none" stroke="#85b7eb" strokeWidth="1.8" width="17" height="17"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg> },
-  { bg:'rgba(212,83,126,0.09)', title:'Alertas inteligentes', desc:'Te avisamos cuando el CPA sube, el presupuesto se agota o el ROAS cae. Actúa antes de que tu cliente te llame.', tag:'Automatización', icon:<svg viewBox="0 0 24 24" fill="none" stroke="#ed93b1" strokeWidth="1.8" width="17" height="17"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg> },
-  { bg:'rgba(99,153,34,0.09)', title:'Multi-cuenta', desc:'Gestiona todos tus clientes desde un panel. Cambia entre cuentas al instante sin desconectarte ni volver a hacer login.', tag:'Agencias', icon:<svg viewBox="0 0 24 24" fill="none" stroke="#97c459" strokeWidth="1.8" width="17" height="17"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg> },
+  {
+    bg: 'rgba(124,110,245,0.12)',
+    title: 'Dashboard multi-plataforma',
+    desc: 'Meta Ads, Google Ads y TikTok en una sola vista. Compara métricas entre plataformas sin abrir otra pestaña.',
+    tag: 'Multi-canal',
+    icon: <svg viewBox="0 0 24 24" fill="none" stroke="#9d8ff5" strokeWidth="1.8" width="17" height="17"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>,
+  },
+  {
+    bg: 'rgba(93,232,180,0.09)',
+    title: 'Asistente IA por industria',
+    desc: 'Genera posts y tendencias de contenido adaptados a tu sector: restaurantes, inmobiliario, salud, retail y más.',
+    tag: 'IA · 10 nichos',
+    icon: <svg viewBox="0 0 24 24" fill="none" stroke="#5de8b4" strokeWidth="1.8" width="17" height="17"><path d="M12 2a10 10 0 110 20A10 10 0 0112 2z"/><path d="M8 12s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>,
+  },
+  {
+    bg: 'rgba(239,159,39,0.09)',
+    title: 'Reportes PDF para clientes',
+    desc: 'Genera reportes con tu branding en un clic. Con el plan Agencia son completamente white-label — Kaan no aparece.',
+    tag: 'White-label',
+    icon: <svg viewBox="0 0 24 24" fill="none" stroke="#ef9f27" strokeWidth="1.8" width="17" height="17"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>,
+  },
+  {
+    bg: 'rgba(55,138,221,0.10)',
+    title: 'Análisis de creativos',
+    desc: 'Hook rate, hold rate, CTR y conversión por anuncio. Sabes exactamente qué creativo está jalando y cuál está quemado.',
+    tag: 'Creativos',
+    icon: <svg viewBox="0 0 24 24" fill="none" stroke="#85b7eb" strokeWidth="1.8" width="17" height="17"><path d="M15 10l-4 4-2-2"/><circle cx="12" cy="12" r="9"/></svg>,
+  },
+  {
+    bg: 'rgba(212,83,126,0.09)',
+    title: 'Calendario de publicaciones',
+    desc: 'Organiza y visualiza tus posts por plataforma. Programa contenido y mantén la consistencia sin perder el hilo.',
+    tag: 'Organización',
+    icon: <svg viewBox="0 0 24 24" fill="none" stroke="#ed93b1" strokeWidth="1.8" width="17" height="17"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>,
+  },
+  {
+    bg: 'rgba(99,153,34,0.09)',
+    title: 'Vista multi-cliente',
+    desc: 'Gestiona todos tus clientes desde un panel. Cambia entre cuentas al instante sin volver a hacer login.',
+    tag: 'Agencias',
+    icon: <svg viewBox="0 0 24 24" fill="none" stroke="#97c459" strokeWidth="1.8" width="17" height="17"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>,
+  },
+]
+
+const NICHES = [
+  { emoji:'🏠', label:'Inmobiliario' },
+  { emoji:'🍽️', label:'Restaurantes' },
+  { emoji:'🏨', label:'Turismo' },
+  { emoji:'💆', label:'Wellness & Belleza' },
+  { emoji:'🏋️', label:'Fitness' },
+  { emoji:'🏥', label:'Salud & Clínicas' },
+  { emoji:'🛍️', label:'Retail' },
+  { emoji:'🎓', label:'Educación' },
+  { emoji:'⚖️', label:'Servicios Prof.' },
+  { emoji:'🏗️', label:'Construcción' },
+]
+
+const PLANS = [
+  {
+    id: 'free', name: 'Free', price: '$0', period: 'para siempre',
+    accent: '#666678', highlight: false, badge: null,
+    features: [
+      { t: '1 plataforma conectada', y: true },
+      { t: 'Analytics últimos 7 días', y: true },
+      { t: '5 posts con IA / mes', y: true },
+      { t: 'Calendario de publicaciones', y: false },
+      { t: 'Reportes PDF', y: false },
+      { t: 'Multi-cliente', y: false },
+    ],
+    cta: 'Empezar gratis',
+    ctaStyle: { background: 'none', border: `0.5px solid ${BOR}`, color: TEXT },
+  },
+  {
+    id: 'starter', name: 'Starter', price: '$247', period: 'MXN / mes',
+    accent: '#6fcf97', highlight: false, badge: null,
+    features: [
+      { t: 'Hasta 3 plataformas', y: true },
+      { t: 'Analytics últimos 30 días', y: true },
+      { t: '30 posts con IA / mes', y: true },
+      { t: 'Calendario de publicaciones', y: true },
+      { t: '3 reportes PDF / mes', y: true },
+      { t: 'Multi-cliente', y: false },
+    ],
+    cta: 'Comenzar Starter',
+    ctaStyle: { background: 'rgba(80,160,120,.15)', border: '1px solid rgba(111,207,151,.2)', color: '#6fcf97' },
+  },
+  {
+    id: 'pro', name: 'Pro', price: '$597', period: 'MXN / mes',
+    accent: '#9096e0', highlight: true, badge: 'Más popular',
+    features: [
+      { t: 'Plataformas ilimitadas', y: true },
+      { t: 'Analytics hasta 90 días', y: true },
+      { t: '100 posts con IA / mes', y: true },
+      { t: 'PDFs ilimitados', y: true },
+      { t: 'Google Ads + TikTok Ads', y: true },
+      { t: 'Soporte prioritario', y: true },
+    ],
+    cta: 'Comenzar Pro',
+    ctaStyle: { background: 'linear-gradient(135deg,#5a5cdb,#7c55c8)', border: 'none', color: '#fff' },
+  },
+  {
+    id: 'agency', name: 'Agencia', price: '$1,297', period: 'MXN / mes',
+    accent: '#c07898', highlight: false, badge: 'Para agencias',
+    features: [
+      { t: 'Todo lo de Pro', y: true },
+      { t: 'Hasta 10 workspaces', y: true },
+      { t: 'Vista multi-cliente', y: true },
+      { t: 'PDFs white-label', y: true },
+      { t: '500 posts con IA / mes', y: true },
+      { t: 'Onboarding personalizado', y: true },
+    ],
+    cta: 'Comenzar Agencia',
+    ctaStyle: { background: 'rgba(160,100,130,.18)', border: '1px solid rgba(192,120,152,.3)', color: '#c07898' },
+  },
 ]
 
 const TESTIMONIALS = [
-  { name:'Carlos M.', role:'Media buyer · CDMX', text:'Antes tardaba 2 horas por cliente haciendo reportes en Excel. Ahora los genero en 5 minutos y se ven más profesionales.', avatar:'CM' },
-  { name:'Sofía R.', role:'Directora de agencia · MTY', text:'El hook rate y hold rate por anuncio me cambió la vida. Ahora sé exactamente qué creativos escalar antes de quemar presupuesto.', avatar:'SR' },
-  { name:'Diego L.', role:'Freelance trafficker · GDL', text:'Mis clientes me preguntan cómo hago reportes tan buenos. Kaan hace que parezca que tengo un equipo detrás.', avatar:'DL' },
+  {
+    name: 'Sofía R.',
+    role: 'Directora de agencia · Playa del Carmen',
+    text: 'Con Kaan puedo ver el rendimiento de todos mis clientes en un solo panel. Los reportes PDF se ven tan profesionales que mis clientes piensan que tengo un equipo grande.',
+    avatar: 'SR',
+    niche: '🏠 Inmobiliario + 🍽️ Restaurantes',
+  },
+  {
+    name: 'Diego L.',
+    role: 'Community Manager freelance · Tulum',
+    text: 'El asistente IA ya sabe de qué habla mi industria. Genero posts de bienes raíces o turismo en segundos, y el contenido suena natural, no genérico.',
+    avatar: 'DL',
+    niche: '🏨 Turismo & Hospitalidad',
+  },
+  {
+    name: 'Carlos M.',
+    role: 'Dueño de gym · Cancún',
+    text: 'Antes no sabía si mis anuncios de Meta estaban funcionando. Ahora entro a Kaan y en 2 minutos sé exactamente cuánto estoy gastando y cuántos clientes me está generando.',
+    avatar: 'CM',
+    niche: '🏋️ Fitness',
+  },
 ]
 
 const FAQS = [
-  { q:'¿Necesito dar acceso completo a mis cuentas de ads?', a:'No. Kaan se conecta a través de los tokens oficiales de cada plataforma (OAuth). Solo tienes acceso de lectura — Kaan nunca puede pausar campañas, cambiar presupuestos ni hacer modificaciones en tu cuenta.' },
-  { q:'¿Con qué frecuencia se actualizan los datos?', a:'Los datos se sincronizan cada hora para todas las plataformas activas. Para campañas con alta rotación, también puedes forzar una actualización manual desde el dashboard.' },
-  { q:'¿Puedo manejar las cuentas de varios clientes?', a:'Sí. Con el plan Pro puedes conectar cuentas ilimitadas y cambiar entre ellas desde el sidebar. Cada cliente tiene su propio espacio y sus datos no se mezclan.' },
-  { q:'¿Los reportes PDF tienen mi branding o el de Kaan?', a:'Con el plan Pro los reportes son completamente white-label. Puedes agregar el logo de tu agencia, los colores de tu cliente y tu propia firma. Kaan no aparece en ningún lado.' },
-  { q:'¿Puedo cancelar en cualquier momento?', a:'Sí, sin compromisos ni penalizaciones. Si cancelas, conservas acceso Pro hasta el final del periodo pagado y luego pasas al plan free automáticamente.' },
-  { q:'¿Qué pasa con mis datos si cancelo?', a:'Tus datos históricos se conservan 90 días después de cancelar. Puedes exportarlos en cualquier momento. No vendemos ni compartimos tus datos con terceros.' },
+  { q: '¿Para quién es Kaan?', a: 'Para agencias de marketing pequeñas, community managers freelance y negocios que invierten en publicidad digital y quieren saber si esa inversión está generando resultados reales.' },
+  { q: '¿Necesito experiencia técnica?', a: 'No. La conexión es por OAuth (igual que "Iniciar sesión con Google"), sin código ni configuraciones complicadas. En menos de 5 minutos ya estás viendo tus datos.' },
+  { q: '¿El asistente IA realmente entiende mi industria?', a: 'Sí. El asistente está entrenado en 10 nichos distintos: inmobiliario, restaurantes, turismo, wellness, fitness, salud, retail, educación, servicios y construcción. El contenido que genera usa el lenguaje, los temas y los hashtags correctos para cada sector.' },
+  { q: '¿Puedo manejar las cuentas de varios clientes?', a: 'Con el plan Pro puedes conectar plataformas ilimitadas. Con el plan Agencia obtienes hasta 10 workspaces independientes y una vista multi-cliente para cambiar entre cuentas en un clic.' },
+  { q: '¿Los reportes PDF tienen el branding de Kaan?', a: 'Con el plan Agencia los reportes son completamente white-label: tu logo, los colores de tu cliente, tu firma. Kaan no aparece en ningún lado.' },
+  { q: '¿Puedo cancelar cuando quiera?', a: 'Sí, sin compromisos ni penalizaciones. Si cancelas, conservas tu acceso hasta el final del periodo pagado y luego pasas al plan free automáticamente.' },
 ]
 
 const CAMPAIGNS = [
-  { color:'#7c6ef5', name:'META_LEADS_Q1_2026', val:'$6,200', tag:'352 conv', tagBg:'rgba(124,110,245,.12)', tagColor:'#9d8ff5' },
+  { color:'#7c6ef5', name:'META_LEADS_MAYO', val:'$6,200', tag:'352 conv', tagBg:'rgba(124,110,245,.12)', tagColor:'#9d8ff5' },
   { color:'#378add', name:'GADS_SEARCH_MARCA', val:'$4,810', tag:'241 conv', tagBg:'rgba(55,138,221,.1)', tagColor:'#85b7eb' },
-  { color:'#d4537e', name:'TIKTOK_VIDEO_FEB', val:'$3,140', tag:'178 conv', tagBg:'rgba(212,83,126,.1)', tagColor:'#ed93b1' },
-  { color:'#ef9f27', name:'META_RETARGETING_V2', val:'$2,890', tag:'72 conv', tagBg:'rgba(239,159,39,.1)', tagColor:'#fac775' },
+  { color:'#d4537e', name:'TIKTOK_VIDEO_Q2', val:'$3,140', tag:'178 conv', tagBg:'rgba(212,83,126,.1)', tagColor:'#ed93b1' },
+  { color:'#ef9f27', name:'META_RETARGETING_V3', val:'$2,890', tag:'72 conv', tagBg:'rgba(239,159,39,.1)', tagColor:'#fac775' },
 ]
 
 export default function Landing() {
@@ -59,100 +201,97 @@ export default function Landing() {
     <div className={dm.className} style={{fontSize:'15px',lineHeight:'1.6',color:TEXT,background:BG,minHeight:'100vh'}}>
       <style>{`
         @media (max-width: 768px) {
-          .kn-gstats { grid-template-columns: 1fr !important; }
-          .kn-gstats > div { border-right: none !important; border-bottom: 0.5px solid rgba(255,255,255,0.07) !important; }
-          .kn-gpricing { grid-template-columns: 1fr !important; max-width: 100% !important; }
           .kn-g4 { grid-template-columns: repeat(2,minmax(0,1fr)) !important; }
           .kn-g2 { grid-template-columns: 1fr !important; }
-          .kn-stat-n { font-size: 36px !important; }
-          .kaan-nav-links { display: none !important; }
-          .kaan-nav-right { gap: 6px !important; }
-          .kaan-nav-right button:first-child { display: none !important; }
-          .kaan-hero h1 { font-size: 36px !important; }
-          .kaan-hero p { font-size: 15px !important; }
+          .kn-gstats { grid-template-columns: 1fr !important; }
+          .kn-gstats > div { border-right: none !important; border-bottom: 0.5px solid rgba(255,255,255,0.07) !important; }
+          .kn-gpricing { grid-template-columns: repeat(2,minmax(0,1fr)) !important; }
           .kaan-grid-3 { grid-template-columns: 1fr !important; }
-          .kaan-grid-4 { grid-template-columns: repeat(2, minmax(0,1fr)) !important; }
-          .kaan-grid-2 { grid-template-columns: 1fr !important; }
-          .kaan-grid-5 { grid-template-columns: repeat(2, minmax(0,1fr)) !important; }
-          .kaan-grid-stats { grid-template-columns: 1fr !important; }
-          .kaan-grid-stats > div { border-right: none !important; border-bottom: 0.5px solid rgba(255,255,255,0.07) !important; }
+          .kaan-grid-5 { grid-template-columns: repeat(5,minmax(0,1fr)) !important; }
+          .kaan-nav-links { display: none !important; }
+          .kaan-nav-right button:first-child { display: none !important; }
+          .kaan-hero h1 { font-size: 34px !important; }
           .kaan-section { padding: 48px 20px !important; }
           .kaan-mockup { margin: 0 16px 48px !important; }
-          .kaan-cta { margin: 0 16px 48px !important; padding: 40px 24px !important; }
-          .kaan-cta h2 { font-size: 28px !important; }
+          .kaan-cta { margin: 0 16px 80px !important; padding: 40px 24px !important; }
+          .kaan-cta h2 { font-size: 26px !important; }
           .kaan-hero-btns { flex-direction: column !important; align-items: center !important; }
           .kaan-hero-btns button { width: 100% !important; max-width: 320px !important; justify-content: center !important; }
-          .kaan-platforms { padding: 0 20px 32px !important; }
-          .kaan-pricing { max-width: 100% !important; }
-          .kaan-section-title { font-size: 28px !important; }
           .kaan-footer { flex-direction: column !important; gap: 16px !important; text-align: center !important; }
+          .kaan-section-title { font-size: 28px !important; }
         }
-        @media (max-width: 480px) {
-          .kaan-grid-4 { grid-template-columns: 1fr !important; }
-          .kaan-grid-5 { grid-template-columns: 1fr !important; }
+        @media (max-width: 560px) {
+          .kn-gpricing { grid-template-columns: 1fr !important; }
+          .kn-g4 { grid-template-columns: 1fr !important; }
+          .kaan-grid-5 { grid-template-columns: repeat(2,minmax(0,1fr)) !important; }
         }
       `}</style>
 
-      {/* NAV */}
+      {/* ── NAV ── */}
       <nav style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'16px 40px',borderBottom:`0.5px solid ${BOR}`,background:'rgba(10,10,12,0.94)',backdropFilter:'blur(12px)',position:'sticky',top:0,zIndex:100}}>
         <div onClick={()=>router.push('/')} style={{display:'flex',alignItems:'center',gap:9,fontWeight:700,fontSize:'17px',color:TEXT,cursor:'pointer'}}>
           <div style={{width:30,height:30,background:ACC,borderRadius:7,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>{LOGO}</div>
           Kaan
         </div>
-        <div className='kaan-nav-links' style={{display:'flex',gap:28,fontSize:'14px'}}>
-          {['Funciones','Plataformas','Precios','FAQ'].map(l=>(
+        <div className="kaan-nav-links" style={{display:'flex',gap:28,fontSize:'14px'}}>
+          {['Funciones','Nichos','Precios','FAQ'].map(l=>(
             <span key={l} style={{color:MUTED,cursor:'pointer'}}>{l}</span>
           ))}
         </div>
-        <div className='kaan-nav-right' style={{display:'flex',gap:10,alignItems:'center'}}>
+        <div className="kaan-nav-right" style={{display:'flex',gap:10,alignItems:'center'}}>
           <button onClick={()=>router.push('/registro')} style={{background:'none',border:`0.5px solid ${BOR}`,color:MUTED,padding:'8px 18px',borderRadius:8,fontSize:'13px',cursor:'pointer'}}>Iniciar sesión</button>
-          <button onClick={()=>router.push('/registro')} style={{background:ACC,color:'white',border:'none',padding:'9px 20px',borderRadius:8,fontSize:'13px',fontWeight:500,cursor:'pointer'}}>Empezar gratis</button>
+          <button onClick={()=>router.push('/registro')} style={{background:ACC,color:'white',border:'none',padding:'9px 20px',borderRadius:8,fontSize:'13px',fontWeight:600,cursor:'pointer'}}>Empezar gratis</button>
         </div>
       </nav>
 
-      {/* HERO */}
-      <div className='kaan-hero' style={{padding:'96px 40px 64px',textAlign:'center',maxWidth:860,margin:'0 auto'}}>
-        <div style={{display:'inline-flex',alignItems:'center',gap:7,background:'rgba(124,110,245,0.09)',border:`0.5px solid rgba(124,110,245,0.25)`,color:ACC,fontSize:'12px',padding:'5px 14px',borderRadius:20,marginBottom:28,letterSpacing:'.04em',fontWeight:500}}>
-          <span style={{width:5,height:5,borderRadius:'50%',background:ACC2,display:'inline-block',flexShrink:0}}/>
-          Analytics para traffickers
+      {/* ── HERO ── */}
+      <div className="kaan-hero" style={{padding:'88px 40px 60px',textAlign:'center',maxWidth:880,margin:'0 auto'}}>
+
+        {/* Audience pills */}
+        <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:8,flexWrap:'wrap',marginBottom:28}}>
+          {['🏢 Agencias MKT','👤 Community Managers','📈 Negocios con ads'].map(p=>(
+            <span key={p} style={{fontSize:'12px',padding:'4px 12px',borderRadius:20,background:SURF,border:`0.5px solid ${BOR}`,color:MUTED}}>{p}</span>
+          ))}
         </div>
-        <h1 style={{fontSize:'56px',fontWeight:700,lineHeight:1.05,letterSpacing:'-0.03em',marginBottom:22,color:TEXT}}>
-          Tus campañas,{' '}
-          <span style={{color:ACC}}>todas</span>{' '}
-          en{' '}
-          <span style={{color:ACC2}}>un solo lugar</span>
+
+        <h1 style={{fontSize:'54px',fontWeight:800,lineHeight:1.05,letterSpacing:'-0.03em',marginBottom:20,color:TEXT}}>
+          Sabe si tu inversión en{' '}
+          <span style={{color:ACC}}>marketing</span>{' '}
+          está{' '}
+          <span style={{color:ACC2}}>funcionando</span>
         </h1>
-        <p style={{fontSize:'18px',color:MUTED,maxWidth:540,margin:'0 auto 12px',lineHeight:1.7}}>
-          Conecta Meta, Google y TikTok. Ve qué está funcionando, qué no, y entrega reportes profesionales a tus clientes en minutos.
+        <p style={{fontSize:'18px',color:MUTED,maxWidth:560,margin:'0 auto 12px',lineHeight:1.75}}>
+          Analytics de Meta, Google y TikTok + asistente IA por nicho + reportes PDF para clientes — todo en una sola herramienta pensada para LATAM.
         </p>
 
-        {/* Social proof inline */}
+        {/* Social proof */}
         <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:12,marginBottom:36,marginTop:16}}>
           <div style={{display:'flex'}}>
-            {['CM','SR','DL','AV','MR'].map((i,idx)=>(
+            {['SR','DL','CM','AV','MR'].map((i,idx)=>(
               <div key={i} style={{width:28,height:28,borderRadius:'50%',background:`hsl(${idx*47+240},40%,45%)`,border:`2px solid ${BG}`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:'9px',fontWeight:700,color:'white',marginLeft:idx?-8:0}}>{i}</div>
             ))}
           </div>
-          <span style={{fontSize:'13px',color:MUTED}}><span style={{color:TEXT,fontWeight:500}}>+120 traffickers</span> ya usan Kaan</span>
+          <span style={{fontSize:'13px',color:MUTED}}><span style={{color:TEXT,fontWeight:600}}>+120 profesionales</span> ya usan Kaan</span>
         </div>
 
-        <div className='kaan-hero-btns' style={{display:'flex',gap:12,justifyContent:'center',flexWrap:'wrap'}}>
+        <div className="kaan-hero-btns" style={{display:'flex',gap:12,justifyContent:'center',flexWrap:'wrap'}}>
           <button onClick={()=>router.push('/registro')} style={{background:ACC,color:'white',border:'none',padding:'14px 28px',fontSize:'15px',fontWeight:600,borderRadius:10,display:'flex',alignItems:'center',gap:8,cursor:'pointer'}}>
-            {LOGO}
-            Empezar gratis
+            {LOGO} Empezar gratis
           </button>
-          <button onClick={()=>document.getElementById('demo').scrollIntoView({behavior:'smooth'})} style={{background:'none',border:`0.5px solid rgba(255,255,255,0.14)`,color:TEXT,padding:'14px 28px',fontSize:'15px',fontWeight:500,borderRadius:10,cursor:'pointer'}}>Ver demo</button>
+          <button onClick={()=>document.getElementById('demo').scrollIntoView({behavior:'smooth'})} style={{background:'none',border:`0.5px solid rgba(255,255,255,0.14)`,color:TEXT,padding:'14px 28px',fontSize:'15px',fontWeight:500,borderRadius:10,cursor:'pointer'}}>
+            Ver demo →
+          </button>
         </div>
         <p style={{marginTop:14,fontSize:'12px',color:MUTED}}>Sin tarjeta de crédito · <span style={{color:'rgba(93,232,180,.75)'}}>Plan free disponible</span></p>
       </div>
 
-      {/* PLATFORM STRIP */}
-      <div className='kaan-platforms' style={{display:'flex',alignItems:'center',justifyContent:'center',gap:8,padding:'0 40px 40px',flexWrap:'wrap'}}>
+      {/* ── PLATFORM STRIP ── */}
+      <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:8,padding:'0 40px 48px',flexWrap:'wrap'}}>
         {[
-          {name:'Meta Ads',icon:<svg viewBox="0 0 24 24" width="15" height="15" fill="#1877f2"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>},
-          {name:'Google Ads',icon:<svg viewBox="0 0 24 24" width="15" height="15"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>},
-          {name:'TikTok Ads',icon:<svg viewBox="0 0 24 24" width="15" height="15"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.27 6.27 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.2 8.2 0 004.79 1.52V6.77a4.85 4.85 0 01-1.02-.08z" fill="#010101"/></svg>},
-          {name:'LinkedIn Ads',icon:<svg viewBox="0 0 24 24" width="15" height="15" fill="#0a66c2"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>},
+          {name:'Meta Ads', icon:<svg viewBox="0 0 24 24" width="14" height="14" fill="#1877f2"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>},
+          {name:'Google Ads', icon:<svg viewBox="0 0 24 24" width="14" height="14"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>},
+          {name:'TikTok Ads', icon:<svg viewBox="0 0 24 24" width="14" height="14"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.27 6.27 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.2 8.2 0 004.79 1.52V6.77a4.85 4.85 0 01-1.02-.08z" fill="#010101"/></svg>},
+          {name:'Instagram', icon:<svg viewBox="0 0 24 24" width="14" height="14"><defs><linearGradient id="ig" x1="0%" y1="100%" x2="100%" y2="0%"><stop offset="0%" stopColor="#f09433"/><stop offset="25%" stopColor="#e6683c"/><stop offset="50%" stopColor="#dc2743"/><stop offset="75%" stopColor="#cc2366"/><stop offset="100%" stopColor="#bc1888"/></linearGradient></defs><path fill="url(#ig)" d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>},
         ].map(p=>(
           <div key={p.name} style={{display:'flex',alignItems:'center',gap:7,background:SURF,border:`0.5px solid ${BOR}`,padding:'7px 14px',borderRadius:20,fontSize:'13px',color:MUTED}}>{p.icon}{p.name}</div>
         ))}
@@ -162,7 +301,7 @@ export default function Landing() {
         </div>
       </div>
 
-      {/* DASHBOARD MOCKUP */}
+      {/* ── DASHBOARD MOCKUP ── */}
       <div id="demo" className="kaan-mockup" style={{margin:'0 40px 80px',background:SURF,border:`0.5px solid ${BOR}`,borderRadius:16,overflow:'hidden'}}>
         <div style={{padding:'11px 16px',borderBottom:`0.5px solid ${BOR}`,display:'flex',alignItems:'center',gap:8}}>
           <div style={{display:'flex',gap:5}}>
@@ -172,11 +311,15 @@ export default function Landing() {
         </div>
         <div style={{padding:20}}>
           <div style={{display:'flex',gap:3,marginBottom:14,overflowX:'auto'}}>
-            {['Resumen general','Meta Ads','Google Ads','TikTok','Creativos','Audiencias'].map((t,i)=>(
-              <div key={t} style={{padding:'6px 14px',borderRadius:6,fontSize:'12px',cursor:'pointer',whiteSpace:'nowrap',background:i===0?ACC:'none',color:i===0?'white':MUTED}}>{t}</div>
+            {['Resumen general','Meta Ads','Google Ads','TikTok','Creativos','Asistente IA'].map((t,i)=>(
+              <div key={t} style={{padding:'6px 14px',borderRadius:6,fontSize:'12px',cursor:'pointer',whiteSpace:'nowrap',
+                background: i===0 ? ACC : i===5 ? 'rgba(90,92,219,.12)' : 'none',
+                color: i===0 ? 'white' : i===5 ? '#9096e0' : MUTED,
+                border: i===5 ? '1px solid rgba(110,108,240,.2)' : 'none',
+              }}>{t}</div>
             ))}
           </div>
-          <div style={{display:'grid',gridTemplateColumns:'repeat(4,minmax(0,1fr))',gap:10,marginBottom:14}} className='kn-g4'>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(4,minmax(0,1fr))',gap:10,marginBottom:14}} className="kn-g4">
             {[
               {label:'Inversión total',val:'$18,450',color:TEXT,badge:'+14% vs mes pasado',pos:true},
               {label:'Conversiones',val:'843',color:ACC2,badge:'+22% vs objetivo',pos:true},
@@ -190,12 +333,12 @@ export default function Landing() {
               </div>
             ))}
           </div>
-          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}} className='kn-g2'>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}} className="kn-g2">
             <div style={{background:SURF2,borderRadius:9,padding:14}}>
               <div style={{fontSize:'9px',color:MUTED,marginBottom:9,textTransform:'uppercase',letterSpacing:'.06em'}}>Inversión por plataforma — 30 días</div>
               <div style={{display:'flex',alignItems:'flex-end',gap:3,height:52}}>
                 {[78,61,44,25,52,68,41,57,85,70,90,76].map((h,i)=>(
-                  <div key={i} style={{flex:1,height:`${h}%`,borderRadius:'2px 2px 0 0',background:['#7c6ef5','#378add','#d4537e','#0a66c2','#7c6ef5','#378add','#d4537e','#7c6ef5','#5de8b4','#5de8b4','#5de8b4','#7c6ef5'][i],opacity:[1,1,1,1,.5,.6,.5,1,1,.7,1,1][i]}}/>
+                  <div key={i} style={{flex:1,height:`${h}%`,borderRadius:'2px 2px 0 0',background:['#7c6ef5','#378add','#d4537e','#1877f2','#7c6ef5','#378add','#d4537e','#7c6ef5','#5de8b4','#5de8b4','#5de8b4','#7c6ef5'][i],opacity:[1,1,1,1,.5,.6,.5,1,1,.7,1,1][i]}}/>
                 ))}
               </div>
             </div>
@@ -216,24 +359,28 @@ export default function Landing() {
         </div>
       </div>
 
-      {/* STATS */}
+      {/* ── STATS ── */}
       <div style={{padding:'0 40px 80px',maxWidth:1100,margin:'0 auto'}}>
-        <div style={{display:'grid',gridTemplateColumns:'repeat(3,minmax(0,1fr))',border:`0.5px solid ${BOR}`,borderRadius:14,overflow:'hidden'}} className='kn-gstats'>
-          {[{n:'3.2x',l:'más rápido que reportes manuales'},{n:'40%',l:'menos tiempo en análisis semanales'},{n:'∞',l:'cuentas de clientes por workspace'}].map((s,i)=>(
+        <div style={{display:'grid',gridTemplateColumns:'repeat(3,minmax(0,1fr))',border:`0.5px solid ${BOR}`,borderRadius:14,overflow:'hidden'}} className="kn-gstats">
+          {[
+            {n:'10',  l:'industrias con IA entrenada'},
+            {n:'3x',  l:'más rápido que reportes manuales'},
+            {n:'∞',   l:'clientes por workspace en Agencia'},
+          ].map((s,i)=>(
             <div key={s.n} style={{padding:'32px 24px',borderRight:i<2?`0.5px solid ${BOR}`:'none',textAlign:'center'}}>
-              <div className='kn-stat-n' style={{fontSize:'52px',fontWeight:700,color:ACC,lineHeight:1,marginBottom:8}}>{s.n}</div>
+              <div style={{fontSize:'52px',fontWeight:800,color:ACC,lineHeight:1,marginBottom:8}}>{s.n}</div>
               <div style={{fontSize:'14px',color:MUTED}}>{s.l}</div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* FEATURES */}
-      <div style={{padding:'0 40px 80px',maxWidth:1100,margin:'0 auto',textAlign:'center'}} className='kaan-section'>
+      {/* ── FEATURES ── */}
+      <div style={{padding:'0 40px 80px',maxWidth:1100,margin:'0 auto',textAlign:'center'}} className="kaan-section">
         <div style={{fontSize:'11px',textTransform:'uppercase',letterSpacing:'.12em',color:ACC,marginBottom:12,fontWeight:600}}>Funciones</div>
-        <h2 className='kaan-section-title' style={{fontSize:'40px',fontWeight:700,lineHeight:1.15,letterSpacing:'-0.025em',marginBottom:14,color:TEXT}}>Todo lo que necesita<br/>un trafficker profesional</h2>
-        <p style={{fontSize:'16px',color:MUTED,maxWidth:520,lineHeight:1.75,margin:'0 auto 48px'}}>Desde análisis de creativos hasta reportes automáticos — diseñado por media buyers, para media buyers.</p>
-        <div style={{display:'grid',gridTemplateColumns:'repeat(3,minmax(0,1fr))',gap:16,textAlign:'left'}} className='kaan-grid-3'>
+        <h2 className="kaan-section-title" style={{fontSize:'40px',fontWeight:800,lineHeight:1.15,letterSpacing:'-0.025em',marginBottom:14,color:TEXT}}>Todo lo que necesita<br/>tu negocio de marketing</h2>
+        <p style={{fontSize:'16px',color:MUTED,maxWidth:520,lineHeight:1.75,margin:'0 auto 48px'}}>Desde analytics hasta contenido generado por IA — diseñado para agencias, CMs y negocios que quieren resultados.</p>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(3,minmax(0,1fr))',gap:16,textAlign:'left'}} className="kaan-grid-3">
           {FEATURES.map(f=>(
             <div key={f.title} style={{background:SURF,border:`0.5px solid ${BOR}`,borderRadius:14,padding:24}}>
               <div style={{width:38,height:38,borderRadius:10,display:'flex',alignItems:'center',justifyContent:'center',marginBottom:14,background:f.bg}}>{f.icon}</div>
@@ -245,11 +392,33 @@ export default function Landing() {
         </div>
       </div>
 
-      {/* TESTIMONIALS */}
-      <div style={{padding:'0 40px 80px',maxWidth:1100,margin:'0 auto',textAlign:'center'}}>
+      {/* ── NICHES ── */}
+      <div style={{padding:'64px 40px 80px',background:SURF,borderTop:`0.5px solid ${BOR}`,borderBottom:`0.5px solid ${BOR}`}}>
+        <div style={{maxWidth:900,margin:'0 auto',textAlign:'center'}}>
+          <div style={{fontSize:'11px',textTransform:'uppercase',letterSpacing:'.12em',color:ACC2,marginBottom:12,fontWeight:600}}>Industrias</div>
+          <h2 className="kaan-section-title" style={{fontSize:'36px',fontWeight:800,letterSpacing:'-.025em',color:TEXT,marginBottom:12}}>IA entrenada en tu industria</h2>
+          <p style={{fontSize:'15px',color:MUTED,maxWidth:500,margin:'0 auto 40px',lineHeight:1.75}}>El asistente entiende el lenguaje, los temas y los hashtags de cada sector. Seleccionas tu nicho una vez y listo.</p>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(5,minmax(0,1fr))',gap:10}} className="kaan-grid-5">
+            {NICHES.map((n,i)=>(
+              <div key={n.label} style={{
+                background: i===0 ? 'rgba(90,92,219,.1)' : SURF2,
+                border: `0.5px solid ${i===0 ? 'rgba(110,108,240,.3)' : BOR}`,
+                borderRadius:12,padding:'18px 10px',textAlign:'center',
+              }}>
+                <div style={{fontSize:'28px',marginBottom:8}}>{n.emoji}</div>
+                <div style={{fontSize:'12px',fontWeight:600,color: i===0 ? '#9096e0' : MUTED,lineHeight:1.3}}>{n.label}</div>
+              </div>
+            ))}
+          </div>
+          <p style={{marginTop:20,fontSize:'12px',color:'#444'}}>¿No ves tu industria? Escríbenos — estamos agregando más nichos constantemente.</p>
+        </div>
+      </div>
+
+      {/* ── TESTIMONIALS ── */}
+      <div style={{padding:'80px 40px',maxWidth:1100,margin:'0 auto',textAlign:'center'}}>
         <div style={{fontSize:'11px',textTransform:'uppercase',letterSpacing:'.12em',color:ACC,marginBottom:12,fontWeight:600}}>Testimonios</div>
-        <h2 className='kaan-section-title' style={{fontSize:'40px',fontWeight:700,lineHeight:1.15,letterSpacing:'-0.025em',marginBottom:48,color:TEXT}}>Lo que dicen los traffickers</h2>
-        <div style={{display:'grid',gridTemplateColumns:'repeat(3,minmax(0,1fr))',gap:16,textAlign:'left'}} className='kaan-grid-3'>
+        <h2 className="kaan-section-title" style={{fontSize:'40px',fontWeight:800,lineHeight:1.15,letterSpacing:'-0.025em',marginBottom:48,color:TEXT}}>Lo que dicen quienes ya lo usan</h2>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(3,minmax(0,1fr))',gap:16,textAlign:'left'}} className="kaan-grid-3">
           {TESTIMONIALS.map(t=>(
             <div key={t.name} style={{background:SURF,border:`0.5px solid ${BOR}`,borderRadius:14,padding:24,display:'flex',flexDirection:'column',gap:16}}>
               <div style={{display:'flex',gap:2}}>
@@ -258,6 +427,7 @@ export default function Landing() {
                 ))}
               </div>
               <p style={{fontSize:'14px',color:TEXT,lineHeight:1.7,flex:1}}>"{t.text}"</p>
+              <div style={{fontSize:'11px',color:MUTED,background:'rgba(255,255,255,.03)',border:`0.5px solid ${BOR}`,borderRadius:6,padding:'5px 9px',display:'inline-block',alignSelf:'flex-start'}}>{t.niche}</div>
               <div style={{display:'flex',alignItems:'center',gap:10}}>
                 <div style={{width:36,height:36,borderRadius:'50%',background:ACC,display:'flex',alignItems:'center',justifyContent:'center',fontSize:'11px',fontWeight:700,color:'white',flexShrink:0}}>{t.avatar}</div>
                 <div>
@@ -270,71 +440,77 @@ export default function Landing() {
         </div>
       </div>
 
-      {/* PLATFORMS */}
-      <div style={{padding:'64px 40px',background:SURF,borderTop:`0.5px solid ${BOR}`,borderBottom:`0.5px solid ${BOR}`}}>
-        <div style={{maxWidth:900,margin:'0 auto',textAlign:'center'}}>
-          <div style={{fontSize:'11px',textTransform:'uppercase',letterSpacing:'.12em',color:ACC,marginBottom:12,fontWeight:600}}>Integraciones</div>
-          <h2 style={{fontSize:'36px',fontWeight:700,letterSpacing:'-.025em',color:TEXT,marginBottom:36}}>Conecta donde ya estás invirtiendo</h2>
-          <div style={{display:'grid',gridTemplateColumns:'repeat(5,minmax(0,1fr))',gap:12}}>
+      {/* ── PRICING ── */}
+      <div style={{padding:'0 40px 80px',maxWidth:1100,margin:'0 auto',textAlign:'center'}}>
+        <div style={{fontSize:'11px',textTransform:'uppercase',letterSpacing:'.12em',color:ACC,marginBottom:12,fontWeight:600}}>Precios</div>
+        <h2 className="kaan-section-title" style={{fontSize:'40px',fontWeight:800,lineHeight:1.15,letterSpacing:'-0.025em',marginBottom:12,color:TEXT}}>Planes accesibles para LATAM</h2>
+        <p style={{fontSize:'16px',color:MUTED,maxWidth:440,lineHeight:1.75,margin:'0 auto 48px'}}>Empieza gratis y escala cuando lo necesites. Sin contratos, sin sorpresas.</p>
+
+        <div style={{display:'grid',gridTemplateColumns:'repeat(4,minmax(0,1fr))',gap:14,maxWidth:1040,margin:'0 auto',textAlign:'left',alignItems:'start'}} className="kn-gpricing">
+          {PLANS.map(p=>(
+            <div key={p.id} style={{
+              background: p.highlight ? 'rgba(90,92,219,.07)' : SURF,
+              border: `1px solid ${p.highlight ? 'rgba(110,108,240,.4)' : BOR}`,
+              borderRadius:16, padding:'24px 20px', position:'relative',
+              boxShadow: p.highlight ? '0 0 0 1px rgba(110,108,240,.15), 0 8px 32px rgba(90,92,219,.1)' : 'none',
+            }}>
+              {p.badge && (
+                <div style={{
+                  position:'absolute',top:'-11px',left:'50%',transform:'translateX(-50%)',
+                  background: p.highlight ? 'linear-gradient(135deg,#5a5cdb,#7c55c8)' : 'rgba(192,120,152,.18)',
+                  border: p.highlight ? 'none' : '1px solid rgba(192,120,152,.3)',
+                  color:'#fff',fontSize:'10px',fontWeight:700,
+                  padding:'3px 12px',borderRadius:20,whiteSpace:'nowrap',
+                }}>{p.badge}</div>
+              )}
+              <div style={{marginBottom:18,marginTop: p.badge ? '6px' : '0'}}>
+                <div style={{fontSize:'10px',fontWeight:700,color:p.accent,marginBottom:8,textTransform:'uppercase',letterSpacing:'.07em'}}>{p.name}</div>
+                <div style={{display:'flex',alignItems:'baseline',gap:4}}>
+                  <span style={{fontSize:'32px',fontWeight:800,color:TEXT,lineHeight:1}}>{p.price}</span>
+                  <span style={{fontSize:'11px',color:MUTED}}>{p.period}</span>
+                </div>
+              </div>
+              <hr style={{border:'none',borderTop:`0.5px solid rgba(255,255,255,.06)`,margin:'16px 0'}}/>
+              <ul style={{listStyle:'none',display:'flex',flexDirection:'column',gap:8,marginBottom:20}}>
+                {p.features.map(f=>(
+                  <li key={f.t} style={{display:'flex',alignItems:'flex-start',gap:7,fontSize:'12px',color: f.y ? (p.highlight ? '#c0c0d0' : MUTED) : '#333'}}>
+                    {f.y ? CHECK : CROSS}
+                    {f.t}
+                  </li>
+                ))}
+              </ul>
+              <button onClick={()=>router.push(p.id==='free'?'/registro':`/registro?plan=${p.id}`)}
+                style={{width:'100%',padding:'11px',borderRadius:9,border:'none',cursor:'pointer',fontFamily:'inherit',fontSize:'12px',fontWeight:700,...p.ctaStyle}}>
+                {p.cta}
+              </button>
+            </div>
+          ))}
+        </div>
+
+        {/* Comparison note */}
+        <div style={{marginTop:32,maxWidth:560,margin:'32px auto 0',background:SURF,border:`0.5px solid ${BOR}`,borderRadius:12,padding:'18px 22px',textAlign:'left'}}>
+          <div style={{fontSize:'11px',fontWeight:700,color:MUTED,marginBottom:12,textTransform:'uppercase',letterSpacing:'.06em'}}>¿Cuál me conviene?</div>
+          <div style={{display:'flex',flexDirection:'column',gap:8}}>
             {[
-              {name:'Meta Ads',status:'Disponible',icon:<svg viewBox="0 0 24 24" width="28" height="28" fill="#1877f2"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>},
-              {name:'Google Ads',status:'Disponible',icon:<svg viewBox="0 0 24 24" width="28" height="28"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>},
-              {name:'TikTok Ads',status:'Disponible',icon:<svg viewBox="0 0 24 24" width="28" height="28"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.27 6.27 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.2 8.2 0 004.79 1.52V6.77a4.85 4.85 0 01-1.02-.08z" fill="#010101"/></svg>},
-              {name:'LinkedIn Ads',status:'Próximamente',icon:<svg viewBox="0 0 24 24" width="28" height="28" fill="#0a66c2"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>},
-              {name:'Más plataformas',status:'En camino',dashed:true,icon:<svg viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5" width="28" height="28"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>},
-            ].map(p=>(
-              <div key={p.name} style={{background:SURF2,border:`0.5px ${p.dashed?'dashed':'solid'} ${BOR}`,borderRadius:12,padding:'18px 12px',textAlign:'center',display:'flex',flexDirection:'column',alignItems:'center',gap:8}}>
-                {p.icon}
-                <div style={{fontSize:'12px',color:MUTED}}>{p.name}</div>
-                <span style={{fontSize:'10px',padding:'2px 8px',borderRadius:10,background:p.status==='Disponible'?'rgba(93,232,180,0.08)':'rgba(255,255,255,0.05)',color:p.status==='Disponible'?ACC2:MUTED}}>{p.status}</span>
+              { emoji:'👤', who:'Comienzo en redes',              plan:'Free → Starter', color:'#6fcf97' },
+              { emoji:'🎨', who:'CM freelance con varios clientes',plan:'Starter o Pro',   color:'#9096e0' },
+              { emoji:'📈', who:'Negocio activo con ads',         plan:'Pro',             color:'#9096e0' },
+              { emoji:'🏢', who:'Agencia con múltiples cuentas',  plan:'Agencia',         color:'#c07898' },
+            ].map((r,i)=>(
+              <div key={i} style={{display:'flex',alignItems:'center',gap:10,padding:'8px 0',borderBottom: i<3 ? `0.5px solid ${BOR}` : 'none'}}>
+                <span style={{fontSize:'16px',flexShrink:0}}>{r.emoji}</span>
+                <div style={{flex:1,fontSize:'12px',color:MUTED}}>{r.who}</div>
+                <span style={{fontSize:'11px',fontWeight:700,color:r.color,background:`${r.color}18`,padding:'2px 9px',borderRadius:20,whiteSpace:'nowrap'}}>{r.plan}</span>
               </div>
             ))}
           </div>
         </div>
       </div>
 
-      {/* PRICING */}
-      <div style={{padding:'80px 40px',maxWidth:1100,margin:'0 auto',textAlign:'center'}}>
-        <div style={{fontSize:'11px',textTransform:'uppercase',letterSpacing:'.12em',color:ACC,marginBottom:12,fontWeight:600}}>Precios</div>
-        <h2 className='kaan-section-title' style={{fontSize:'40px',fontWeight:700,lineHeight:1.15,letterSpacing:'-0.025em',marginBottom:14,color:TEXT}}>Simple y sin sorpresas</h2>
-        <p style={{fontSize:'16px',color:MUTED,maxWidth:440,lineHeight:1.75,margin:'0 auto 48px'}}>Empieza gratis y escala cuando lo necesites.</p>
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,maxWidth:700,margin:'0 auto',textAlign:'left'}} className='kn-gpricing'>
-          <div style={{background:SURF,border:`0.5px solid ${BOR}`,borderRadius:16,padding:28}}>
-            <div style={{fontSize:'13px',color:MUTED,marginBottom:10}}>Free</div>
-            <div style={{display:'flex',alignItems:'baseline',gap:4,marginBottom:4}}>
-              <span style={{fontSize:'40px',fontWeight:700,letterSpacing:'-0.03em',color:TEXT,lineHeight:1}}><sup style={{fontSize:'18px',fontWeight:400}}>$</sup>0</span>
-              <span style={{fontSize:'13px',color:MUTED}}>/ mes</span>
-            </div>
-            <hr style={{border:'none',borderTop:`0.5px solid ${BOR}`,margin:'20px 0'}}/>
-            <ul style={{listStyle:'none',display:'flex',flexDirection:'column',gap:10}}>
-              {[{t:'1 cuenta conectada',y:true},{t:'Dashboard multi-métrica',y:true},{t:'Historial 30 días',y:true},{t:'Reportes PDF',y:false},{t:'Alertas',y:false},{t:'Multi-cuenta',y:false}].map(f=>(
-                <li key={f.t} style={{display:'flex',alignItems:'center',gap:9,fontSize:'14px',color:f.y?TEXT:MUTED}}>{f.y?CHECK:CROSS}{f.t}</li>
-              ))}
-            </ul>
-            <button onClick={()=>router.push('/registro')} style={{width:'100%',marginTop:22,padding:'12px',borderRadius:9,fontSize:'14px',fontWeight:500,background:'none',border:`0.5px solid ${BOR}`,color:TEXT,cursor:'pointer'}}>Empezar gratis</button>
-          </div>
-          <div style={{background:SURF,border:`2px solid ${ACC}`,borderRadius:16,padding:28,overflow:'hidden',position:'relative'}}>
-            <div style={{position:'absolute',top:18,right:-30,background:ACC,color:'white',fontSize:'9px',padding:'4px 36px',transform:'rotate(35deg)',letterSpacing:'.06em',fontWeight:600}}>Más popular</div>
-            <div style={{fontSize:'13px',color:MUTED,marginBottom:10}}>Pro</div>
-            <div style={{display:'flex',alignItems:'baseline',gap:4,marginBottom:4}}>
-              <span style={{fontSize:'40px',fontWeight:700,letterSpacing:'-0.03em',color:TEXT,lineHeight:1}}><sup style={{fontSize:'18px',fontWeight:400}}>$</sup>29</span>
-              <span style={{fontSize:'13px',color:MUTED}}>/ mes</span>
-            </div>
-            <hr style={{border:'none',borderTop:`0.5px solid ${BOR}`,margin:'20px 0'}}/>
-            <ul style={{listStyle:'none',display:'flex',flexDirection:'column',gap:10}}>
-              {['Cuentas ilimitadas','Todas las plataformas','Historial 12 meses','Reportes PDF white-label','Alertas inteligentes','Soporte prioritario'].map(f=>(
-                <li key={f} style={{display:'flex',alignItems:'center',gap:9,fontSize:'14px',color:TEXT}}>{CHECK}{f}</li>
-              ))}
-            </ul>
-            <button onClick={()=>router.push('/registro')} style={{width:'100%',marginTop:22,padding:'12px',borderRadius:9,fontSize:'14px',fontWeight:600,background:ACC,color:'white',border:'none',cursor:'pointer'}}>Empezar con Pro</button>
-          </div>
-        </div>
-      </div>
-
-      {/* FAQ */}
+      {/* ── FAQ ── */}
       <div style={{padding:'0 40px 80px',maxWidth:720,margin:'0 auto'}}>
         <div style={{fontSize:'11px',textTransform:'uppercase',letterSpacing:'.12em',color:ACC,marginBottom:12,textAlign:'center',fontWeight:600}}>FAQ</div>
-        <h2 style={{fontSize:'40px',fontWeight:700,lineHeight:1.15,letterSpacing:'-0.025em',textAlign:'center',marginBottom:44,color:TEXT}}>Preguntas frecuentes</h2>
+        <h2 style={{fontSize:'40px',fontWeight:800,lineHeight:1.15,letterSpacing:'-0.025em',textAlign:'center',marginBottom:44,color:TEXT}}>Preguntas frecuentes</h2>
         <div>
           {FAQS.map((faq,i)=>(
             <div key={i} style={{borderBottom:`0.5px solid ${BOR}`}}>
@@ -348,28 +524,35 @@ export default function Landing() {
         </div>
       </div>
 
-      {/* CTA FINAL */}
-      <div className='kaan-cta' style={{margin:'0 40px 80px',background:SURF,border:`0.5px solid rgba(124,110,245,0.3)`,borderRadius:20,padding:'64px 40px',textAlign:'center'}}>
+      {/* ── CTA FINAL ── */}
+      <div className="kaan-cta" style={{margin:'0 40px 80px',background:SURF,border:`0.5px solid rgba(124,110,245,0.3)`,borderRadius:20,padding:'64px 40px',textAlign:'center'}}>
         <div style={{fontSize:'11px',textTransform:'uppercase',letterSpacing:'.12em',color:ACC,marginBottom:16,fontWeight:600}}>Empieza hoy</div>
-        <h2 style={{fontSize:'40px',fontWeight:700,lineHeight:1.15,letterSpacing:'-0.025em',marginBottom:14,color:TEXT}}>¿Listo para dejar de perder tiempo<br/>en reportes manuales?</h2>
-        <p style={{fontSize:'16px',color:MUTED,maxWidth:460,margin:'0 auto 36px',lineHeight:1.7}}>Únete a los traffickers que ya toman mejores decisiones con datos en tiempo real.</p>
+        <h2 style={{fontSize:'40px',fontWeight:800,lineHeight:1.15,letterSpacing:'-0.025em',marginBottom:14,color:TEXT}}>
+          ¿Listo para saber si tu marketing<br/>realmente está funcionando?
+        </h2>
+        <p style={{fontSize:'16px',color:MUTED,maxWidth:480,margin:'0 auto 36px',lineHeight:1.7}}>
+          Agencias, CMs y negocios en toda LATAM ya toman mejores decisiones con Kaan. Empieza gratis, sin tarjeta.
+        </p>
         <div style={{display:'flex',gap:12,justifyContent:'center',flexWrap:'wrap'}}>
           <button onClick={()=>router.push('/registro')} style={{background:ACC,color:'white',border:'none',padding:'14px 32px',fontSize:'15px',fontWeight:600,borderRadius:10,display:'flex',alignItems:'center',gap:8,cursor:'pointer'}}>
             {LOGO} Empezar gratis
           </button>
+          <button onClick={()=>router.push('/planes')} style={{background:'none',border:`0.5px solid rgba(255,255,255,.14)`,color:TEXT,padding:'14px 28px',fontSize:'15px',fontWeight:500,borderRadius:10,cursor:'pointer'}}>
+            Ver planes →
+          </button>
         </div>
-        <p style={{marginTop:14,fontSize:'12px',color:MUTED}}>Sin tarjeta de crédito · Cancela cuando quieras</p>
+        <p style={{marginTop:14,fontSize:'12px',color:MUTED}}>Sin tarjeta de crédito · Cancela cuando quieras · Datos seguros</p>
       </div>
 
-      {/* FOOTER */}
-      <div className='kaan-footer' style={{padding:'28px 40px',borderTop:`0.5px solid ${BOR}`,display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:12}}>
+      {/* ── FOOTER ── */}
+      <div className="kaan-footer" style={{padding:'28px 40px',borderTop:`0.5px solid ${BOR}`,display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:12}}>
         <div style={{display:'flex',alignItems:'center',gap:8}}>
           <div style={{width:26,height:26,background:ACC,borderRadius:6,display:'flex',alignItems:'center',justifyContent:'center'}}>{LOGO}</div>
           <span style={{fontSize:'13px',color:MUTED}}>© 2026 Kaan · Todos los derechos reservados</span>
         </div>
         <div style={{display:'flex',gap:20,fontSize:'13px'}}>
-          {['Privacidad','Términos','Contacto'].map(l=>(
-            <span key={l} style={{color:MUTED,cursor:'pointer'}}>{l}</span>
+          {[['Privacidad','/privacidad'],['Términos','/terminos'],['Planes','/planes']].map(([l,href])=>(
+            <a key={l} href={href} style={{color:MUTED,cursor:'pointer',textDecoration:'none'}}>{l}</a>
           ))}
         </div>
       </div>
