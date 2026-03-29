@@ -7,7 +7,13 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 )
 
-const TRENDS_DAILY_LIMIT = 5
+// Per-plan daily refresh limits for trends
+const TRENDS_PLAN_LIMITS = {
+  free:    2,
+  starter: 5,
+  pro:     10,
+  agency:  25,
+}
 
 // Caché en memoria por clave "fecha_nicho"
 const memCache = {}
@@ -67,6 +73,11 @@ export async function GET(request) {
 
   // 3. Rate limiting por usuario
   if (userId) {
+    const { data: profile } = await supabase
+      .from('profiles').select('plan').eq('id', userId).single()
+    const userPlan = profile?.plan || 'free'
+    const TRENDS_DAILY_LIMIT = TRENDS_PLAN_LIMITS[userPlan] || TRENDS_PLAN_LIMITS.free
+
     const rateLimitKey = `trends_${today}`
     const { data: usageRow } = await supabase
       .from('ai_usage').select('calls').eq('user_id', userId).eq('date', rateLimitKey).single()
@@ -75,7 +86,7 @@ export async function GET(request) {
     if (trendCalls >= TRENDS_DAILY_LIMIT) {
       if (memCache[cacheKey]) return NextResponse.json({ trends: memCache[cacheKey], cached: true })
       return NextResponse.json({
-        error: `Límite de actualizaciones alcanzado (${TRENDS_DAILY_LIMIT}/día).`,
+        error: `Límite de actualizaciones alcanzado (${TRENDS_DAILY_LIMIT}/día con tu plan ${userPlan}).`,
         limitReached: true,
       }, { status: 429 })
     }

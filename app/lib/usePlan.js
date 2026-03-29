@@ -21,8 +21,11 @@ export function usePlan() {
     init()
   }, [])
 
-  const isPro = plan === null ? null : plan === 'pro'
-  const isFree = plan === 'free'
+  const isFree    = plan === 'free' || plan === null
+  const isStarter = ['starter', 'pro', 'agency'].includes(plan)
+  const isPro     = ['pro', 'agency'].includes(plan)
+  const isAgency  = plan === 'agency'
+  const planLevel = { agency: 3, pro: 2, starter: 1, free: 0 }[plan] ?? 0
 
-  return { plan, isPro, isFree, loading }
+  return { plan, isFree, isStarter, isPro, isAgency, planLevel, loading }
 }

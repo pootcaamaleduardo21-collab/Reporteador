@@ -7,8 +7,13 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 )
 
-const DAILY_LIMIT   = 10
-const MONTHLY_LIMIT = 50
+// Per-plan limits: [daily, monthly]
+const PLAN_LIMITS = {
+  free:    { daily:  5, monthly:  15 },
+  starter: { daily: 10, monthly:  30 },
+  pro:     { daily: 25, monthly: 100 },
+  agency:  { daily: 50, monthly: 500 },
+}
 
 async function callGroq(systemPrompt, userPrompt) {
   const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -49,13 +54,21 @@ export async function POST(request) {
 
     // ── Rate limiting por usuario ──
     if (userId) {
+      // Determine plan limits
+      const { data: profile } = await supabase
+        .from('profiles').select('plan').eq('id', userId).single()
+      const userPlan   = profile?.plan || 'free'
+      const limits     = PLAN_LIMITS[userPlan] || PLAN_LIMITS.free
+      const DAILY_LIMIT   = limits.daily
+      const MONTHLY_LIMIT = limits.monthly
+
       const { data: todayRow } = await supabase
         .from('ai_usage').select('calls').eq('user_id', userId).eq('date', today).single()
       todayCalls = todayRow?.calls || 0
 
       if (todayCalls >= DAILY_LIMIT) {
         return NextResponse.json({
-          error: `Límite diario alcanzado (${DAILY_LIMIT} generaciones/día). Regresa mañana.`,
+          error: `Límite diario alcanzado (${DAILY_LIMIT} generaciones/día con tu plan ${userPlan}). Regresa mañana o actualiza tu plan.`,
           limitReached: true, type: 'daily',
         }, { status: 429 })
       }
@@ -66,7 +79,7 @@ export async function POST(request) {
 
       if (monthlyCalls >= MONTHLY_LIMIT) {
         return NextResponse.json({
-          error: `Límite mensual alcanzado (${MONTHLY_LIMIT} generaciones/mes). Se renueva el 1 del próximo mes.`,
+          error: `Límite mensual alcanzado (${MONTHLY_LIMIT} generaciones/mes con tu plan ${userPlan}). Se renueva el 1 del próximo mes.`,
           limitReached: true, type: 'monthly',
         }, { status: 429 })
       }

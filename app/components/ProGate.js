@@ -111,7 +111,7 @@ export default function ProGate({ feature = 'esta funcion', type = 'default' }) 
             color:'#fff',borderRadius:'9px',textDecoration:'none',
             fontSize:'12px',fontWeight:'700',marginBottom:'8px',
           }}>
-            Ver planes — desde $297 MXN/mes
+            Ver planes — desde $247 MXN/mes
           </a>
           <a href="/dashboard" style={{fontSize:'11px',color:'#444',textDecoration:'none'}}>
             Volver al overview

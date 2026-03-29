@@ -7,7 +7,7 @@ const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.
 
 export async function POST(req) {
   try {
-    const { priceId, userId, email } = await req.json()
+    const { priceId, userId, email, plan } = await req.json()
 
     // Get or create Stripe customer
     const { data: profile } = await supabase
@@ -31,7 +31,7 @@ export async function POST(req) {
       mode: 'subscription',
       success_url: process.env.NEXTAUTH_URL + '/dashboard?plan=success',
       cancel_url: process.env.NEXTAUTH_URL + '/planes?canceled=true',
-      metadata: { userId },
+      metadata: { userId, plan: plan || 'starter' },
     })
 
     return NextResponse.json({ url: session.url })
