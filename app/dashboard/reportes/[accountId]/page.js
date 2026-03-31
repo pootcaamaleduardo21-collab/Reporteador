@@ -2,6 +2,7 @@
 import React, { useEffect, useState, useRef } from 'react'
 import { usePlan } from '../../../lib/usePlan'
 import ProGate from '../../../components/ProGate'
+import PDFExportModal from '../../../components/PDFExportModal'
 import { useParams, useSearchParams } from 'next/navigation'
 import { supabase } from '../../../lib/supabase'
 import { Line, Bar, Doughnut } from 'react-chartjs-2'
@@ -538,6 +539,8 @@ export default function Reportes() {
   const { accountId } = useParams()
   const searchParams = useSearchParams()
   const { isPro, loading: planLoading } = usePlan()
+  const [userId, setUserId] = useState(null)
+  const [showPDFModal, setShowPDFModal] = useState(false)
   const PRESETS = (!planLoading && isPro === false) ? ALL_PRESETS.filter(p => !['today','yesterday','last_7d','custom'].includes(p.value)) : ALL_PRESETS
   const [token, setToken] = useState(null)
   const [preset, setPreset] = useState('this_month')
@@ -576,6 +579,7 @@ export default function Reportes() {
     async function init() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { window.location.href = '/'; return }
+      setUserId(user.id)
       const { data: acc } = await supabase.from('ad_accounts').select('account_name,platform').eq('account_id', accountId).single()
       if (!acc) { window.location.href = '/dashboard/meta-ads'; return }
       setAccountName(acc.account_name || accountId)
@@ -757,15 +761,8 @@ export default function Reportes() {
     setLoadingDemo(false)
   }
 
-  async function exportPDF() {
-    try {
-      const { default: html2canvas } = await import('html2canvas')
-      const { default: jsPDF } = await import('jspdf')
-      const canvas = await html2canvas(reportRef.current,{scale:2,backgroundColor:'#0a0a0e',useCORS:true})
-      const pdf = new jsPDF({orientation:'portrait',unit:'px',format:[canvas.width/2,canvas.height/2]})
-      pdf.addImage(canvas.toDataURL('image/png'),'PNG',0,0,canvas.width/2,canvas.height/2)
-      pdf.save(accountName+'-'+preset+'.pdf')
-    } catch(e){console.error(e)}
+  function exportPDF() {
+    setShowPDFModal(true)
   }
 
   const isGoogle = platform === 'google_ads'
@@ -1400,6 +1397,18 @@ export default function Reportes() {
           )}
         </div>
       )}
+
+      <PDFExportModal
+        isOpen={showPDFModal}
+        onClose={() => setShowPDFModal(false)}
+        accountName={accountName}
+        preset={preset}
+        platform={platform}
+        overview={overview}
+        campaigns={isPro ? campaigns : []}
+        ads={isPro ? ads : []}
+        userId={userId}
+      />
     </div>
   )
 }

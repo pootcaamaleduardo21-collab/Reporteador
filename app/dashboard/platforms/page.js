@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '../../lib/supabase'
+import { usePlan } from '../../lib/usePlan'
 
 export default function PlatformsPage() {
   const router = useRouter()
@@ -13,6 +14,7 @@ export default function PlatformsPage() {
   const [disconnecting, setDisconnecting] = useState(null)
   const successMsg = searchParams?.get('success')
   const errorMsg = searchParams?.get('error')
+  const { platformLimit, plan } = usePlan()
 
   const platforms = [
     {
@@ -87,6 +89,11 @@ export default function PlatformsPage() {
 
   const handleConnect = (platform) => {
     if (!platform.connectUrl) return
+    if (platformLimit !== Infinity && accounts.length >= platformLimit) {
+      const next = plan === 'free' ? 'Starter' : 'Pro'
+      alert(`Tu plan ${plan==='free'?'Free':'Starter'} permite máximo ${platformLimit} plataforma${platformLimit>1?'s':''}. Actualiza a ${next} para conectar más.`)
+      return
+    }
     if (platform.id === 'meta_ads') {
       // Must pass user ID in state so the callback knows who to assign the token to
       if (!user) return
@@ -154,6 +161,7 @@ export default function PlatformsPage() {
           const connected = getAccountsByPlatform(platform.id)
           const isConnected = connected.length > 0
           const isSoon = !platform.connectUrl
+          const isAtLimit = platformLimit !== Infinity && accounts.length >= platformLimit
 
           return (
             <div key={platform.id} className="plat-card"
@@ -215,20 +223,26 @@ export default function PlatformsPage() {
               )}
 
               {/* Botón conectar */}
-              <button
-                onClick={() => handleConnect(platform)}
-                disabled={isSoon}
-                className={isSoon?'':'connect-btn'}
-                style={{
-                  width:'100%',padding:'11px',borderRadius:'8px',
-                  background: isSoon ? 'rgba(255,255,255,.03)' : isConnected ? 'rgba(255,255,255,.05)' : platform.accentColor,
-                  border: isSoon ? '1px solid rgba(255,255,255,.08)' : isConnected ? `1px solid ${platform.accentColor}40` : 'none',
-                  color: isSoon ? 'var(--text4)' : isConnected ? platform.accentColor==='#ff0050'?'#ff6090':platform.accentColor : '#fff',
-                  fontSize:'12px',fontWeight:'700',cursor:isSoon?'not-allowed':'pointer',
-                  fontFamily:'inherit',transition:'opacity .15s',
-                }}>
-                {isSoon ? 'Próximamente disponible' : isConnected ? `+ Agregar otra cuenta` : platform.connectLabel}
-              </button>
+              {isAtLimit && !isConnected ? (
+                <a href="/planes" style={{display:'block',width:'100%',padding:'11px',borderRadius:'8px',background:'rgba(252,211,77,.06)',border:'1px solid rgba(252,211,77,.2)',color:'#fcd34d',fontSize:'12px',fontWeight:'700',textAlign:'center',textDecoration:'none',boxSizing:'border-box'}}>
+                  🔒 Límite de plan — Ver planes
+                </a>
+              ) : (
+                <button
+                  onClick={() => handleConnect(platform)}
+                  disabled={isSoon}
+                  className={isSoon?'':'connect-btn'}
+                  style={{
+                    width:'100%',padding:'11px',borderRadius:'8px',
+                    background: isSoon ? 'rgba(255,255,255,.03)' : isConnected ? 'rgba(255,255,255,.05)' : platform.accentColor,
+                    border: isSoon ? '1px solid rgba(255,255,255,.08)' : isConnected ? `1px solid ${platform.accentColor}40` : 'none',
+                    color: isSoon ? 'var(--text4)' : isConnected ? platform.accentColor==='#ff0050'?'#ff6090':platform.accentColor : '#fff',
+                    fontSize:'12px',fontWeight:'700',cursor:isSoon?'not-allowed':'pointer',
+                    fontFamily:'inherit',transition:'opacity .15s',
+                  }}>
+                  {isSoon ? 'Próximamente disponible' : isConnected ? `+ Agregar otra cuenta` : platform.connectLabel}
+                </button>
+              )}
             </div>
           )
         })}

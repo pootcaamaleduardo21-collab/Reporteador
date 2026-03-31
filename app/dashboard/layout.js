@@ -39,7 +39,7 @@ export default function DashboardLayout({ children }) {
   const [googleAdsOpen, setGoogleAdsOpen] = useState(false)
   const [tiktokAdsOpen, setTiktokAdsOpen] = useState(false)
   const router = useRouter()
-  const { isPro } = usePlan()
+  const { isPro, plan, platformLimit } = usePlan()
   const pathname = usePathname()
 
   useEffect(() => {
@@ -386,7 +386,7 @@ export default function DashboardLayout({ children }) {
             </div>
             {sidebarOpen && <div style={{flex:1,minWidth:0}}>
               <div style={{fontSize:'12px',color:'var(--text2)',fontFamily:'monospace',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{user.email}</div>
-              <div style={{fontSize:'11px',color:isPro?'#9096e0':'var(--text3)',fontWeight:'700',marginTop:'2px'}}>{isPro===null?'':isPro?'Pro ✦':'Free'}</div>
+              <div style={{fontSize:'11px',color:isPro?'#9096e0':plan==='starter'?'#60a5fa':'var(--text3)',fontWeight:'700',marginTop:'2px'}}>{plan===null?'':plan==='agency'?'Agency ✦':plan==='pro'?'Pro ✦':plan==='starter'?'Starter':'Free'}</div>
             </div>}
           </div>
           <div className="nav-hover" onClick={handleLogout}
@@ -435,7 +435,7 @@ export default function DashboardLayout({ children }) {
         <div style={{background:'var(--sidebar)',borderBottom:stripOpen?'1px solid rgba(255,255,255,.06)':'none',overflow:'hidden',maxHeight:stripOpen?'72px':'0',transition:'max-height .25s ease',flexShrink:0}}>
           <div style={{display:'flex',alignItems:'center',gap:'6px',padding:'8px 14px',overflowX:'auto',scrollbarWidth:'none'}}>
             <span style={{fontSize:'9px',color:'var(--text4)',fontFamily:'monospace',whiteSpace:'nowrap',flexShrink:0}}>CAMBIAR CUENTA:</span>
-            {(isPro ? accounts : accounts.slice(0,1)).map(acc=>(
+            {accounts.slice(0, platformLimit === Infinity ? undefined : platformLimit).map(acc=>(
               <div key={acc.id} className="pill-hover" onClick={()=>selectAccount(acc)}
                 style={{display:'flex',alignItems:'center',gap:'7px',padding:'6px 11px',background:selectedAccount?.id===acc.id?'rgba(99,102,241,.14)':'rgba(255,255,255,.04)',border:'1px solid '+(selectedAccount?.id===acc.id?'rgba(99,102,241,.3)':'rgba(255,255,255,.07)'),borderRadius:'8px',cursor:'pointer',flexShrink:0,transition:'all .15s'}}>
                 <div style={{width:'6px',height:'6px',borderRadius:'50%',background:acc.is_active?'#6ee7b7':'#f87171',flexShrink:0}}></div>
@@ -445,9 +445,9 @@ export default function DashboardLayout({ children }) {
                 </div>
               </div>
             ))}
-            {!isPro && accounts.length > 1 && (
+            {platformLimit !== Infinity && accounts.length > platformLimit && (
               <a href="/planes" style={{display:'flex',alignItems:'center',gap:'5px',padding:'6px 10px',background:'rgba(252,211,77,.06)',border:'1px solid rgba(252,211,77,.15)',borderRadius:'8px',textDecoration:'none',flexShrink:0}}>
-                <span style={{fontSize:'10px',color:'#fcd34d',fontWeight:'600',whiteSpace:'nowrap'}}>🔒 +{accounts.length-1} en Pro</span>
+                <span style={{fontSize:'10px',color:'#fcd34d',fontWeight:'600',whiteSpace:'nowrap'}}>🔒 +{accounts.length - platformLimit} en {plan==='starter'?'Pro':'Starter+'}</span>
               </a>
             )}
           </div>

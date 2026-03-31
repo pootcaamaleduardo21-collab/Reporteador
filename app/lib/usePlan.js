@@ -26,6 +26,8 @@ export function usePlan() {
   const isPro     = ['pro', 'agency'].includes(plan)
   const isAgency  = plan === 'agency'
   const planLevel = { agency: 3, pro: 2, starter: 1, free: 0 }[plan] ?? 0
+  const platformLimit = isPro ? Infinity : plan === 'starter' ? 3 : 1
+  const pdfLimit      = isPro ? Infinity : plan === 'starter' ? 3 : 0
 
-  return { plan, isFree, isStarter, isPro, isAgency, planLevel, loading }
+  return { plan, isFree, isStarter, isPro, isAgency, planLevel, platformLimit, pdfLimit, loading }
 }

@@ -188,8 +188,23 @@ export async function GET(request) {
       }
     }
 
+    // Check plan limit before saving accounts
+    const PLATFORM_LIMITS = { free: 1, starter: 3 }
+    const { data: profile } = await supabase.from('profiles').select('plan').eq('id', userId).single()
+    const userPlan = profile?.plan || 'free'
+    const platformLimit = PLATFORM_LIMITS[userPlan]
+    let savedCount = 0
+    if (platformLimit !== undefined) {
+      const { count: existingCount } = await supabase.from('ad_accounts').select('*', { count: 'exact', head: true }).eq('user_id', userId)
+      savedCount = existingCount || 0
+    }
+
     // Guardar cuentas en ad_accounts
     for (const accountInfo of accountsInfo) {
+      if (platformLimit !== undefined && savedCount >= platformLimit) {
+        console.log(`Plan limit reached (${platformLimit}) for user ${userId}, skipping account ${accountInfo.customerId}`)
+        continue
+      }
       const { error: accError } = await supabase
         .from('ad_accounts')
         .upsert({
@@ -204,6 +219,8 @@ export async function GET(request) {
 
       if (accError) {
         console.error('Error saving account', accountInfo.customerId, accError);
+      } else {
+        savedCount++
       }
     }
 
