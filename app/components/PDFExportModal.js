@@ -298,7 +298,7 @@ function AdsPage({ color, accountName, ads, page, total }) {
 const PRESET_COLORS = ['#6366f1','#3b82f6','#10b981','#f59e0b','#ef4444','#ec4899','#8b5cf6','#0ea5e9']
 
 // ── Main Modal ────────────────────────────────────────────────────
-export default function PDFExportModal({ isOpen, onClose, accountName, preset, platform, overview, campaigns, ads, userId }) {
+export default function PDFExportModal({ isOpen, onClose, accountName, preset, platform, overview, campaigns, ads, userId, isPro }) {
   const [brandColor, setBrandColor] = useState('#6366f1')
   const [brandName,  setBrandName]  = useState('')
   const [logo,       setLogo]       = useState(null)
@@ -316,17 +316,19 @@ export default function PDFExportModal({ isOpen, onClose, accountName, preset, p
   async function handleExport() {
     setExporting(true)
     try {
-      // Check plan limit
-      const checkRes = await fetch('/api/pdf/track', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId }),
-      })
-      const checkData = await checkRes.json()
-      if (!checkData.allowed) {
-        alert(checkData.error || 'No puedes exportar PDF con tu plan actual.')
-        setExporting(false)
-        return
+      // Pro/Agency tienen exportación ilimitada — solo verificar API para Free/Starter
+      if (!isPro) {
+        const checkRes = await fetch('/api/pdf/track', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId }),
+        })
+        const checkData = await checkRes.json()
+        if (!checkData.allowed) {
+          alert(checkData.error || 'No puedes exportar PDF con tu plan actual.')
+          setExporting(false)
+          return
+        }
       }
 
       const { default: html2canvas } = await import('html2canvas')

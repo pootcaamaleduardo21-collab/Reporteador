@@ -1408,6 +1408,7 @@ export default function Reportes() {
         campaigns={isPro ? campaigns : []}
         ads={isPro ? ads : []}
         userId={userId}
+        isPro={isPro}
       />
     </div>
   )
