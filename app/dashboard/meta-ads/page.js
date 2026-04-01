@@ -54,9 +54,10 @@ export default function MetaAdsPage() {
     init()
   }, [])
 
-  function connectMeta() {
+  async function connectMeta() {
     if (!user) return
-    const state = btoa(JSON.stringify({ uid: user.id, ts: Date.now(), returnTo: '/dashboard/meta-ads' }))
+    const { data: { session } } = await supabase.auth.getSession()
+    const state = btoa(JSON.stringify({ uid: user.id, ts: Date.now(), returnTo: '/dashboard/meta-ads', sbToken: session?.access_token }))
     window.location.href = `/api/auth/meta?state=${encodeURIComponent(state)}`
   }
 
