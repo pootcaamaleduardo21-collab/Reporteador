@@ -83,22 +83,22 @@ export default function MetaAdsPage() {
   async function saveAccount() {
     if (!verifyResult?.ok || !user) return
     setSaving(true)
+    setSaveError(null)
     try {
-      const { data: { session } } = await supabase.auth.getSession()
-      const res = await fetch('/api/meta/save-account', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: user.id,
-          accountId: verifyResult.id,
-          accountName: verifyResult.name,
-          isActive: verifyResult.status === 1,
-          accessToken: session?.access_token,
-        }),
-      })
-      const j = await res.json()
-      if (!j.ok) throw new Error(j.error || 'Save failed')
-      router.push('/dashboard/reportes/' + verifyResult.id)
+      const rawId = verifyResult.id.replace(/^act_/i, '')
+      const actId = `act_${rawId}`
+      const { error } = await supabase.from('ad_accounts').upsert(
+        {
+          user_id: user.id,
+          account_id: actId,
+          account_name: verifyResult.name || actId,
+          platform: 'meta_ads',
+          is_active: verifyResult.status === 1,
+        },
+        { onConflict: 'user_id,account_id' }
+      )
+      if (error) throw new Error(error.message)
+      router.push('/dashboard/reportes/' + actId)
     } catch (e) {
       console.error('Save account error:', e)
       setSaveError(e.message || 'Error al guardar la cuenta')
