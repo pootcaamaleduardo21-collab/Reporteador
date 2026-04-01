@@ -95,6 +95,19 @@ const doughnutOpts = {
   }
 }
 
+const hBarOpts = (tickPrefix='') => ({
+  indexAxis:'y',
+  responsive:true, maintainAspectRatio:false,
+  plugins:{
+    legend:{display:false},
+    tooltip:{backgroundColor:'#1a1a1e',borderColor:'#2a2a35',borderWidth:1,titleColor:'#fff',bodyColor:'#888',padding:12,cornerRadius:8}
+  },
+  scales:{
+    x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#444',font:{size:10},callback:(v)=>tickPrefix?tickPrefix+v:v}},
+    y:{grid:{display:false},ticks:{color:'#ddd',font:{size:12,family:'Plus Jakarta Sans, sans-serif'}}}
+  }
+})
+
 const COLORS = ['#6ee7b7','#3b82f6','#f97316','#a78bfa','#fcd34d','#f87171','#ec4899','#14b8a6','#84cc16','#f59e0b']
 
 const qualityScore = (row) => {
@@ -956,6 +969,68 @@ function ReportesInner() {
                       <span>Comparando período actual vs período anterior — las flechas ↑↓ muestran si mejoró o bajó cada métrica</span>
                     </div>
                   )}
+                  {/* RESUMEN EJECUTIVO — respuesta directa: ¿está funcionando la inversión? */}
+                  {(()=>{
+                    const hasResults = overview.results > 0
+                    const isBad = !hasResults && overview.spend > 50
+                    const color  = hasResults ? '#6ee7b7' : isBad ? '#f87171' : '#fcd34d'
+                    const bg     = hasResults ? 'rgba(110,231,183,.05)' : isBad ? 'rgba(248,113,113,.05)' : 'rgba(252,211,77,.05)'
+                    const border = hasResults ? 'rgba(110,231,183,.2)' : isBad ? 'rgba(248,113,113,.2)' : 'rgba(252,211,77,.2)'
+                    const icon   = hasResults ? '✅' : isBad ? '🔴' : '⏳'
+                    const headline = hasResults
+                      ? 'La inversión está generando resultados'
+                      : isBad ? 'Se invirtió sin obtener resultados — hay algo que revisar'
+                      : 'Poca actividad registrada en este período'
+                    // Tendencia: últimos 3 días vs primeros 3 días de cpr
+                    let trendMsg = null
+                    if (daily.length >= 6) {
+                      const half = Math.floor(daily.length/2)
+                      const firstHalf = daily.slice(0, half)
+                      const secondHalf = daily.slice(daily.length-half)
+                      const avgFirst  = firstHalf.reduce((s,d)=>s+(d.cpr||0),0)/firstHalf.length
+                      const avgSecond = secondHalf.reduce((s,d)=>s+(d.cpr||0),0)/secondHalf.length
+                      if (avgFirst>0 && avgSecond>0) {
+                        const pct = Math.round((avgFirst-avgSecond)/avgFirst*100)
+                        if (pct>10) trendMsg = { up:true, text: 'El costo por resultado bajó '+pct+'% en la segunda mitad del período — la campaña está mejorando' }
+                        else if (pct<-10) trendMsg = { up:false, text: 'El costo por resultado subió '+Math.abs(pct)+'% en la segunda mitad del período — revisar frecuencia y creativos' }
+                      }
+                    }
+                    return (
+                      <div style={{background:bg,border:'1px solid '+border,borderRadius:'14px',padding:'20px 24px',marginBottom:'24px'}}>
+                        <div style={{display:'flex',alignItems:'flex-start',gap:'16px',flexWrap:'wrap'}}>
+                          <div style={{fontSize:'36px',lineHeight:1,flexShrink:0}}>{icon}</div>
+                          <div style={{flex:1,minWidth:'220px'}}>
+                            <div style={{fontSize:'15px',fontWeight:'800',color,marginBottom:'8px'}}>{headline}</div>
+                            <div style={{fontSize:'13px',color:'#999',lineHeight:'1.8'}}>
+                              Se invirtieron{' '}<strong style={{color:'#fff',fontSize:'14px'}}>{fmt$(overview.spend)}</strong>
+                              {hasResults && <> y se obtuvieron{' '}<strong style={{color:'#6ee7b7',fontSize:'14px'}}>{fmtN(overview.results)} resultados</strong></>}
+                              {overview.cpr>0 && <> — cada resultado costó en promedio{' '}<strong style={{color:'#fff'}}>{fmt$(overview.cpr)}</strong></>}
+                              {!hasResults && isBad && <>. Revisa el objetivo, la segmentación y el creativo.</>}
+                            </div>
+                            {trendMsg && (
+                              <div style={{marginTop:'8px',fontSize:'12px',color:trendMsg.up?'#6ee7b7':'#fcd34d',display:'flex',alignItems:'center',gap:'6px'}}>
+                                <span>{trendMsg.up?'📈':'📉'}</span>
+                                <span>{trendMsg.text}</span>
+                              </div>
+                            )}
+                          </div>
+                          <div style={{display:'flex',gap:'24px',flexWrap:'wrap',alignItems:'center',flexShrink:0}}>
+                            {[
+                              {l:'Personas alcanzadas',v:fmtN(overview.reach),c:'#60a5fa'},
+                              {l:'Veces que vio el anuncio',v:(+overview.frequency).toFixed(1)+'x',c:overview.frequency>3.5?'#f87171':overview.frequency>2.5?'#fcd34d':'#6ee7b7'},
+                              ...(overview.impressions>0?[{l:'Impresiones totales',v:fmtN(overview.impressions),c:'#a78bfa'}]:[]),
+                            ].map((s,i)=>(
+                              <div key={i} style={{textAlign:'center'}}>
+                                <div style={{fontSize:'22px',fontWeight:'800',color:s.c,marginBottom:'2px'}}>{s.v}</div>
+                                <div style={{fontSize:'9px',color:'#555',fontFamily:'monospace',maxWidth:'80px',textAlign:'center',lineHeight:'1.4',textTransform:'uppercase',letterSpacing:'.04em'}}>{s.l}</div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })()}
+
                   {/* KPIs principales - las métricas más importantes */}
                   <div style={{marginBottom:'8px'}}>
                     <div style={{fontSize:'11px',fontWeight:'700',color:'var(--text4)',textTransform:'uppercase',letterSpacing:'.07em',marginBottom:'10px'}}>📌 Métricas clave</div>
@@ -1106,48 +1181,103 @@ function ReportesInner() {
                 <span>🎯</span>
                 <span>Cada fila es una campaña. Haz clic en cualquiera para ver su diagnóstico y recomendaciones personalizadas.</span>
               </div>
-              {campaigns.length>1&&(
-                <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(340px,1fr))',gap:'12px',marginBottom:'16px'}}>
-                  <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'10px',padding:'20px'}}>
-                    <div style={{fontSize:'11px',fontWeight:'700',color:'var(--text4)',marginBottom:'14px'}}>💰 Gasto por campaña</div>
-                    <div style={{height:'180px'}}>
-                      <Bar data={{labels:campaigns.map(c=>c.name.length>20?c.name.slice(0,20)+'…':c.name),datasets:[{label:'Gastado ($)',data:campaigns.map(c=>+c.spend.toFixed(2)),backgroundColor:campaigns.map((_,i)=>COLORS[i%COLORS.length]+'80'),borderColor:campaigns.map((_,i)=>COLORS[i%COLORS.length]),borderWidth:1,borderRadius:4}]}} options={chartOpts()}/>
-                    </div>
-                  </div>
-                  <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'10px',padding:'20px'}}>
-                    <div style={{fontSize:'11px',fontWeight:'700',color:'var(--text4)',marginBottom:'14px'}}>🎯 Resultados por campaña</div>
-                    <div style={{height:'180px'}}>
-                      <Bar data={{labels:campaigns.map(c=>c.name.length>20?c.name.slice(0,20)+'…':c.name),datasets:[{label:'Resultados',data:campaigns.map(c=>c.results),backgroundColor:campaigns.map((_,i)=>COLORS[i%COLORS.length]+'80'),borderColor:campaigns.map((_,i)=>COLORS[i%COLORS.length]),borderWidth:1,borderRadius:4}]}} options={chartOpts()}/>
-                    </div>
-                  </div>
-                  <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'10px',padding:'20px'}}>
-                    <div style={{fontSize:'11px',fontWeight:'700',color:'var(--text4)',marginBottom:'14px'}}>📈 CTR % por campaña</div>
-                    <div style={{height:'180px'}}>
-                      <Bar data={{labels:campaigns.map(c=>c.name.length>20?c.name.slice(0,20)+'…':c.name),datasets:[{label:'CTR %',data:campaigns.map(c=>+c.ctr.toFixed(2)),backgroundColor:campaigns.map((_,i)=>COLORS[i%COLORS.length]+'80'),borderColor:campaigns.map((_,i)=>COLORS[i%COLORS.length]),borderWidth:1,borderRadius:4}]}} options={chartOpts()}/>
-                    </div>
-                  </div>
-                  <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'10px',padding:'20px'}}>
-                    <div style={{fontSize:'11px',fontWeight:'700',color:'var(--text4)',marginBottom:'14px'}}>📉 CPM por campaña</div>
-                    <div style={{height:'180px'}}>
-                      <Bar data={{labels:campaigns.map(c=>c.name.length>20?c.name.slice(0,20)+'…':c.name),datasets:[{label:'CPM ($)',data:campaigns.map(c=>+c.cpm.toFixed(2)),backgroundColor:campaigns.map((_,i)=>COLORS[i%COLORS.length]+'80'),borderColor:campaigns.map((_,i)=>COLORS[i%COLORS.length]),borderWidth:1,borderRadius:4}]}} options={chartOpts()}/>
-                    </div>
-                  </div>
-                  {campaigns.some(c=>c.cpr>0)&&(
-                    <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'10px',padding:'20px'}}>
-                      <div style={{fontSize:'11px',fontWeight:'700',color:'var(--text4)',marginBottom:'14px'}}>💡 Costo por resultado por campaña</div>
-                      <div style={{height:'180px'}}>
-                        <Bar data={{labels:campaigns.filter(c=>c.cpr>0).map(c=>c.name.length>20?c.name.slice(0,20)+'…':c.name),datasets:[{label:'C/Resultado ($)',data:campaigns.filter(c=>c.cpr>0).map(c=>+c.cpr.toFixed(2)),backgroundColor:campaigns.filter(c=>c.cpr>0).map((_,i)=>COLORS[i%COLORS.length]+'80'),borderColor:campaigns.filter(c=>c.cpr>0).map((_,i)=>COLORS[i%COLORS.length]),borderWidth:1,borderRadius:4}]}} options={chartOpts()}/>
+              {campaigns.length>0&&(()=>{
+                const hasResults  = campaigns.some(c=>c.results>0)
+                const byResults   = [...campaigns].sort((a,b)=>b.results-a.results)
+                const bySpend     = [...campaigns].sort((a,b)=>b.spend-a.spend)
+                const cprList     = campaigns.filter(c=>c.cpr>0).sort((a,b)=>a.cpr-b.cpr)
+                const totalRes    = campaigns.reduce((s,c)=>s+c.results,0)
+                const totalSpend  = campaigns.reduce((s,c)=>s+c.spend,0)
+                const best        = hasResults ? byResults[0] : bySpend[0]
+                const bestResPct  = totalRes>0 ? Math.round(best.results/totalRes*100) : 0
+                const bestSpPct   = totalSpend>0 ? Math.round(best.spend/totalSpend*100) : 0
+                const shortName   = n => n.length>32?n.slice(0,32)+'…':n
+                const barBg       = (arr,i) => i===0?'rgba(110,231,183,.55)':i===arr.length-1&&arr.length>2?'rgba(248,113,113,.4)':'rgba(99,102,241,.35)'
+                const barBorder   = (arr,i) => i===0?'#6ee7b7':i===arr.length-1&&arr.length>2?'#f87171':'#6366f1'
+                const rowH        = (n) => Math.min(360, Math.max(140, n*46))
+                return (
+                  <>
+                    {/* CHART 1 — ¿Qué campaña genera más resultados? */}
+                    <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'14px',padding:'24px',marginBottom:'14px'}}>
+                      <div style={{marginBottom:'16px'}}>
+                        <div style={{fontSize:'15px',fontWeight:'800',color:'#e0e0e0',marginBottom:'4px'}}>
+                          {hasResults ? '¿Cuál campaña genera más resultados?' : '¿Cómo se distribuye el presupuesto?'}
+                        </div>
+                        <div style={{fontSize:'11px',color:'#555',fontFamily:'monospace'}}>
+                          {hasResults ? 'Campañas ordenadas de la que más genera a la que menos — verde = líder' : 'Sin resultados registrados · mostrando distribución del gasto por campaña'}
+                        </div>
                       </div>
+                      <div style={{height:rowH(hasResults?byResults.length:bySpend.length)+'px'}}>
+                        <Bar
+                          data={{
+                            labels:(hasResults?byResults:bySpend).map(c=>shortName(c.name)),
+                            datasets:[{
+                              label:hasResults?'Resultados':'Gastado ($)',
+                              data:(hasResults?byResults:bySpend).map(c=>hasResults?c.results:+c.spend.toFixed(2)),
+                              backgroundColor:(hasResults?byResults:bySpend).map((_,i,arr)=>barBg(arr,i)),
+                              borderColor:(hasResults?byResults:bySpend).map((_,i,arr)=>barBorder(arr,i)),
+                              borderWidth:1,borderRadius:4
+                            }]
+                          }}
+                          options={hBarOpts(hasResults?'':'$')}
+                        />
+                      </div>
+                      {hasResults && best.results>0 && (
+                        <div style={{marginTop:'14px',padding:'12px 16px',background:'rgba(110,231,183,.05)',border:'1px solid rgba(110,231,183,.15)',borderRadius:'8px',fontSize:'12px',color:'#999',lineHeight:'1.7'}}>
+                          <strong style={{color:'#6ee7b7'}}>🏆 {shortName(best.name)}</strong> lidera con{' '}
+                          <strong style={{color:'#fff'}}>{fmtN(best.results)} resultados</strong>
+                          {totalRes>0 && <> ({bestResPct}% del total)</>}
+                          {bestSpPct<bestResPct && <>, usando solo el <strong style={{color:'#fcd34d'}}>{bestSpPct}%</strong> del presupuesto — es tu campaña más eficiente</>}
+                          {bestSpPct>=bestResPct && <>, con el <strong style={{color:'#fcd34d'}}>{bestSpPct}%</strong> del presupuesto</>}
+                          .
+                        </div>
+                      )}
+                      {!hasResults && (
+                        <div style={{marginTop:'14px',padding:'12px 16px',background:'rgba(248,113,113,.05)',border:'1px solid rgba(248,113,113,.15)',borderRadius:'8px',fontSize:'12px',color:'#999',lineHeight:'1.7'}}>
+                          <strong style={{color:'#f87171'}}>⚠️ Ninguna campaña registra resultados</strong> en este período. Revisa el objetivo de conversión, la segmentación y el creativo. Si son campañas de reconocimiento, verifica el alcance en la pestaña Resumen.
+                        </div>
+                      )}
                     </div>
-                  )}
-                  <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'10px',padding:'20px'}}>
-                    <div style={{fontSize:'11px',fontWeight:'700',color:'var(--text4)',marginBottom:'14px'}}>🔄 Frecuencia por campaña</div>
-                    <div style={{height:'180px'}}>
-                      <Bar data={{labels:campaigns.map(c=>c.name.length>20?c.name.slice(0,20)+'…':c.name),datasets:[{label:'Frecuencia',data:campaigns.map(c=>+c.frequency.toFixed(2)),backgroundColor:campaigns.map(c=>c.frequency>3.5?'rgba(248,113,113,.5)':c.frequency>2.5?'rgba(252,211,77,.5)':'rgba(110,231,183,.5)'),borderColor:campaigns.map(c=>c.frequency>3.5?'#f87171':c.frequency>2.5?'#fcd34d':'#6ee7b7'),borderWidth:1,borderRadius:4}]}} options={chartOpts()}/>
-                    </div>
-                  </div>
-                </div>
-              )}
+
+                    {/* CHART 2 — ¿Cuánto cuesta cada resultado? */}
+                    {cprList.length>1&&(
+                      <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'14px',padding:'24px',marginBottom:'14px'}}>
+                        <div style={{marginBottom:'16px'}}>
+                          <div style={{fontSize:'15px',fontWeight:'800',color:'#e0e0e0',marginBottom:'4px'}}>¿Cuánto cuesta obtener cada resultado?</div>
+                          <div style={{fontSize:'11px',color:'#555',fontFamily:'monospace'}}>Barra más corta = más barato = más eficiente — verde es la mejor, rojo la más cara</div>
+                        </div>
+                        <div style={{height:rowH(cprList.length)+'px'}}>
+                          <Bar
+                            data={{
+                              labels:cprList.map(c=>shortName(c.name)),
+                              datasets:[{
+                                label:'Costo por resultado ($)',
+                                data:cprList.map(c=>+c.cpr.toFixed(2)),
+                                backgroundColor:cprList.map((_,i,arr)=>barBg(arr,i)),
+                                borderColor:cprList.map((_,i,arr)=>barBorder(arr,i)),
+                                borderWidth:1,borderRadius:4
+                              }]
+                            }}
+                            options={hBarOpts('$')}
+                          />
+                        </div>
+                        <div style={{marginTop:'14px',display:'grid',gridTemplateColumns:'1fr 1fr',gap:'10px'}}>
+                          <div style={{padding:'12px 14px',background:'rgba(110,231,183,.05)',border:'1px solid rgba(110,231,183,.15)',borderRadius:'8px'}}>
+                            <div style={{fontSize:'9px',color:'#6ee7b7',fontFamily:'monospace',textTransform:'uppercase',letterSpacing:'.07em',marginBottom:'4px'}}>✅ Más eficiente</div>
+                            <div style={{fontSize:'13px',fontWeight:'800',color:'#fff',marginBottom:'2px'}}>{shortName(cprList[0].name)}</div>
+                            <div style={{fontSize:'12px',color:'#6ee7b7'}}>{fmt$(cprList[0].cpr)} por resultado</div>
+                          </div>
+                          <div style={{padding:'12px 14px',background:'rgba(248,113,113,.05)',border:'1px solid rgba(248,113,113,.15)',borderRadius:'8px'}}>
+                            <div style={{fontSize:'9px',color:'#f87171',fontFamily:'monospace',textTransform:'uppercase',letterSpacing:'.07em',marginBottom:'4px'}}>⚠️ Más cara</div>
+                            <div style={{fontSize:'13px',fontWeight:'800',color:'#fff',marginBottom:'2px'}}>{shortName(cprList[cprList.length-1].name)}</div>
+                            <div style={{fontSize:'12px',color:'#f87171'}}>{fmt$(cprList[cprList.length-1].cpr)} por resultado · {(cprList[cprList.length-1].cpr/cprList[0].cpr).toFixed(1)}x más cara</div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )
+              })()}
               {campaigns.map((c,i)=><ExpandCard key={i} name={c.name} badge={OBJECTIVE_MAP[c.objective]?.label||c.objective} row={c}/>)}
               {campaigns.length===0&&(
                 <div style={{textAlign:'center',padding:'60px 20px',color:'var(--text4)'}}>
@@ -1166,48 +1296,96 @@ function ReportesInner() {
                 <span>👥</span>
                 <span>Los conjuntos definen a quién se muestra tu anuncio (segmentación, presupuesto y ubicación). Haz clic para ver diagnóstico.</span>
               </div>
-              {adsets.length>1&&(
-                <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(340px,1fr))',gap:'12px',marginBottom:'16px'}}>
-                  <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'10px',padding:'20px'}}>
-                    <div style={{fontSize:'11px',fontWeight:'700',color:'var(--text4)',marginBottom:'14px'}}>💰 Gasto por conjunto</div>
-                    <div style={{height:'180px'}}>
-                      <Bar data={{labels:adsets.map(a=>a.name.length>20?a.name.slice(0,20)+'…':a.name),datasets:[{label:'Gastado ($)',data:adsets.map(a=>+a.spend.toFixed(2)),backgroundColor:adsets.map((_,i)=>COLORS[i%COLORS.length]+'80'),borderColor:adsets.map((_,i)=>COLORS[i%COLORS.length]),borderWidth:1,borderRadius:4}]}} options={chartOpts()}/>
-                    </div>
-                  </div>
-                  <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'10px',padding:'20px'}}>
-                    <div style={{fontSize:'11px',fontWeight:'700',color:'var(--text4)',marginBottom:'14px'}}>🎯 Resultados por conjunto</div>
-                    <div style={{height:'180px'}}>
-                      <Bar data={{labels:adsets.map(a=>a.name.length>20?a.name.slice(0,20)+'…':a.name),datasets:[{label:'Resultados',data:adsets.map(a=>a.results),backgroundColor:adsets.map((_,i)=>COLORS[i%COLORS.length]+'80'),borderColor:adsets.map((_,i)=>COLORS[i%COLORS.length]),borderWidth:1,borderRadius:4}]}} options={chartOpts()}/>
-                    </div>
-                  </div>
-                  <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'10px',padding:'20px'}}>
-                    <div style={{fontSize:'11px',fontWeight:'700',color:'var(--text4)',marginBottom:'14px'}}>📈 CTR % por conjunto</div>
-                    <div style={{height:'180px'}}>
-                      <Bar data={{labels:adsets.map(a=>a.name.length>20?a.name.slice(0,20)+'…':a.name),datasets:[{label:'CTR %',data:adsets.map(a=>+a.ctr.toFixed(2)),backgroundColor:adsets.map((_,i)=>COLORS[i%COLORS.length]+'80'),borderColor:adsets.map((_,i)=>COLORS[i%COLORS.length]),borderWidth:1,borderRadius:4}]}} options={chartOpts()}/>
-                    </div>
-                  </div>
-                  <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'10px',padding:'20px'}}>
-                    <div style={{fontSize:'11px',fontWeight:'700',color:'var(--text4)',marginBottom:'14px'}}>📉 CPM por conjunto</div>
-                    <div style={{height:'180px'}}>
-                      <Bar data={{labels:adsets.map(a=>a.name.length>20?a.name.slice(0,20)+'…':a.name),datasets:[{label:'CPM ($)',data:adsets.map(a=>+a.cpm.toFixed(2)),backgroundColor:adsets.map((_,i)=>COLORS[i%COLORS.length]+'80'),borderColor:adsets.map((_,i)=>COLORS[i%COLORS.length]),borderWidth:1,borderRadius:4}]}} options={chartOpts()}/>
-                    </div>
-                  </div>
-                  {adsets.some(a=>a.cpr>0)&&(
-                    <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'10px',padding:'20px'}}>
-                      <div style={{fontSize:'11px',fontWeight:'700',color:'var(--text4)',marginBottom:'14px'}}>💡 Costo por resultado por conjunto</div>
-                      <div style={{height:'180px'}}>
-                        <Bar data={{labels:adsets.filter(a=>a.cpr>0).map(a=>a.name.length>20?a.name.slice(0,20)+'…':a.name),datasets:[{label:'C/Resultado ($)',data:adsets.filter(a=>a.cpr>0).map(a=>+a.cpr.toFixed(2)),backgroundColor:adsets.filter(a=>a.cpr>0).map((_,i)=>COLORS[i%COLORS.length]+'80'),borderColor:adsets.filter(a=>a.cpr>0).map((_,i)=>COLORS[i%COLORS.length]),borderWidth:1,borderRadius:4}]}} options={chartOpts()}/>
+              {adsets.length>0&&(()=>{
+                const hasResults = adsets.some(a=>a.results>0)
+                const byResults  = [...adsets].sort((a,b)=>b.results-a.results)
+                const bySpend    = [...adsets].sort((a,b)=>b.spend-a.spend)
+                const cprList    = adsets.filter(a=>a.cpr>0).sort((a,b)=>a.cpr-b.cpr)
+                const totalRes   = adsets.reduce((s,a)=>s+a.results,0)
+                const best       = hasResults ? byResults[0] : bySpend[0]
+                const bestResPct = totalRes>0 ? Math.round(best.results/totalRes*100) : 0
+                const shortName  = n => n.length>32?n.slice(0,32)+'…':n
+                const barBg      = (arr,i) => i===0?'rgba(110,231,183,.55)':i===arr.length-1&&arr.length>2?'rgba(248,113,113,.4)':'rgba(99,102,241,.35)'
+                const barBorder  = (arr,i) => i===0?'#6ee7b7':i===arr.length-1&&arr.length>2?'#f87171':'#6366f1'
+                const rowH       = n => Math.min(380, Math.max(140, n*46))
+                return (
+                  <>
+                    {/* CHART 1 — ¿Qué audiencia responde mejor? */}
+                    <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'14px',padding:'24px',marginBottom:'14px'}}>
+                      <div style={{marginBottom:'16px'}}>
+                        <div style={{fontSize:'15px',fontWeight:'800',color:'#e0e0e0',marginBottom:'4px'}}>
+                          {hasResults ? '¿Qué audiencia está respondiendo mejor?' : '¿Cómo se distribuye el presupuesto por audiencia?'}
+                        </div>
+                        <div style={{fontSize:'11px',color:'#555',fontFamily:'monospace'}}>
+                          Cada conjunto de anuncios define una audiencia distinta — verde = la que más resultados genera
+                        </div>
                       </div>
+                      <div style={{height:rowH((hasResults?byResults:bySpend).length)+'px'}}>
+                        <Bar
+                          data={{
+                            labels:(hasResults?byResults:bySpend).map(a=>shortName(a.name)),
+                            datasets:[{
+                              label:hasResults?'Resultados':'Gastado ($)',
+                              data:(hasResults?byResults:bySpend).map(a=>hasResults?a.results:+a.spend.toFixed(2)),
+                              backgroundColor:(hasResults?byResults:bySpend).map((_,i,arr)=>barBg(arr,i)),
+                              borderColor:(hasResults?byResults:bySpend).map((_,i,arr)=>barBorder(arr,i)),
+                              borderWidth:1,borderRadius:4
+                            }]
+                          }}
+                          options={hBarOpts(hasResults?'':'$')}
+                        />
+                      </div>
+                      {hasResults && best.results>0 && (
+                        <div style={{marginTop:'14px',padding:'12px 16px',background:'rgba(110,231,183,.05)',border:'1px solid rgba(110,231,183,.15)',borderRadius:'8px',fontSize:'12px',color:'#999',lineHeight:'1.7'}}>
+                          <strong style={{color:'#6ee7b7'}}>🏆 {shortName(best.name)}</strong> es la audiencia más efectiva con{' '}
+                          <strong style={{color:'#fff'}}>{fmtN(best.results)} resultados</strong>
+                          {totalRes>0&&<> ({bestResPct}% del total)</>}.
+                          {byResults.length>1&&byResults[byResults.length-1].spend>0&&byResults[byResults.length-1].results===0&&
+                            <> La audiencia <strong style={{color:'#f87171'}}>{shortName(byResults[byResults.length-1].name)}</strong> no está generando resultados — considera ajustar su segmentación o pausarla.</>
+                          }
+                        </div>
+                      )}
                     </div>
-                  )}
-                  <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'10px',padding:'20px'}}>
-                    <div style={{fontSize:'11px',fontWeight:'700',color:'var(--text4)',marginBottom:'14px'}}>🔄 Frecuencia por conjunto</div>
-                    <div style={{height:'180px'}}>
-                      <Bar data={{labels:adsets.map(a=>a.name.length>20?a.name.slice(0,20)+'…':a.name),datasets:[{label:'Frecuencia',data:adsets.map(a=>+a.frequency.toFixed(2)),backgroundColor:adsets.map(a=>a.frequency>3.5?'rgba(248,113,113,.5)':a.frequency>2.5?'rgba(252,211,77,.5)':'rgba(110,231,183,.5)'),borderColor:adsets.map(a=>a.frequency>3.5?'#f87171':a.frequency>2.5?'#fcd34d':'#6ee7b7'),borderWidth:1,borderRadius:4}]}} options={chartOpts()}/>
-                    </div>
-                  </div>
-                </div>
-              )}
+
+                    {/* CHART 2 — ¿Cuál audiencia tiene el mejor costo? */}
+                    {cprList.length>1&&(
+                      <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'14px',padding:'24px',marginBottom:'14px'}}>
+                        <div style={{marginBottom:'16px'}}>
+                          <div style={{fontSize:'15px',fontWeight:'800',color:'#e0e0e0',marginBottom:'4px'}}>¿Cuál audiencia convierte al menor costo?</div>
+                          <div style={{fontSize:'11px',color:'#555',fontFamily:'monospace'}}>Barra más corta = cada resultado le costó menos — esa audiencia es la más rentable</div>
+                        </div>
+                        <div style={{height:rowH(cprList.length)+'px'}}>
+                          <Bar
+                            data={{
+                              labels:cprList.map(a=>shortName(a.name)),
+                              datasets:[{
+                                label:'Costo por resultado ($)',
+                                data:cprList.map(a=>+a.cpr.toFixed(2)),
+                                backgroundColor:cprList.map((_,i,arr)=>barBg(arr,i)),
+                                borderColor:cprList.map((_,i,arr)=>barBorder(arr,i)),
+                                borderWidth:1,borderRadius:4
+                              }]
+                            }}
+                            options={hBarOpts('$')}
+                          />
+                        </div>
+                        <div style={{marginTop:'14px',display:'grid',gridTemplateColumns:'1fr 1fr',gap:'10px'}}>
+                          <div style={{padding:'12px 14px',background:'rgba(110,231,183,.05)',border:'1px solid rgba(110,231,183,.15)',borderRadius:'8px'}}>
+                            <div style={{fontSize:'9px',color:'#6ee7b7',fontFamily:'monospace',textTransform:'uppercase',letterSpacing:'.07em',marginBottom:'4px'}}>✅ Audiencia más rentable</div>
+                            <div style={{fontSize:'13px',fontWeight:'800',color:'#fff',marginBottom:'2px'}}>{shortName(cprList[0].name)}</div>
+                            <div style={{fontSize:'12px',color:'#6ee7b7'}}>{fmt$(cprList[0].cpr)} por resultado</div>
+                          </div>
+                          <div style={{padding:'12px 14px',background:'rgba(248,113,113,.05)',border:'1px solid rgba(248,113,113,.15)',borderRadius:'8px'}}>
+                            <div style={{fontSize:'9px',color:'#f87171',fontFamily:'monospace',textTransform:'uppercase',letterSpacing:'.07em',marginBottom:'4px'}}>⚠️ Audiencia más cara</div>
+                            <div style={{fontSize:'13px',fontWeight:'800',color:'#fff',marginBottom:'2px'}}>{shortName(cprList[cprList.length-1].name)}</div>
+                            <div style={{fontSize:'12px',color:'#f87171'}}>{fmt$(cprList[cprList.length-1].cpr)} por resultado · {(cprList[cprList.length-1].cpr/cprList[0].cpr).toFixed(1)}x más cara</div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )
+              })()}
               {adsets.map((a,i)=><ExpandCard key={i} name={a.name} sub={'Campaña: '+a.campaign} row={a}/>)}
               {adsets.length===0&&(
                 <div style={{textAlign:'center',padding:'60px 20px',color:'var(--text4)'}}>
@@ -1226,60 +1404,106 @@ function ReportesInner() {
                 <span>🖼</span>
                 <span>Cada anuncio tiene un <strong>Score del 0 al 100</strong> — ordenados del mejor al peor. Haz clic para ver qué mejorar.</span>
               </div>
-              {ads.length>1&&(()=>{
-                const top10 = [...ads].sort((a,b)=>qualityScore(b)-qualityScore(a)).slice(0,10)
-                const top10Spend = [...ads].sort((a,b)=>b.spend-a.spend).slice(0,10)
+              {ads.length>0&&(()=>{
+                const byScore   = [...ads].sort((a,b)=>qualityScore(b)-qualityScore(a))
+                const byResults = [...ads].sort((a,b)=>b.results-a.results)
+                const cprList   = ads.filter(a=>a.cpr>0).sort((a,b)=>a.cpr-b.cpr)
+                const winner    = byScore[0]
+                const loser     = byScore[byScore.length-1]
+                const hasResults= ads.some(a=>a.results>0)
+                const shortName = n => n.length>32?n.slice(0,32)+'…':n
+                const rowH      = n => Math.min(420, Math.max(140, n*46))
+                const scoreColor= q => q>=75?'rgba(110,231,183,.55)':q>=50?'rgba(252,211,77,.5)':'rgba(248,113,113,.4)'
+                const scoreBorder=q => q>=75?'#6ee7b7':q>=50?'#fcd34d':'#f87171'
+                const top = byScore.slice(0,10)
                 return (
-                  <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(340px,1fr))',gap:'12px',marginBottom:'16px'}}>
-                    <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'10px',padding:'20px'}}>
-                      <div style={{fontSize:'11px',fontWeight:'700',color:'var(--text4)',marginBottom:'4px'}}>⭐ Score por anuncio <span style={{fontWeight:'400',color:'#555'}}>(top 10)</span></div>
-                      <div style={{fontSize:'9px',color:'#444',fontFamily:'monospace',marginBottom:'12px'}}>Mayor score = mejor rendimiento combinado</div>
-                      <div style={{height:'200px'}}>
-                        <Bar data={{labels:top10.map(a=>a.name.length>18?a.name.slice(0,18)+'…':a.name),datasets:[{label:'Score /100',data:top10.map(a=>qualityScore(a)),backgroundColor:top10.map(a=>{const q=qualityScore(a);return q>=75?'rgba(110,231,183,.5)':q>=50?'rgba(252,211,77,.5)':'rgba(248,113,113,.5)'}),borderColor:top10.map(a=>{const q=qualityScore(a);return q>=75?'#6ee7b7':q>=50?'#fcd34d':'#f87171'}),borderWidth:1,borderRadius:4}]}} options={chartOpts()}/>
-                      </div>
-                    </div>
-                    <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'10px',padding:'20px'}}>
-                      <div style={{fontSize:'11px',fontWeight:'700',color:'var(--text4)',marginBottom:'4px'}}>💰 Gasto por anuncio <span style={{fontWeight:'400',color:'#555'}}>(top 10)</span></div>
-                      <div style={{fontSize:'9px',color:'#444',fontFamily:'monospace',marginBottom:'12px'}}>Los anuncios que más presupuesto consumieron</div>
-                      <div style={{height:'200px'}}>
-                        <Bar data={{labels:top10Spend.map(a=>a.name.length>18?a.name.slice(0,18)+'…':a.name),datasets:[{label:'Gastado ($)',data:top10Spend.map(a=>+a.spend.toFixed(2)),backgroundColor:top10Spend.map((_,i)=>COLORS[i%COLORS.length]+'80'),borderColor:top10Spend.map((_,i)=>COLORS[i%COLORS.length]),borderWidth:1,borderRadius:4}]}} options={chartOpts()}/>
-                      </div>
-                    </div>
-                    <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'10px',padding:'20px'}}>
-                      <div style={{fontSize:'11px',fontWeight:'700',color:'var(--text4)',marginBottom:'4px'}}>📈 CTR % por anuncio <span style={{fontWeight:'400',color:'#555'}}>(top 10)</span></div>
-                      <div style={{fontSize:'9px',color:'#444',fontFamily:'monospace',marginBottom:'12px'}}>Los creativos que más clics generaron</div>
-                      <div style={{height:'200px'}}>
-                        <Bar data={{labels:[...ads].sort((a,b)=>b.ctr-a.ctr).slice(0,10).map(a=>a.name.length>18?a.name.slice(0,18)+'…':a.name),datasets:[{label:'CTR %',data:[...ads].sort((a,b)=>b.ctr-a.ctr).slice(0,10).map(a=>+a.ctr.toFixed(2)),backgroundColor:[...ads].sort((a,b)=>b.ctr-a.ctr).slice(0,10).map((_,i)=>COLORS[i%COLORS.length]+'80'),borderColor:[...ads].sort((a,b)=>b.ctr-a.ctr).slice(0,10).map((_,i)=>COLORS[i%COLORS.length]),borderWidth:1,borderRadius:4}]}} options={chartOpts()}/>
-                      </div>
-                    </div>
-                    {ads.some(a=>a.results>0)&&(
-                      <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'10px',padding:'20px'}}>
-                        <div style={{fontSize:'11px',fontWeight:'700',color:'var(--text4)',marginBottom:'4px'}}>🎯 Resultados por anuncio <span style={{fontWeight:'400',color:'#555'}}>(top 10)</span></div>
-                        <div style={{fontSize:'9px',color:'#444',fontFamily:'monospace',marginBottom:'12px'}}>Los creativos que más conversiones generaron</div>
-                        <div style={{height:'200px'}}>
-                          <Bar data={{labels:[...ads].sort((a,b)=>b.results-a.results).slice(0,10).map(a=>a.name.length>18?a.name.slice(0,18)+'…':a.name),datasets:[{label:'Resultados',data:[...ads].sort((a,b)=>b.results-a.results).slice(0,10).map(a=>a.results),backgroundColor:[...ads].sort((a,b)=>b.results-a.results).slice(0,10).map((_,i)=>COLORS[i%COLORS.length]+'80'),borderColor:[...ads].sort((a,b)=>b.results-a.results).slice(0,10).map((_,i)=>COLORS[i%COLORS.length]),borderWidth:1,borderRadius:4}]}} options={chartOpts()}/>
+                  <>
+                    {/* HEADER: ganador y el que necesita atención */}
+                    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'12px',marginBottom:'14px'}}>
+                      <div style={{background:'rgba(110,231,183,.05)',border:'1px solid rgba(110,231,183,.2)',borderRadius:'14px',padding:'20px'}}>
+                        <div style={{fontSize:'9px',color:'#6ee7b7',fontFamily:'monospace',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:'8px'}}>🏆 Anuncio ganador</div>
+                        <div style={{fontSize:'13px',fontWeight:'800',color:'#fff',marginBottom:'6px',lineHeight:'1.4'}}>{shortName(winner.name)}</div>
+                        <div style={{display:'flex',gap:'16px',flexWrap:'wrap'}}>
+                          <div><div style={{fontSize:'18px',fontWeight:'800',color:'#6ee7b7'}}>{qualityScore(winner)}<span style={{fontSize:'11px',color:'#555'}}>/100</span></div><div style={{fontSize:'9px',color:'#555',fontFamily:'monospace'}}>SCORE</div></div>
+                          {winner.results>0&&<div><div style={{fontSize:'18px',fontWeight:'800',color:'#fff'}}>{fmtN(winner.results)}</div><div style={{fontSize:'9px',color:'#555',fontFamily:'monospace'}}>RESULTADOS</div></div>}
+                          {winner.cpr>0&&<div><div style={{fontSize:'18px',fontWeight:'800',color:'#6ee7b7'}}>{fmt$(winner.cpr)}</div><div style={{fontSize:'9px',color:'#555',fontFamily:'monospace'}}>C/RESULTADO</div></div>}
                         </div>
                       </div>
-                    )}
-                    {ads.some(a=>a.cpr>0)&&(
-                      <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'10px',padding:'20px'}}>
-                        <div style={{fontSize:'11px',fontWeight:'700',color:'var(--text4)',marginBottom:'4px'}}>💡 Costo/resultado por anuncio <span style={{fontWeight:'400',color:'#555'}}>(más eficientes)</span></div>
-                        <div style={{fontSize:'9px',color:'#444',fontFamily:'monospace',marginBottom:'12px'}}>Menor costo por resultado = más eficiente</div>
-                        <div style={{height:'200px'}}>
-                          <Bar data={{labels:[...ads].filter(a=>a.cpr>0).sort((a,b)=>a.cpr-b.cpr).slice(0,10).map(a=>a.name.length>18?a.name.slice(0,18)+'…':a.name),datasets:[{label:'C/Resultado ($)',data:[...ads].filter(a=>a.cpr>0).sort((a,b)=>a.cpr-b.cpr).slice(0,10).map(a=>+a.cpr.toFixed(2)),backgroundColor:[...ads].filter(a=>a.cpr>0).sort((a,b)=>a.cpr-b.cpr).slice(0,10).map((_,i)=>COLORS[i%COLORS.length]+'80'),borderColor:[...ads].filter(a=>a.cpr>0).sort((a,b)=>a.cpr-b.cpr).slice(0,10).map((_,i)=>COLORS[i%COLORS.length]),borderWidth:1,borderRadius:4}]}} options={chartOpts()}/>
+                      {byScore.length>1&&(
+                        <div style={{background:'rgba(248,113,113,.05)',border:'1px solid rgba(248,113,113,.2)',borderRadius:'14px',padding:'20px'}}>
+                          <div style={{fontSize:'9px',color:'#f87171',fontFamily:'monospace',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:'8px'}}>⚠️ Necesita atención</div>
+                          <div style={{fontSize:'13px',fontWeight:'800',color:'#fff',marginBottom:'6px',lineHeight:'1.4'}}>{shortName(loser.name)}</div>
+                          <div style={{display:'flex',gap:'16px',flexWrap:'wrap'}}>
+                            <div><div style={{fontSize:'18px',fontWeight:'800',color:'#f87171'}}>{qualityScore(loser)}<span style={{fontSize:'11px',color:'#555'}}>/100</span></div><div style={{fontSize:'9px',color:'#555',fontFamily:'monospace'}}>SCORE</div></div>
+                            <div><div style={{fontSize:'18px',fontWeight:'800',color:'#fff'}}>{fmt$(loser.spend)}</div><div style={{fontSize:'9px',color:'#555',fontFamily:'monospace'}}>GASTADO</div></div>
+                            {loser.results===0&&<div style={{display:'flex',alignItems:'center'}}><span style={{fontSize:'11px',color:'#f87171',fontFamily:'monospace'}}>Sin resultados</span></div>}
+                          </div>
                         </div>
+                      )}
+                    </div>
+
+                    {/* CHART 1 — Ranking de creativos por score */}
+                    <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'14px',padding:'24px',marginBottom:'14px'}}>
+                      <div style={{marginBottom:'16px'}}>
+                        <div style={{fontSize:'15px',fontWeight:'800',color:'#e0e0e0',marginBottom:'4px'}}>¿Cuál anuncio está funcionando mejor?</div>
+                        <div style={{fontSize:'11px',color:'#555',fontFamily:'monospace'}}>Score del 0-100 que combina CTR, frecuencia, resultados y métricas de video — verde = excelente, rojo = revisar</div>
+                      </div>
+                      <div style={{height:rowH(top.length)+'px'}}>
+                        <Bar
+                          data={{
+                            labels:top.map(a=>shortName(a.name)),
+                            datasets:[{
+                              label:'Score /100',
+                              data:top.map(a=>qualityScore(a)),
+                              backgroundColor:top.map(a=>scoreColor(qualityScore(a))),
+                              borderColor:top.map(a=>scoreBorder(qualityScore(a))),
+                              borderWidth:1,borderRadius:4
+                            }]
+                          }}
+                          options={hBarOpts()}
+                        />
+                      </div>
+                    </div>
+
+                    {/* CHART 2 — ¿Cuál anuncio genera más resultados? */}
+                    {hasResults&&(
+                      <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'14px',padding:'24px',marginBottom:'14px'}}>
+                        <div style={{marginBottom:'16px'}}>
+                          <div style={{fontSize:'15px',fontWeight:'800',color:'#e0e0e0',marginBottom:'4px'}}>¿Cuál anuncio genera más resultados?</div>
+                          <div style={{fontSize:'11px',color:'#555',fontFamily:'monospace'}}>El creativo que más leads, mensajes o ventas produce en este período</div>
+                        </div>
+                        <div style={{height:rowH(Math.min(byResults.filter(a=>a.results>0).length,10))+'px'}}>
+                          <Bar
+                            data={{
+                              labels:byResults.filter(a=>a.results>0).slice(0,10).map(a=>shortName(a.name)),
+                              datasets:[{
+                                label:'Resultados',
+                                data:byResults.filter(a=>a.results>0).slice(0,10).map(a=>a.results),
+                                backgroundColor:byResults.filter(a=>a.results>0).slice(0,10).map((_,i,arr)=>i===0?'rgba(110,231,183,.55)':i===arr.length-1&&arr.length>2?'rgba(248,113,113,.4)':'rgba(99,102,241,.35)'),
+                                borderColor:byResults.filter(a=>a.results>0).slice(0,10).map((_,i,arr)=>i===0?'#6ee7b7':i===arr.length-1&&arr.length>2?'#f87171':'#6366f1'),
+                                borderWidth:1,borderRadius:4
+                              }]
+                            }}
+                            options={hBarOpts()}
+                          />
+                        </div>
+                        {cprList.length>1&&(
+                          <div style={{marginTop:'14px',display:'grid',gridTemplateColumns:'1fr 1fr',gap:'10px'}}>
+                            <div style={{padding:'12px 14px',background:'rgba(110,231,183,.05)',border:'1px solid rgba(110,231,183,.15)',borderRadius:'8px'}}>
+                              <div style={{fontSize:'9px',color:'#6ee7b7',fontFamily:'monospace',textTransform:'uppercase',letterSpacing:'.07em',marginBottom:'4px'}}>✅ Creativo más rentable</div>
+                              <div style={{fontSize:'13px',fontWeight:'800',color:'#fff',marginBottom:'2px'}}>{shortName(cprList[0].name)}</div>
+                              <div style={{fontSize:'12px',color:'#6ee7b7'}}>{fmt$(cprList[0].cpr)} por resultado</div>
+                            </div>
+                            <div style={{padding:'12px 14px',background:'rgba(248,113,113,.05)',border:'1px solid rgba(248,113,113,.15)',borderRadius:'8px'}}>
+                              <div style={{fontSize:'9px',color:'#f87171',fontFamily:'monospace',textTransform:'uppercase',letterSpacing:'.07em',marginBottom:'4px'}}>⚠️ Creativo más caro</div>
+                              <div style={{fontSize:'13px',fontWeight:'800',color:'#fff',marginBottom:'2px'}}>{shortName(cprList[cprList.length-1].name)}</div>
+                              <div style={{fontSize:'12px',color:'#f87171'}}>{fmt$(cprList[cprList.length-1].cpr)} por resultado · {(cprList[cprList.length-1].cpr/cprList[0].cpr).toFixed(1)}x más caro</div>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
-                    {ads.some(a=>a.hookRate>0)&&(
-                      <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'10px',padding:'20px'}}>
-                        <div style={{fontSize:'11px',fontWeight:'700',color:'var(--text4)',marginBottom:'4px'}}>🎬 Hook Rate por anuncio <span style={{fontWeight:'400',color:'#555'}}>(videos)</span></div>
-                        <div style={{fontSize:'9px',color:'#444',fontFamily:'monospace',marginBottom:'12px'}}>Qué % de personas vio los primeros 3 segundos</div>
-                        <div style={{height:'200px'}}>
-                          <Bar data={{labels:[...ads].filter(a=>a.hookRate>0).sort((a,b)=>b.hookRate-a.hookRate).slice(0,10).map(a=>a.name.length>18?a.name.slice(0,18)+'…':a.name),datasets:[{label:'Hook Rate %',data:[...ads].filter(a=>a.hookRate>0).sort((a,b)=>b.hookRate-a.hookRate).slice(0,10).map(a=>+a.hookRate.toFixed(1)),backgroundColor:[...ads].filter(a=>a.hookRate>0).sort((a,b)=>b.hookRate-a.hookRate).slice(0,10).map(a=>a.hookRate>=25?'rgba(110,231,183,.5)':a.hookRate>=15?'rgba(252,211,77,.5)':'rgba(248,113,113,.5)'),borderColor:[...ads].filter(a=>a.hookRate>0).sort((a,b)=>b.hookRate-a.hookRate).slice(0,10).map(a=>a.hookRate>=25?'#6ee7b7':a.hookRate>=15?'#fcd34d':'#f87171'),borderWidth:1,borderRadius:4}]}} options={chartOpts()}/>
-                        </div>
-                      </div>
-                    )}
-                  </div>
+                  </>
                 )
               })()}
               {[...ads].sort((a,b)=>qualityScore(b)-qualityScore(a)).map((a,i)=><AdScoreCard key={i} ad={a}/>)}
