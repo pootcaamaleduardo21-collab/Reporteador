@@ -579,11 +579,23 @@ function ReportesInner() {
   const [activeTab, setActiveTab] = useState('overview')
   const [platform, setPlatform] = useState(null)
   const [googleAdsData, setGoogleAdsData] = useState(null)
+  const [historicoData, setHistoricoData] = useState(null)
+  const [loadingHistorico, setLoadingHistorico] = useState(false)
+  const [historicoError, setHistoricoError] = useState(null)
+  const [historicoFrom, setHistoricoFrom] = useState(()=>{const d=new Date();d.setDate(1);d.setMonth(d.getMonth()-5);return d.toISOString().slice(0,7)})
+  const [historicoTo, setHistoricoTo] = useState(()=>{const d=new Date();d.setDate(1);return d.toISOString().slice(0,7)})
+
+  const HIST_MONTHS = React.useMemo(()=>Array.from({length:24},(_,i)=>{
+    const d=new Date(); d.setDate(1); d.setMonth(d.getMonth()-23+i)
+    const val=d.toISOString().slice(0,7)
+    const lbl=d.toLocaleString('es-MX',{month:'long',year:'numeric'})
+    return {value:val, label:lbl.charAt(0).toUpperCase()+lbl.slice(1)}
+  }),[])
 
   // Sync tab from URL ?tab= param
   useEffect(() => {
     const tab = searchParams?.get('tab')
-    if (tab && ['overview','campanas','conjuntos','anuncios','audiencia','google-ads','tiktok-ads'].includes(tab)) {
+    if (tab && ['overview','campanas','conjuntos','anuncios','audiencia','historico','google-ads','tiktok-ads'].includes(tab)) {
       setActiveTab(tab)
     }
   }, [searchParams])
@@ -633,6 +645,10 @@ function ReportesInner() {
   useEffect(() => {
     if (token && platform === 'meta_ads' && activeTab === 'audiencia') fetchDemographics()
   }, [token, platform, activeTab, preset, customFrom, customTo])
+
+  useEffect(() => {
+    if (token && platform === 'meta_ads' && activeTab === 'historico' && !historicoData && !loadingHistorico) fetchHistorico()
+  }, [token, platform, activeTab])
 
   async function fetchData() {
     setLoading(true)
@@ -804,6 +820,91 @@ function ReportesInner() {
     setLoadingDemo(false)
   }
 
+  async function fetchHistorico() {
+    if (!token) return
+    setLoadingHistorico(true)
+    setHistoricoError(null)
+    setHistoricoData(null)
+    try {
+      const since = historicoFrom + '-01'
+      const toD = new Date(historicoTo + '-01')
+      toD.setMonth(toD.getMonth() + 1); toD.setDate(0)
+      const until = toD.toISOString().slice(0, 10)
+      const tr = JSON.stringify({since, until})
+      const base = 'https://graph.facebook.com/v21.0/' + accountId + '/insights'
+      const flds = 'spend,impressions,reach,frequency,clicks,cpc,cpm,ctr,actions,objective'
+      const campFlds = 'campaign_name,objective,spend,impressions,reach,clicks,cpc,cpm,ctr,actions'
+
+      const [accR, campR] = await Promise.all([
+        fetch(base+'?fields='+flds+'&time_range='+tr+'&time_increment=monthly&access_token='+token+'&limit=36'),
+        fetch(base+'?fields='+campFlds+'&level=campaign&time_range='+tr+'&time_increment=monthly&access_token='+token+'&limit=300'),
+      ])
+      const [accJ, campJ] = await Promise.all([accR.json(), campR.json()])
+      if (accJ.error) throw new Error(accJ.error.message)
+
+      const parseH = (d) => {
+        const actions = d.actions || []
+        const obj = d.objective || 'MULTIPLE'
+        const objI = OBJECTIVE_MAP[obj] || OBJECTIVE_MAP.MULTIPLE
+        const type = resultType === 'auto' ? objI.resultTypes[0] : resultType
+        const results = getResults(actions, type)
+        const spend = parseFloat(d.spend) || 0
+        return {
+          spend, results,
+          impressions: parseFloat(d.impressions) || 0,
+          reach: parseFloat(d.reach) || 0,
+          clicks: parseFloat(d.clicks) || 0,
+          cpm: parseFloat(d.cpm) || 0,
+          ctr: parseFloat(d.ctr) || 0,
+          frequency: parseFloat(d.frequency) || 0,
+          cpr: results > 0 ? spend / results : 0,
+        }
+      }
+
+      const monthly = (accJ.data || []).map(d => {
+        const dt = new Date(d.date_start + 'T12:00:00')
+        return {
+          month: d.date_start.slice(0, 7),
+          label: dt.toLocaleString('es-MX', {month:'short', year:'2-digit'}).replace('.',''),
+          ...parseH(d)
+        }
+      }).sort((a,b) => a.month.localeCompare(b.month))
+
+      const campRows = (campJ.data || []).map(d => ({
+        month: d.date_start.slice(0, 7),
+        campaign: d.campaign_name,
+        objective: d.objective || 'MULTIPLE',
+        ...parseH(d)
+      }))
+
+      const objectives = [...new Set(campRows.map(r => r.objective))].filter(Boolean)
+
+      const byObj = {}
+      objectives.forEach(obj => {
+        byObj[obj] = monthly.map(m => {
+          const rows = campRows.filter(r => r.objective === obj && r.month === m.month)
+          return {
+            month: m.month, label: m.label,
+            spend: rows.reduce((s,r) => s+r.spend, 0),
+            results: rows.reduce((s,r) => s+r.results, 0),
+          }
+        })
+      })
+
+      const bestByMonth = {}
+      campRows.forEach(r => {
+        if (!bestByMonth[r.month] || r.results > (bestByMonth[r.month].results || 0))
+          bestByMonth[r.month] = {campaign: r.campaign, results: r.results, spend: r.spend, objective: r.objective}
+      })
+
+      setHistoricoData({monthly, objectives, byObj, bestByMonth})
+    } catch(e) {
+      console.error('fetchHistorico error:', e)
+      setHistoricoError(e.message || 'Error al cargar el histórico')
+    }
+    setLoadingHistorico(false)
+  }
+
   function exportPDF() {
     setShowPDFModal(true)
   }
@@ -811,7 +912,7 @@ function ReportesInner() {
   const isGoogle = platform === 'google_ads'
   const tabs = isGoogle
     ? [{id:'overview',label:'Resumen',icon:'📊',desc:'Vista general de la cuenta'},{id:'google-ads',label:'Campañas',icon:'🎯',desc:'Detalle por campaña'}]
-    : [{id:'overview',label:'Resumen',icon:'📊',desc:'Vista general'},{id:'campanas',label:'Campañas',icon:'🎯',desc:'Cada campaña activa'},{id:'conjuntos',label:'Conjuntos',icon:'👥',desc:'Grupos de anuncios'},{id:'anuncios',label:'Anuncios',icon:'🖼',desc:'Creativos individuales'},{id:'audiencia',label:'Audiencia',icon:'🗺',desc:'Quién ve tus anuncios'}]
+    : [{id:'overview',label:'Resumen',icon:'📊',desc:'Vista general'},{id:'campanas',label:'Campañas',icon:'🎯',desc:'Cada campaña activa'},{id:'conjuntos',label:'Conjuntos',icon:'👥',desc:'Grupos de anuncios'},{id:'anuncios',label:'Anuncios',icon:'🖼',desc:'Creativos individuales'},{id:'audiencia',label:'Audiencia',icon:'🗺',desc:'Quién ve tus anuncios'},{id:'historico',label:'Histórico',icon:'📅',desc:'Mes a mes'}]
   const objInfo = OBJECTIVE_MAP[detectedObjective] || OBJECTIVE_MAP.MULTIPLE
 
   const METRIC_HELP = {
@@ -1810,6 +1911,277 @@ function ReportesInner() {
                   </div>
                 </>
               )}
+            </>
+          )}
+          {activeTab==='historico'&&platform==='meta_ads'&&(
+            isPro === false ? <ProGate feature="el histórico mensual" type="historico"/> :
+            <>
+              {/* Selector de período */}
+              <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'12px',padding:'14px 20px',marginBottom:'20px',display:'flex',alignItems:'center',gap:'10px',flexWrap:'wrap'}}>
+                <span style={{fontSize:'10px',color:'var(--text4)',fontFamily:'monospace',textTransform:'uppercase',letterSpacing:'.07em',flexShrink:0}}>Período:</span>
+                <select value={historicoFrom} onChange={e=>{setHistoricoFrom(e.target.value);setHistoricoData(null)}}
+                  style={{background:'rgba(255,255,255,.06)',border:'1px solid var(--border)',borderRadius:'6px',color:'#e0e0e0',padding:'6px 10px',fontSize:'11px',fontFamily:'inherit',cursor:'pointer',outline:'none'}}>
+                  {HIST_MONTHS.map(m=><option key={m.value} value={m.value} style={{background:'#18181f'}}>{m.label}</option>)}
+                </select>
+                <span style={{color:'var(--text4)',fontSize:'12px'}}>→</span>
+                <select value={historicoTo} onChange={e=>{setHistoricoTo(e.target.value);setHistoricoData(null)}}
+                  style={{background:'rgba(255,255,255,.06)',border:'1px solid var(--border)',borderRadius:'6px',color:'#e0e0e0',padding:'6px 10px',fontSize:'11px',fontFamily:'inherit',cursor:'pointer',outline:'none'}}>
+                  {HIST_MONTHS.filter(m=>m.value>=historicoFrom).map(m=><option key={m.value} value={m.value} style={{background:'#18181f'}}>{m.label}</option>)}
+                </select>
+                <button onClick={fetchHistorico} disabled={loadingHistorico}
+                  style={{padding:'6px 18px',background:'rgba(99,102,241,.2)',border:'1px solid rgba(99,102,241,.4)',borderRadius:'6px',color:'#a5b4fc',fontSize:'11px',fontWeight:'700',cursor:'pointer',fontFamily:'inherit',opacity:loadingHistorico?.6:1}}>
+                  {loadingHistorico ? 'Cargando…' : 'Cargar datos'}
+                </button>
+              </div>
+
+              {loadingHistorico&&(
+                <div style={{display:'flex',flexDirection:'column',alignItems:'center',padding:'80px 0',gap:'12px'}}>
+                  <div style={{width:'32px',height:'32px',borderRadius:'50%',border:'3px solid rgba(99,102,241,.2)',borderTop:'3px solid #6366f1',animation:'spin 1s linear infinite'}}></div>
+                  <div style={{fontSize:'12px',color:'var(--text4)',fontFamily:'monospace'}}>Cargando histórico mensual...</div>
+                </div>
+              )}
+
+              {!loadingHistorico&&historicoError&&(
+                <div style={{background:'rgba(248,113,113,.08)',border:'1px solid rgba(248,113,113,.2)',borderRadius:'10px',padding:'16px 20px',fontSize:'12px',color:'#f87171'}}>
+                  ⚠️ {historicoError}
+                </div>
+              )}
+
+              {!loadingHistorico&&historicoData&&historicoData.monthly.length===0&&(
+                <div style={{textAlign:'center',padding:'60px 20px',color:'var(--text4)'}}>
+                  <div style={{fontSize:'32px',marginBottom:'12px'}}>📅</div>
+                  <div style={{fontSize:'14px',fontWeight:'700',color:'var(--text)',marginBottom:'6px'}}>Sin datos en este período</div>
+                  <div style={{fontSize:'12px'}}>No hay actividad registrada en los meses seleccionados.</div>
+                </div>
+              )}
+
+              {!loadingHistorico&&historicoData&&historicoData.monthly.length>0&&(()=>{
+                const data = historicoData.monthly
+                const totalSpend   = data.reduce((s,m)=>s+m.spend,0)
+                const totalResults = data.reduce((s,m)=>s+m.results,0)
+                const totalImpr    = data.reduce((s,m)=>s+m.impressions,0)
+                const avgCpr       = totalResults>0 ? totalSpend/totalResults : 0
+                const bestMonth    = [...data].sort((a,b)=>b.results-a.results)[0]
+                const improving    = data.length>1&&data[0].cpr>0&&data[data.length-1].cpr>0
+                  ? data[data.length-1].cpr < data[0].cpr : null
+                const spendTrend   = data.length>1
+                  ? Math.round((data[data.length-1].spend - data[0].spend)/Math.max(data[0].spend,1)*100) : null
+
+                return (
+                  <>
+                    {/* RESUMEN DEL PERÍODO */}
+                    <div style={{background:'rgba(99,102,241,.06)',border:'1px solid rgba(99,102,241,.2)',borderRadius:'14px',padding:'20px 24px',marginBottom:'20px'}}>
+                      <div style={{fontSize:'10px',color:'#a5b4fc',fontFamily:'monospace',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:'14px'}}>
+                        📅 Resumen — {data.length} {data.length===1?'mes':'meses'} analizados
+                      </div>
+                      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(140px,1fr))',gap:'20px'}}>
+                        {[
+                          {l:'Total invertido',   v:fmt$(totalSpend),            c:'#fff'},
+                          {l:'Total resultados',  v:fmtN(totalResults),          c:totalResults>0?'#6ee7b7':'#f87171'},
+                          {l:'Costo prom. / resultado', v:avgCpr>0?fmt$(avgCpr):'—', c:'#fff'},
+                          {l:'Impresiones totales',v:fmtN(totalImpr),            c:'#60a5fa'},
+                          ...(bestMonth&&bestMonth.results>0?[{l:'Mejor mes',v:bestMonth.label.toUpperCase(),c:'#6ee7b7',sub:fmtN(bestMonth.results)+' resultados · '+fmt$(bestMonth.spend)}]:[]),
+                          ...(improving!==null?[{l:'Tendencia del costo',v:improving?'Mejorando ↓':'Empeorando ↑',c:improving?'#6ee7b7':'#f87171',sub:improving?'El costo/resultado bajó':'El costo/resultado subió'}]:[]),
+                        ].map((s,i)=>(
+                          <div key={i}>
+                            <div style={{fontSize:'9px',color:'#555',fontFamily:'monospace',textTransform:'uppercase',letterSpacing:'.07em',marginBottom:'4px'}}>{s.l}</div>
+                            <div style={{fontSize:'20px',fontWeight:'800',color:s.c,lineHeight:1.1}}>{s.v}</div>
+                            {s.sub&&<div style={{fontSize:'10px',color:'#666',fontFamily:'monospace',marginTop:'3px'}}>{s.sub}</div>}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* CHARTS GRID — 4 preguntas clave */}
+                    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'14px',marginBottom:'14px'}}>
+
+                      {/* Gasto mensual */}
+                      <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'12px',padding:'20px'}}>
+                        <div style={{fontSize:'14px',fontWeight:'800',color:'#e0e0e0',marginBottom:'3px'}}>💰 ¿Cuánto se invirtió por mes?</div>
+                        <div style={{fontSize:'10px',color:'#555',fontFamily:'monospace',marginBottom:'14px'}}>
+                          {spendTrend!==null&&(spendTrend>10?'El gasto subió '+spendTrend+'% vs el primer mes':spendTrend<-10?'El gasto bajó '+Math.abs(spendTrend)+'% vs el primer mes':'Gasto estable entre meses')}
+                        </div>
+                        <div style={{height:'190px'}}>
+                          <Bar data={{
+                            labels:data.map(d=>d.label),
+                            datasets:[{
+                              label:'Gastado ($)',
+                              data:data.map(d=>+d.spend.toFixed(2)),
+                              backgroundColor:data.map((_,i)=>i===data.length-1?'rgba(99,102,241,.65)':'rgba(99,102,241,.3)'),
+                              borderColor:'#6366f1',borderWidth:1,borderRadius:4
+                            }]
+                          }} options={chartOpts()}/>
+                        </div>
+                      </div>
+
+                      {/* Resultados mensuales */}
+                      <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'12px',padding:'20px'}}>
+                        <div style={{fontSize:'14px',fontWeight:'800',color:'#e0e0e0',marginBottom:'3px'}}>🎯 ¿Cuántos resultados se obtuvieron?</div>
+                        <div style={{fontSize:'10px',color:'#555',fontFamily:'monospace',marginBottom:'14px'}}>
+                          {totalResults>0?'Total de '+fmtN(totalResults)+' resultados en el período':'Sin resultados registrados — revisar objetivo de conversión'}
+                        </div>
+                        <div style={{height:'190px'}}>
+                          <Bar data={{
+                            labels:data.map(d=>d.label),
+                            datasets:[{
+                              label:'Resultados',
+                              data:data.map(d=>d.results),
+                              backgroundColor:data.map(d=>d.results>0?'rgba(110,231,183,.5)':'rgba(248,113,113,.3)'),
+                              borderColor:data.map(d=>d.results>0?'#6ee7b7':'#f87171'),
+                              borderWidth:1,borderRadius:4
+                            }]
+                          }} options={chartOpts()}/>
+                        </div>
+                      </div>
+
+                      {/* Costo por resultado — tendencia */}
+                      <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'12px',padding:'20px'}}>
+                        <div style={{fontSize:'14px',fontWeight:'800',color:'#e0e0e0',marginBottom:'3px'}}>📉 ¿El costo por resultado mejora?</div>
+                        <div style={{fontSize:'10px',color:improving===true?'#6ee7b7':improving===false?'#f87171':'#555',fontFamily:'monospace',marginBottom:'14px'}}>
+                          {improving===true?'↓ Sí — el costo por resultado está bajando con el tiempo':improving===false?'↑ El costo está subiendo — revisar segmentación y creativos':'Selecciona más meses para ver la tendencia'}
+                        </div>
+                        <div style={{height:'190px'}}>
+                          <Line data={{
+                            labels:data.filter(d=>d.cpr>0).map(d=>d.label),
+                            datasets:[{
+                              label:'C/Resultado ($)',
+                              data:data.filter(d=>d.cpr>0).map(d=>+d.cpr.toFixed(2)),
+                              borderColor:'#f97316',backgroundColor:'rgba(249,115,22,.08)',
+                              fill:true,tension:.4,pointRadius:4,borderWidth:2,
+                              pointBackgroundColor:'#f97316',pointBorderColor:'#0d0d12',pointBorderWidth:2
+                            }]
+                          }} options={chartOpts()}/>
+                        </div>
+                      </div>
+
+                      {/* CTR mensual */}
+                      <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'12px',padding:'20px'}}>
+                        <div style={{fontSize:'14px',fontWeight:'800',color:'#e0e0e0',marginBottom:'3px'}}>📈 ¿Los anuncios generan más clics?</div>
+                        <div style={{fontSize:'10px',color:'#555',fontFamily:'monospace',marginBottom:'14px'}}>
+                          {data.length>1&&data[data.length-1].ctr>0&&data[0].ctr>0
+                            ?(data[data.length-1].ctr>data[0].ctr?'↑ El CTR mejoró vs el primer mes — los creativos están funcionando mejor':'↓ El CTR bajó vs el primer mes — considera rotar los creativos')
+                            :'CTR promedio del período'}
+                        </div>
+                        <div style={{height:'190px'}}>
+                          <Line data={{
+                            labels:data.map(d=>d.label),
+                            datasets:[{
+                              label:'CTR %',
+                              data:data.map(d=>+d.ctr.toFixed(2)),
+                              borderColor:'#6ee7b7',backgroundColor:'rgba(110,231,183,.06)',
+                              fill:true,tension:.4,pointRadius:4,borderWidth:2,
+                              pointBackgroundColor:'#6ee7b7',pointBorderColor:'#0d0d12',pointBorderWidth:2
+                            }]
+                          }} options={chartOpts()}/>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* INVERSIÓN VS RESULTADOS — gráfico combinado */}
+                    <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'12px',padding:'20px',marginBottom:'14px'}}>
+                      <div style={{fontSize:'14px',fontWeight:'800',color:'#e0e0e0',marginBottom:'3px'}}>📊 Inversión vs Resultados — evolución mensual</div>
+                      <div style={{fontSize:'10px',color:'#555',fontFamily:'monospace',marginBottom:'14px'}}>
+                        Las líneas deberían moverse juntas. Si el gasto sube pero los resultados no, hay algo que optimizar.
+                      </div>
+                      <div style={{height:'230px'}}>
+                        <Line data={{
+                          labels:data.map(d=>d.label),
+                          datasets:[
+                            {label:'Gastado ($)',data:data.map(d=>+d.spend.toFixed(2)),borderColor:'#f97316',backgroundColor:'rgba(249,115,22,.06)',fill:true,tension:.4,yAxisID:'y',pointRadius:3,borderWidth:2},
+                            {label:'Resultados',data:data.map(d=>d.results),borderColor:'#6ee7b7',backgroundColor:'rgba(110,231,183,.06)',fill:true,tension:.4,yAxisID:'y1',pointRadius:3,borderWidth:2}
+                          ]
+                        }} options={chartOpts(true)}/>
+                      </div>
+                    </div>
+
+                    {/* DESGLOSE POR OBJETIVO */}
+                    {historicoData.objectives.length>1&&(
+                      <>
+                        <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'12px',padding:'20px',marginBottom:'14px'}}>
+                          <div style={{fontSize:'14px',fontWeight:'800',color:'#e0e0e0',marginBottom:'3px'}}>🎯 Resultados por tipo de campaña</div>
+                          <div style={{fontSize:'10px',color:'#555',fontFamily:'monospace',marginBottom:'14px'}}>
+                            ¿Qué objetivo de campaña genera más resultados cada mes?
+                          </div>
+                          <div style={{height:'220px'}}>
+                            <Bar data={{
+                              labels:data.map(d=>d.label),
+                              datasets:historicoData.objectives.map((obj,i)=>({
+                                label:OBJECTIVE_MAP[obj]?.label||obj,
+                                data:(historicoData.byObj[obj]||[]).map(m=>m.results),
+                                backgroundColor:COLORS[i%COLORS.length]+'80',
+                                borderColor:COLORS[i%COLORS.length],
+                                borderWidth:1,borderRadius:3
+                              }))
+                            }} options={{...chartOpts(),plugins:{...chartOpts().plugins,legend:{labels:{color:'#888',font:{family:'Plus Jakarta Sans, sans-serif',size:11},boxWidth:10,padding:12}}}}}/>
+                          </div>
+                        </div>
+
+                        <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'12px',padding:'20px',marginBottom:'14px'}}>
+                          <div style={{fontSize:'14px',fontWeight:'800',color:'#e0e0e0',marginBottom:'3px'}}>💰 Gasto por tipo de campaña</div>
+                          <div style={{fontSize:'10px',color:'#555',fontFamily:'monospace',marginBottom:'14px'}}>
+                            ¿Cómo se distribuye el presupuesto entre los distintos objetivos?
+                          </div>
+                          <div style={{height:'220px'}}>
+                            <Bar data={{
+                              labels:data.map(d=>d.label),
+                              datasets:historicoData.objectives.map((obj,i)=>({
+                                label:OBJECTIVE_MAP[obj]?.label||obj,
+                                data:(historicoData.byObj[obj]||[]).map(m=>+m.spend.toFixed(2)),
+                                backgroundColor:COLORS[i%COLORS.length]+'80',
+                                borderColor:COLORS[i%COLORS.length],
+                                borderWidth:1,borderRadius:3
+                              }))
+                            }} options={{...chartOpts(),plugins:{...chartOpts().plugins,legend:{labels:{color:'#888',font:{family:'Plus Jakarta Sans, sans-serif',size:11},boxWidth:10,padding:12}}}}}/>
+                          </div>
+                        </div>
+                      </>
+                    )}
+
+                    {/* TABLA: MEJOR CAMPAÑA POR MES */}
+                    <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'12px',padding:'20px',marginBottom:'14px'}}>
+                      <div style={{fontSize:'14px',fontWeight:'800',color:'#e0e0e0',marginBottom:'3px'}}>🏆 Mejor campaña por mes</div>
+                      <div style={{fontSize:'10px',color:'#555',fontFamily:'monospace',marginBottom:'16px'}}>
+                        La campaña que más resultados generó en cada mes del período
+                      </div>
+                      <div style={{overflowX:'auto'}}>
+                        <table style={{width:'100%',borderCollapse:'collapse'}}>
+                          <thead>
+                            <tr style={{borderBottom:'1px solid rgba(255,255,255,.07)'}}>
+                              {['Mes','Campaña líder','Tipo','Resultados','Invertido','Costo / resultado'].map(h=>(
+                                <th key={h} style={{padding:'8px 12px',textAlign:'left',fontSize:'9px',color:'#444',fontFamily:'monospace',textTransform:'uppercase',letterSpacing:'.07em',fontWeight:'600',whiteSpace:'nowrap'}}>{h}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {data.map((m,i)=>{
+                              const best = historicoData.bestByMonth[m.month]
+                              if (!best) return (
+                                <tr key={i} style={{borderBottom:'1px solid rgba(255,255,255,.04)'}}>
+                                  <td style={{padding:'10px 12px',color:'#a5b4fc',fontFamily:'monospace',fontWeight:'700'}}>{m.label.toUpperCase()}</td>
+                                  <td colSpan={5} style={{padding:'10px 12px',color:'#444',fontSize:'11px',fontFamily:'monospace'}}>Sin actividad</td>
+                                </tr>
+                              )
+                              const cpr = best.results>0 ? best.spend/best.results : 0
+                              return (
+                                <tr key={i} style={{borderBottom:'1px solid rgba(255,255,255,.04)'}}
+                                  onMouseEnter={e=>e.currentTarget.style.background='rgba(255,255,255,.025)'}
+                                  onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
+                                  <td style={{padding:'10px 12px',color:'#a5b4fc',fontFamily:'monospace',fontWeight:'700',whiteSpace:'nowrap'}}>{m.label.toUpperCase()}</td>
+                                  <td style={{padding:'10px 12px',color:'#e0e0e0',fontSize:'12px',maxWidth:'200px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{best.campaign}</td>
+                                  <td style={{padding:'10px 12px'}}><span style={{fontSize:'9px',fontFamily:'monospace',color:'#888',background:'rgba(255,255,255,.05)',padding:'2px 8px',borderRadius:'4px',whiteSpace:'nowrap'}}>{OBJECTIVE_MAP[best.objective]?.label||best.objective||'—'}</span></td>
+                                  <td style={{padding:'10px 12px',color:best.results>0?'#6ee7b7':'#555',fontWeight:'700',fontSize:'13px'}}>{fmtN(best.results)}</td>
+                                  <td style={{padding:'10px 12px',color:'#fff',fontSize:'12px'}}>{fmt$(best.spend)}</td>
+                                  <td style={{padding:'10px 12px',color:cpr>0?'#fff':'#555',fontSize:'12px'}}>{cpr>0?fmt$(cpr):'—'}</td>
+                                </tr>
+                              )
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </>
+                )
+              })()}
             </>
           )}
         </div>
