@@ -14,6 +14,7 @@ export default function MetaAdsPage() {
   const [verifying, setVerifying] = useState(false)
   const [verifyResult, setVerifyResult] = useState(null) // {ok, name, id, status}
   const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState(null)
   const [success, setSuccess] = useState(null)
   const router = useRouter()
 
@@ -83,7 +84,7 @@ export default function MetaAdsPage() {
     if (!verifyResult?.ok || !user) return
     setSaving(true)
     try {
-      // Usar API route server-side para evitar restricciones de RLS en ad_accounts
+      const { data: { session } } = await supabase.auth.getSession()
       const res = await fetch('/api/meta/save-account', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -92,6 +93,7 @@ export default function MetaAdsPage() {
           accountId: verifyResult.id,
           accountName: verifyResult.name,
           isActive: verifyResult.status === 1,
+          accessToken: session?.access_token,
         }),
       })
       const j = await res.json()
@@ -99,6 +101,7 @@ export default function MetaAdsPage() {
       router.push('/dashboard/reportes/' + verifyResult.id)
     } catch (e) {
       console.error('Save account error:', e)
+      setSaveError(e.message || 'Error al guardar la cuenta')
       setSaving(false)
     }
   }
@@ -169,6 +172,11 @@ export default function MetaAdsPage() {
                       {saving ? 'Conectando…' : 'Conectar y ver reportes →'}
                     </button>
                   </div>
+                  {saveError && (
+                    <div style={{marginTop:'10px',padding:'8px 12px',background:'rgba(248,113,113,.08)',border:'1px solid rgba(248,113,113,.2)',borderRadius:'7px',fontSize:'11px',color:'#f87171'}}>
+                      ✗ {saveError}
+                    </div>
+                  )}
                 ) : (
                   <div>
                     <div style={{fontSize:'12px',fontWeight:'700',color:'#f87171',marginBottom:'2px'}}>✗ No se pudo acceder a esta cuenta</div>
