@@ -159,24 +159,26 @@ export default function MetaAdsPage() {
             {verifyResult && (
               <div style={{marginTop:'12px',padding:'12px',background:verifyResult.ok?'rgba(110,231,183,.07)':'rgba(248,113,113,.07)',border:'1px solid '+(verifyResult.ok?'rgba(110,231,183,.2)':'rgba(248,113,113,.2)'),borderRadius:'8px'}}>
                 {verifyResult.ok ? (
-                  <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:'12px',flexWrap:'wrap'}}>
-                    <div>
-                      <div style={{fontSize:'12px',fontWeight:'700',color:'#6ee7b7',marginBottom:'2px'}}>✓ Cuenta verificada</div>
-                      <div style={{fontSize:'11px',color:'#888'}}>{verifyResult.name} · {verifyResult.id} · {verifyResult.currency}</div>
-                      <div style={{fontSize:'10px',color:verifyResult.status===1?'#6ee7b7':'#f87171',marginTop:'2px'}}>
-                        {verifyResult.status===1?'Cuenta activa':'Cuenta inactiva (status '+verifyResult.status+')'}
+                  <>
+                    <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:'12px',flexWrap:'wrap'}}>
+                      <div>
+                        <div style={{fontSize:'12px',fontWeight:'700',color:'#6ee7b7',marginBottom:'2px'}}>✓ Cuenta verificada</div>
+                        <div style={{fontSize:'11px',color:'#888'}}>{verifyResult.name} · {verifyResult.id} · {verifyResult.currency}</div>
+                        <div style={{fontSize:'10px',color:verifyResult.status===1?'#6ee7b7':'#f87171',marginTop:'2px'}}>
+                          {verifyResult.status===1?'Cuenta activa':'Cuenta inactiva (status '+verifyResult.status+')'}
+                        </div>
                       </div>
+                      <button onClick={saveAccount} disabled={saving}
+                        style={{padding:'8px 18px',background:'rgba(110,231,183,.2)',border:'1px solid rgba(110,231,183,.35)',borderRadius:'7px',color:'#6ee7b7',fontSize:'12px',fontWeight:'700',cursor:'pointer',fontFamily:'inherit',flexShrink:0,opacity:saving?0.6:1}}>
+                        {saving ? 'Conectando…' : 'Conectar y ver reportes →'}
+                      </button>
                     </div>
-                    <button onClick={saveAccount} disabled={saving}
-                      style={{padding:'8px 18px',background:'rgba(110,231,183,.2)',border:'1px solid rgba(110,231,183,.35)',borderRadius:'7px',color:'#6ee7b7',fontSize:'12px',fontWeight:'700',cursor:'pointer',fontFamily:'inherit',flexShrink:0,opacity:saving?0.6:1}}>
-                      {saving ? 'Conectando…' : 'Conectar y ver reportes →'}
-                    </button>
-                  </div>
-                  {saveError && (
-                    <div style={{marginTop:'10px',padding:'8px 12px',background:'rgba(248,113,113,.08)',border:'1px solid rgba(248,113,113,.2)',borderRadius:'7px',fontSize:'11px',color:'#f87171'}}>
-                      ✗ {saveError}
-                    </div>
-                  )}
+                    {saveError && (
+                      <div style={{marginTop:'10px',padding:'8px 12px',background:'rgba(248,113,113,.08)',border:'1px solid rgba(248,113,113,.2)',borderRadius:'7px',fontSize:'11px',color:'#f87171'}}>
+                        ✗ {saveError}
+                      </div>
+                    )}
+                  </>
                 ) : (
                   <div>
                     <div style={{fontSize:'12px',fontWeight:'700',color:'#f87171',marginBottom:'2px'}}>✗ No se pudo acceder a esta cuenta</div>
