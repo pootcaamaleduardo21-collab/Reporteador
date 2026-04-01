@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '../lib/supabase'
 import { usePlan } from '../lib/usePlan'
-import { NICHES, DEFAULT_NICHE } from '../lib/niches'
+import { NICHES, DEFAULT_NICHE, NICHE_TOOLS } from '../lib/niches'
 
 const fmtN = v => (+v||0)>=1e6?((+v/1e6).toFixed(1)+'M'):(+v||0)>=1e3?((+v/1e3).toFixed(1)+'K'):String(Math.round(+v||0))
 const fmtDate = d => { try { return new Date(d).toLocaleDateString('es-MX',{day:'numeric',month:'short'}) } catch{return ''} }
@@ -53,6 +53,9 @@ export default function DashboardHome() {
   const [showNicheModal, setShowNicheModal] = useState(false)
   const [selectedNiche, setSelectedNiche] = useState(DEFAULT_NICHE)
   const [activeNiche, setActiveNiche] = useState(DEFAULT_NICHE)
+
+  const nicheTool = NICHE_TOOLS[activeNiche] || NICHE_TOOLS[DEFAULT_NICHE]
+  const nicheObj = NICHES.find(n => n.id === activeNiche) || NICHES[0]
 
   useEffect(() => {
     try {
@@ -474,80 +477,82 @@ export default function DashboardHome() {
       )}
 
       {/* ══════════════════════════════════════════════════
-          🏠 HERRAMIENTAS INMOBILIARIAS
+          HERRAMIENTAS POR NICHO (auto-detectado)
           ══════════════════════════════════════════════════ */}
       <div style={{marginBottom:'24px',animation:'fadeIn .5s ease'}}>
         <div style={{display:'flex',alignItems:'center',gap:'12px',marginBottom:'16px'}}>
           <span style={{fontSize:'11px',fontWeight:'600',padding:'5px 14px',borderRadius:'20px',background:'rgba(52,160,120,.08)',border:'1px solid rgba(52,160,120,.2)',color:'#5fad8c',letterSpacing:'.04em',whiteSpace:'nowrap'}}>
-            🏠 Herramientas Inmobiliarias
+            {nicheObj.emoji} {nicheTool.label}
           </span>
           <div style={{flex:1,height:'1px',background:'var(--border)'}}></div>
         </div>
 
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'14px'}}>
 
-          {/* ─── 1. PIPELINE DE COMISIONES ─── */}
+          {/* ─── 1. CALCULADORA DE NEGOCIO (por nicho) ─── */}
           {(() => {
-            const leads = +pipLeads||0
-            const precio = +pipPrecio||0
-            const com = +pipComision/100||0.03
-            const cierre = +pipCierre/100||0.1
-            const meta = +pipMeta||0
-            const cierresEsp = leads * cierre
-            const comisionTotal = cierresEsp * precio * com
-            const metaPct = meta > 0 ? Math.min((comisionTotal/meta)*100, 100) : 0
-            const hasData = leads > 0 && precio > 0
+            const c = nicheTool.calc
+            const v1 = +pipLeads||0
+            const v2 = +pipPrecio||0
+            const v3 = +pipComision||(+c.f3D||0)
+            const v4 = +pipCierre||(+c.f4D||0)
+            const goal = +pipMeta||0
+            const result = c.compute(v1,v2,v3,v4)
+            const goalPct = goal > 0 ? Math.min((result/goal)*100, 100) : 0
+            const hasData = v1 > 0 && v2 > 0
             return (
               <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'14px',padding:'20px'}}>
                 <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'4px'}}>
-                  <div style={{width:'34px',height:'34px',borderRadius:'9px',background:'linear-gradient(135deg,rgba(99,102,241,.2),rgba(67,56,202,.15))',border:'1px solid rgba(99,102,241,.25)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'16px',flexShrink:0}}>💎</div>
+                  <div style={{width:'34px',height:'34px',borderRadius:'9px',background:'linear-gradient(135deg,rgba(99,102,241,.2),rgba(67,56,202,.15))',border:'1px solid rgba(99,102,241,.25)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'16px',flexShrink:0}}>{c.icon}</div>
                   <div>
-                    <div style={{fontSize:'13px',fontWeight:'700',color:'var(--text)'}}>Pipeline de Comisiones</div>
+                    <div style={{fontSize:'13px',fontWeight:'700',color:'var(--text)'}}>{c.title}</div>
                     <div style={{fontSize:'10px',color:'var(--text4)'}}>¿Cuánto valen tus leads actuales?</div>
                   </div>
                 </div>
                 <div style={{fontSize:'10px',color:'var(--text4)',marginBottom:'12px',lineHeight:'1.5',padding:'8px 0',borderBottom:'1px solid rgba(255,255,255,.05)'}}>
-                  Meta Ads te dice cuántos leads tienes. Kaan te dice cuánto valen en comisiones potenciales.
+                  {c.desc}
                 </div>
                 <div style={{display:'flex',flexDirection:'column',gap:'7px',marginBottom:'12px'}}>
                   <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'7px'}}>
                     <div>
-                      <div style={{fontSize:'9px',color:'var(--text4)',fontWeight:'700',marginBottom:'3px',textTransform:'uppercase',letterSpacing:'.05em'}}>Leads este mes</div>
-                      <input className="tool-input" type="number" placeholder="ej. 45" value={pipLeads} onChange={e=>setPipLeads(e.target.value)}/>
+                      <div style={{fontSize:'9px',color:'var(--text4)',fontWeight:'700',marginBottom:'3px',textTransform:'uppercase',letterSpacing:'.05em'}}>{c.f1Label}</div>
+                      <input className="tool-input" type="number" placeholder={c.f1P} value={pipLeads} onChange={e=>setPipLeads(e.target.value)}/>
                     </div>
                     <div>
-                      <div style={{fontSize:'9px',color:'var(--text4)',fontWeight:'700',marginBottom:'3px',textTransform:'uppercase',letterSpacing:'.05em'}}>Precio prop. (MXN)</div>
-                      <input className="tool-input" type="number" placeholder="ej. 2,500,000" value={pipPrecio} onChange={e=>setPipPrecio(e.target.value)}/>
+                      <div style={{fontSize:'9px',color:'var(--text4)',fontWeight:'700',marginBottom:'3px',textTransform:'uppercase',letterSpacing:'.05em'}}>{c.f2Label}</div>
+                      <input className="tool-input" type="number" placeholder={c.f2P} value={pipPrecio} onChange={e=>setPipPrecio(e.target.value)}/>
                     </div>
                     <div>
-                      <div style={{fontSize:'9px',color:'var(--text4)',fontWeight:'700',marginBottom:'3px',textTransform:'uppercase',letterSpacing:'.05em'}}>Comisión (%)</div>
-                      <input className="tool-input" type="number" placeholder="3" value={pipComision} onChange={e=>setPipComision(e.target.value)}/>
+                      <div style={{fontSize:'9px',color:'var(--text4)',fontWeight:'700',marginBottom:'3px',textTransform:'uppercase',letterSpacing:'.05em'}}>{c.f3Label}</div>
+                      <input className="tool-input" type="number" placeholder={c.f3P} value={pipComision} onChange={e=>setPipComision(e.target.value)}/>
                     </div>
                     <div>
-                      <div style={{fontSize:'9px',color:'var(--text4)',fontWeight:'700',marginBottom:'3px',textTransform:'uppercase',letterSpacing:'.05em'}}>Tasa cierre (%)</div>
-                      <input className="tool-input" type="number" placeholder="10" value={pipCierre} onChange={e=>setPipCierre(e.target.value)}/>
+                      <div style={{fontSize:'9px',color:'var(--text4)',fontWeight:'700',marginBottom:'3px',textTransform:'uppercase',letterSpacing:'.05em'}}>{c.f4Label}</div>
+                      <input className="tool-input" type="number" placeholder={c.f4P} value={pipCierre} onChange={e=>setPipCierre(e.target.value)}/>
                     </div>
                   </div>
-                  <div>
-                    <div style={{fontSize:'9px',color:'var(--text4)',fontWeight:'700',marginBottom:'3px',textTransform:'uppercase',letterSpacing:'.05em'}}>Meta mensual de comisiones (MXN, opcional)</div>
-                    <input className="tool-input" type="number" placeholder="ej. 150,000" value={pipMeta} onChange={e=>setPipMeta(e.target.value)}/>
-                  </div>
+                  {c.hasGoal && (
+                    <div>
+                      <div style={{fontSize:'9px',color:'var(--text4)',fontWeight:'700',marginBottom:'3px',textTransform:'uppercase',letterSpacing:'.05em'}}>{c.goalLabel}</div>
+                      <input className="tool-input" type="number" placeholder={c.goalP} value={pipMeta} onChange={e=>setPipMeta(e.target.value)}/>
+                    </div>
+                  )}
                 </div>
                 {hasData ? (
                   <div style={{background:'linear-gradient(135deg,rgba(99,102,241,.12),rgba(139,92,246,.08))',border:'1px solid rgba(99,102,241,.25)',borderRadius:'10px',padding:'14px'}}>
-                    <div style={{fontSize:'10px',color:'#a5b4fc',fontWeight:'700',marginBottom:'6px',textTransform:'uppercase',letterSpacing:'.06em'}}>Tu pipeline vale</div>
-                    <div style={{fontSize:'28px',fontWeight:'800',color:'#a5b4fc',lineHeight:'1',marginBottom:'2px'}}>{fmtCurrency(comisionTotal)}</div>
-                    <div style={{fontSize:'10px',color:'var(--text4)',marginBottom:'10px'}}>en comisiones potenciales · {cierresEsp.toFixed(1)} cierres esperados</div>
-                    {meta > 0 && (
+                    <div style={{fontSize:'10px',color:'#a5b4fc',fontWeight:'700',marginBottom:'6px',textTransform:'uppercase',letterSpacing:'.06em'}}>{c.resultTitle}</div>
+                    <div style={{fontSize:'28px',fontWeight:'800',color:'#a5b4fc',lineHeight:'1',marginBottom:'2px'}}>{fmtCurrency(result)}</div>
+                    <div style={{fontSize:'10px',color:'var(--text4)',marginBottom:'10px'}}>{c.resultUnit} · {c.sub(v1,v2,v3,v4)}</div>
+                    {goal > 0 && (
                       <>
                         <div style={{display:'flex',justifyContent:'space-between',fontSize:'9px',color:'var(--text4)',marginBottom:'4px'}}>
                           <span>Progreso hacia tu meta</span>
-                          <span style={{color:metaPct>=100?'#10b981':'#a5b4fc'}}>{metaPct.toFixed(0)}%</span>
+                          <span style={{color:goalPct>=100?'#10b981':'#a5b4fc'}}>{goalPct.toFixed(0)}%</span>
                         </div>
                         <div style={{height:'6px',background:'rgba(255,255,255,.07)',borderRadius:'3px',overflow:'hidden'}}>
-                          <div style={{height:'100%',width:`${metaPct}%`,background:metaPct>=100?'#10b981':'linear-gradient(90deg,#6366f1,#a5b4fc)',borderRadius:'3px',transition:'width .5s ease'}}></div>
+                          <div style={{height:'100%',width:`${goalPct}%`,background:goalPct>=100?'#10b981':'linear-gradient(90deg,#6366f1,#a5b4fc)',borderRadius:'3px',transition:'width .5s ease'}}></div>
                         </div>
-                        {metaPct >= 100 && <div style={{fontSize:'10px',color:'#10b981',marginTop:'6px',fontWeight:'700'}}>🎉 ¡Ya alcanzaste tu meta mensual!</div>}
+                        {goalPct >= 100 && <div style={{fontSize:'10px',color:'#10b981',marginTop:'6px',fontWeight:'700'}}>🎉 ¡Ya alcanzaste tu meta mensual!</div>}
                       </>
                     )}
                   </div>
@@ -582,7 +587,7 @@ export default function DashboardHome() {
                   </div>
                 </div>
                 <div style={{fontSize:'10px',color:'var(--text4)',marginBottom:'12px',lineHeight:'1.5',padding:'8px 0',borderBottom:'1px solid rgba(255,255,255,.05)'}}>
-                  Revisa qué tan completa está tu infraestructura de marketing inmobiliario.
+                  {nicheTool.diagDesc}
                 </div>
                 {/* Score gauge */}
                 <div style={{display:'flex',alignItems:'center',gap:'14px',marginBottom:'14px',padding:'12px',background:'rgba(255,255,255,.03)',borderRadius:'10px',border:'1px solid rgba(255,255,255,.06)'}}>
@@ -621,24 +626,11 @@ export default function DashboardHome() {
             )
           })()}
 
-          {/* ─── 3. ESTACIONALIDAD INMOBILIARIA ─── */}
+          {/* ─── 3. ESTACIONALIDAD (por nicho) ─── */}
           {(() => {
             const now = new Date()
-            const currentMonth = now.getMonth() // 0-11
-            const months = [
-              { m:'Ene', level:1, tip:'Post-navidad: CPL caro, bajo interés comprador. Ideal para construir audiencias baratas.', budget:'Reduce' },
-              { m:'Feb', level:2, tip:'Recuperación lenta. Vacaciones escolares impulsan búsqueda de propiedades vacacionales.', budget:'Normal' },
-              { m:'Mar', level:3, tip:'Pico primaveral. Familias planifican mudanza antes del fin de cursos. Escala presupuesto.', budget:'Escala' },
-              { m:'Abr', level:3, tip:'Semana Santa inspira compras vacacionales. Alta demanda en zonas turísticas.', budget:'Escala' },
-              { m:'May', level:3, tip:'Último mes antes del verano. Alta demanda residencial. Aumenta inversión.', budget:'Escala' },
-              { m:'Jun', level:2, tip:'Inicio de vacaciones. Demanda mixta. Mantén presupuesto pero varía creativos.', budget:'Normal' },
-              { m:'Jul', level:1, tip:'Pleno verano. Compradores de vacaciones, no residencial. Segmenta bien.', budget:'Reduce' },
-              { m:'Ago', level:2, tip:'Regreso a clases activa búsqueda de zonas residenciales con colegios cercanos.', budget:'Normal' },
-              { m:'Sep', level:2, tip:'Fiestas patrias. Sentimiento positivo. Recuperación de demanda residencial.', budget:'Normal' },
-              { m:'Oct', level:3, tip:'Segundo pico del año. Excelente momento para escalar campañas de leads.', budget:'Escala' },
-              { m:'Nov', level:1, tip:'Buen Fin distrae compradores. CPL sube 30-50%. Reduce budget y espera diciembre.', budget:'Pausa' },
-              { m:'Dic', level:1, tip:'Congelamiento total. Nadie compra casa en navidad. Usa para planificar enero.', budget:'Pausa' },
-            ]
+            const currentMonth = now.getMonth()
+            const months = nicheTool.seasonality
             const levelColor = l => l===3?'#10b981':l===2?'#fbbf24':'#f87171'
             const levelLabel = l => l===3?'Alto':l===2?'Medio':'Bajo'
             const budgetColor = b => b==='Escala'?'#10b981':b==='Normal'?'#a5b4fc':b==='Reduce'?'#fbbf24':'#f87171'
@@ -648,12 +640,12 @@ export default function DashboardHome() {
                 <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'4px'}}>
                   <div style={{width:'34px',height:'34px',borderRadius:'9px',background:'linear-gradient(135deg,rgba(251,191,36,.2),rgba(180,83,9,.15))',border:'1px solid rgba(251,191,36,.25)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'16px',flexShrink:0}}>📅</div>
                   <div>
-                    <div style={{fontSize:'13px',fontWeight:'700',color:'var(--text)'}}>Estacionalidad Inmobiliaria</div>
-                    <div style={{fontSize:'10px',color:'var(--text4)'}}>Cuándo invertir más (o menos) en México</div>
+                    <div style={{fontSize:'13px',fontWeight:'700',color:'var(--text)'}}>{nicheTool.seasonLabel}</div>
+                    <div style={{fontSize:'10px',color:'var(--text4)'}}>{nicheTool.seasonSubtitle}</div>
                   </div>
                 </div>
                 <div style={{fontSize:'10px',color:'var(--text4)',marginBottom:'12px',lineHeight:'1.5',padding:'8px 0',borderBottom:'1px solid rgba(255,255,255,.05)'}}>
-                  Ninguna plataforma te avisa sobre la estacionalidad del mercado inmobiliario. Kaan sí.
+                  {nicheTool.seasonDesc}
                 </div>
                 {/* Current month highlight */}
                 <div style={{background:`rgba(${cur.level===3?'16,185,129':cur.level===2?'251,191,36':'248,113,113'},.1)`,border:`1px solid rgba(${cur.level===3?'16,185,129':cur.level===2?'251,191,36':'248,113,113'},.25)`,borderRadius:'10px',padding:'12px',marginBottom:'12px'}}>
@@ -677,7 +669,7 @@ export default function DashboardHome() {
                   ))}
                 </div>
                 <div style={{display:'flex',gap:'10px',marginTop:'8px',justifyContent:'center'}}>
-                  {[{c:'#10b981',l:'Alta'},  {c:'#fbbf24',l:'Media'}, {c:'#f87171',l:'Baja'}].map(x=>(
+                  {[{c:'#10b981',l:'Alta'},{c:'#fbbf24',l:'Media'},{c:'#f87171',l:'Baja'}].map(x=>(
                     <div key={x.l} style={{display:'flex',alignItems:'center',gap:'4px'}}>
                       <div style={{width:'8px',height:'8px',borderRadius:'2px',background:x.c}}></div>
                       <span style={{fontSize:'9px',color:'var(--text4)'}}>{x.l}</span>
