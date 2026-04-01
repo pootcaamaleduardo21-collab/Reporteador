@@ -561,6 +561,7 @@ function ReportesInner() {
   const [loading, setLoading] = useState(false)
   const [loadingDemo, setLoadingDemo] = useState(false)
   const [fetchError, setFetchError] = useState(null)
+  const [demoError, setDemoError] = useState(null)
   const [accountName, setAccountName] = useState('')
   const [activeTab, setActiveTab] = useState('overview')
   const [platform, setPlatform] = useState(null)
@@ -744,6 +745,7 @@ function ReportesInner() {
   async function fetchDemographics() {
     setLoadingDemo(true)
     setDemographics(null)
+    setDemoError(null)
     try {
       const range = getDateRange(preset, customFrom, customTo) || getDateRange('this_month')
       if (!range||!range.since||!range.until) { setLoadingDemo(false); return }
@@ -762,32 +764,30 @@ function ReportesInner() {
 
       const [ageJ,genderJ,countryJ,deviceJ,platformJ,regionJ] = await Promise.all([ageR.json(),genderR.json(),countryR.json(),deviceR.json(),platformR.json(),regionR.json()])
 
-      // Detect token error from any response
+      console.log('[audiencia] ageJ:', ageJ, 'genderJ:', genderJ)
+
+      // Detect token/auth error (separate from main fetchError)
       const firstErr = ageJ.error || genderJ.error || countryJ.error
       if (firstErr) {
         const msg = firstErr.message || ''
-        if (msg.includes('190') || msg.includes('OAuthException') || firstErr.code === 190 || firstErr.type === 'OAuthException') {
-          setFetchError('token_expired')
-        } else {
-          setFetchError('general')
-        }
+        const isToken = msg.includes('190') || msg.includes('OAuthException') || firstErr.code === 190 || firstErr.type === 'OAuthException'
+        setDemoError(isToken ? 'token_expired' : firstErr.message || 'Error de API')
         setLoadingDemo(false)
         return
       }
 
-      const dem = {
+      setDemographics({
         age:(ageJ.data||[]).sort((a,b)=>parseFloat(b.spend)-parseFloat(a.spend)),
         gender:(genderJ.data||[]),
         country:(countryJ.data||[]).sort((a,b)=>parseFloat(b.spend)-parseFloat(a.spend)),
         device:(deviceJ.data||[]).sort((a,b)=>parseFloat(b.spend)-parseFloat(a.spend)),
         platform:(platformJ.data||[]).sort((a,b)=>parseFloat(b.spend)-parseFloat(a.spend)),
         region:(regionJ.data||[]).sort((a,b)=>parseFloat(b.spend)-parseFloat(a.spend)).slice(0,15),
-      }
-      // Only set demographics if we have at least some data
-      if (dem.age.length > 0 || dem.gender.length > 0 || dem.country.length > 0) {
-        setDemographics(dem)
-      }
-    } catch(e){console.error('fetchDemographics error:', e)}
+      })
+    } catch(e){
+      console.error('fetchDemographics error:', e)
+      setDemoError(e?.message || 'Error desconocido')
+    }
     setLoadingDemo(false)
   }
 
@@ -1286,14 +1286,16 @@ function ReportesInner() {
                 <div style={{textAlign:'center',padding:'60px 20px'}}>
                   <div style={{fontSize:'32px',marginBottom:'12px'}}>🗺</div>
                   <div style={{fontSize:'14px',fontWeight:'700',color:'var(--text)',marginBottom:'6px'}}>
-                    {fetchError === 'token_expired' ? 'Token de Meta expirado' : 'Sin datos de audiencia'}
+                    {demoError === 'token_expired' ? 'Token de Meta expirado' : 'Sin datos de audiencia'}
                   </div>
-                  <div style={{fontSize:'12px',color:'var(--text4)',marginBottom:fetchError?'16px':'0'}}>
-                    {fetchError === 'token_expired'
+                  <div style={{fontSize:'12px',color:'var(--text4)',marginBottom:demoError?'16px':'0'}}>
+                    {demoError === 'token_expired'
                       ? 'Tu sesión de Meta Ads venció. Reconecta la cuenta para ver los datos de audiencia.'
-                      : 'No hay datos demográficos para este período. Prueba un mes con actividad publicitaria (ej. "Este mes" o "Mes pasado").'}
+                      : demoError
+                        ? `Error: ${demoError}`
+                        : 'Meta no tiene suficientes datos demográficos para este período. Prueba con "Este mes" o "Mes pasado".'}
                   </div>
-                  {fetchError === 'token_expired' && (
+                  {demoError === 'token_expired' && (
                     <button onClick={() => window.location.href='/dashboard/meta-ads'}
                       style={{padding:'8px 20px',borderRadius:'7px',border:'1px solid rgba(248,113,113,.3)',background:'rgba(248,113,113,.12)',color:'#f87171',fontSize:'12px',fontWeight:'700',cursor:'pointer',fontFamily:'inherit'}}>
                       Reconectar Meta →
@@ -1301,7 +1303,14 @@ function ReportesInner() {
                   )}
                 </div>
               )}
-              {!loadingDemo&&demographics&&(
+              {!loadingDemo&&demographics&&demographics.age.length===0&&demographics.gender.length===0&&(
+                <div style={{textAlign:'center',padding:'60px 20px'}}>
+                  <div style={{fontSize:'32px',marginBottom:'12px'}}>🗺</div>
+                  <div style={{fontSize:'14px',fontWeight:'700',color:'var(--text)',marginBottom:'6px'}}>Sin datos demográficos</div>
+                  <div style={{fontSize:'12px',color:'var(--text4)'}}>Meta no tiene suficientes datos para mostrar el desglose de audiencia en este período. Prueba con "Este mes" o "Mes pasado".</div>
+                </div>
+              )}
+              {!loadingDemo&&demographics&&(demographics.age.length>0||demographics.gender.length>0)&&(
                 <>
                   <div style={{background:'rgba(59,130,246,.06)',border:'1px solid rgba(59,130,246,.15)',borderRadius:'8px',padding:'10px 16px',marginBottom:'20px',fontSize:'11px',color:'#60a5fa',display:'flex',alignItems:'center',gap:'8px'}}>
                     <span>🗺</span>
