@@ -1,9 +1,9 @@
 'use client'
-import React, { useEffect, useState, useRef } from 'react'
+import React, { Suspense, useEffect, useState, useRef } from 'react'
 import { usePlan } from '../../../lib/usePlan'
 import ProGate from '../../../components/ProGate'
 import PDFExportModal from '../../../components/PDFExportModal'
-import { useParams } from 'next/navigation'
+import { useParams, useSearchParams } from 'next/navigation'
 import { supabase } from '../../../lib/supabase'
 import { Line, Bar, Doughnut } from 'react-chartjs-2'
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, ArcElement, Title, Tooltip, Legend, Filler } from 'chart.js'
@@ -535,8 +535,9 @@ const MapChart = ({ countryData, regionData }) => {
 }
 
 
-export default function Reportes() {
+function ReportesInner() {
   const { accountId } = useParams()
+  const searchParams = useSearchParams()
   const { isPro, loading: planLoading } = usePlan()
   const [userId, setUserId] = useState(null)
   const [showPDFModal, setShowPDFModal] = useState(false)
@@ -565,15 +566,13 @@ export default function Reportes() {
   const [platform, setPlatform] = useState(null)
   const [googleAdsData, setGoogleAdsData] = useState(null)
 
-  // Sync tab from URL ?tab= param (client-side only to avoid useSearchParams Suspense requirement)
+  // Sync tab from URL ?tab= param
   useEffect(() => {
-    if (typeof window === 'undefined') return
-    const params = new URLSearchParams(window.location.search)
-    const tab = params.get('tab')
+    const tab = searchParams?.get('tab')
     if (tab && ['overview','campanas','conjuntos','anuncios','audiencia','google-ads','tiktok-ads'].includes(tab)) {
       setActiveTab(tab)
     }
-  }, [])
+  }, [searchParams])
   const [comparing, setComparing] = useState(false)
   const reportRef = useRef(null)
 
@@ -763,15 +762,32 @@ export default function Reportes() {
 
       const [ageJ,genderJ,countryJ,deviceJ,platformJ,regionJ] = await Promise.all([ageR.json(),genderR.json(),countryR.json(),deviceR.json(),platformR.json(),regionR.json()])
 
-      setDemographics({
+      // Detect token error from any response
+      const firstErr = ageJ.error || genderJ.error || countryJ.error
+      if (firstErr) {
+        const msg = firstErr.message || ''
+        if (msg.includes('190') || msg.includes('OAuthException') || firstErr.code === 190 || firstErr.type === 'OAuthException') {
+          setFetchError('token_expired')
+        } else {
+          setFetchError('general')
+        }
+        setLoadingDemo(false)
+        return
+      }
+
+      const dem = {
         age:(ageJ.data||[]).sort((a,b)=>parseFloat(b.spend)-parseFloat(a.spend)),
         gender:(genderJ.data||[]),
         country:(countryJ.data||[]).sort((a,b)=>parseFloat(b.spend)-parseFloat(a.spend)),
         device:(deviceJ.data||[]).sort((a,b)=>parseFloat(b.spend)-parseFloat(a.spend)),
         platform:(platformJ.data||[]).sort((a,b)=>parseFloat(b.spend)-parseFloat(a.spend)),
         region:(regionJ.data||[]).sort((a,b)=>parseFloat(b.spend)-parseFloat(a.spend)).slice(0,15),
-      })
-    } catch(e){console.error(e)}
+      }
+      // Only set demographics if we have at least some data
+      if (dem.age.length > 0 || dem.gender.length > 0 || dem.country.length > 0) {
+        setDemographics(dem)
+      }
+    } catch(e){console.error('fetchDemographics error:', e)}
     setLoadingDemo(false)
   }
 
@@ -1269,8 +1285,20 @@ export default function Reportes() {
               {!loadingDemo&&!demographics&&(
                 <div style={{textAlign:'center',padding:'60px 20px'}}>
                   <div style={{fontSize:'32px',marginBottom:'12px'}}>🗺</div>
-                  <div style={{fontSize:'14px',fontWeight:'700',color:'var(--text)',marginBottom:'6px'}}>Sin datos de audiencia</div>
-                  <div style={{fontSize:'12px',color:'var(--text4)'}}>Prueba un período con más gasto o selecciona un mes con actividad</div>
+                  <div style={{fontSize:'14px',fontWeight:'700',color:'var(--text)',marginBottom:'6px'}}>
+                    {fetchError === 'token_expired' ? 'Token de Meta expirado' : 'Sin datos de audiencia'}
+                  </div>
+                  <div style={{fontSize:'12px',color:'var(--text4)',marginBottom:fetchError?'16px':'0'}}>
+                    {fetchError === 'token_expired'
+                      ? 'Tu sesión de Meta Ads venció. Reconecta la cuenta para ver los datos de audiencia.'
+                      : 'No hay datos demográficos para este período. Prueba un mes con actividad publicitaria (ej. "Este mes" o "Mes pasado").'}
+                  </div>
+                  {fetchError === 'token_expired' && (
+                    <button onClick={() => window.location.href='/dashboard/meta-ads'}
+                      style={{padding:'8px 20px',borderRadius:'7px',border:'1px solid rgba(248,113,113,.3)',background:'rgba(248,113,113,.12)',color:'#f87171',fontSize:'12px',fontWeight:'700',cursor:'pointer',fontFamily:'inherit'}}>
+                      Reconectar Meta →
+                    </button>
+                  )}
                 </div>
               )}
               {!loadingDemo&&demographics&&(
@@ -1443,5 +1471,13 @@ export default function Reportes() {
         isPro={isPro}
       />
     </div>
+  )
+}
+
+export default function Reportes() {
+  return (
+    <Suspense>
+      <ReportesInner />
+    </Suspense>
   )
 }
