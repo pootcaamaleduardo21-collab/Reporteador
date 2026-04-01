@@ -1064,7 +1064,7 @@ function ReportesInner() {
                 </div>
               )}
 
-              {platform === 'meta_ads' && overview.vid25>0&&(
+              {platform === 'meta_ads' && overview && overview.vid25>0&&(
                 <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'10px',padding:'20px',marginBottom:'24px'}}>
                   <div style={{fontSize:'11px',fontWeight:'700',color:'var(--text4)',marginBottom:'14px'}}>Embudo de video completo</div>
                   <div style={{display:'flex',gap:'8px',alignItems:'flex-end',height:'140px',paddingBottom:'24px'}}>
