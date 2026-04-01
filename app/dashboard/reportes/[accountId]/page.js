@@ -1107,10 +1107,44 @@ function ReportesInner() {
                 <span>Cada fila es una campaña. Haz clic en cualquiera para ver su diagnóstico y recomendaciones personalizadas.</span>
               </div>
               {campaigns.length>1&&(
-                <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'10px',padding:'20px',marginBottom:'16px'}}>
-                  <div style={{fontSize:'11px',fontWeight:'700',color:'var(--text4)',marginBottom:'16px'}}>Comparativa de CTR por campaña</div>
-                  <div style={{height:'160px'}}>
-                    <Bar data={{labels:campaigns.map(c=>c.name.length>22?c.name.slice(0,22)+'...':c.name),datasets:[{label:'CTR %',data:campaigns.map(c=>+c.ctr.toFixed(2)),backgroundColor:campaigns.map((_,i)=>COLORS[i%COLORS.length]+'80'),borderColor:campaigns.map((_,i)=>COLORS[i%COLORS.length]),borderWidth:1,borderRadius:4}]}} options={chartOpts()}/>
+                <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(340px,1fr))',gap:'12px',marginBottom:'16px'}}>
+                  <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'10px',padding:'20px'}}>
+                    <div style={{fontSize:'11px',fontWeight:'700',color:'var(--text4)',marginBottom:'14px'}}>💰 Gasto por campaña</div>
+                    <div style={{height:'180px'}}>
+                      <Bar data={{labels:campaigns.map(c=>c.name.length>20?c.name.slice(0,20)+'…':c.name),datasets:[{label:'Gastado ($)',data:campaigns.map(c=>+c.spend.toFixed(2)),backgroundColor:campaigns.map((_,i)=>COLORS[i%COLORS.length]+'80'),borderColor:campaigns.map((_,i)=>COLORS[i%COLORS.length]),borderWidth:1,borderRadius:4}]}} options={chartOpts()}/>
+                    </div>
+                  </div>
+                  <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'10px',padding:'20px'}}>
+                    <div style={{fontSize:'11px',fontWeight:'700',color:'var(--text4)',marginBottom:'14px'}}>🎯 Resultados por campaña</div>
+                    <div style={{height:'180px'}}>
+                      <Bar data={{labels:campaigns.map(c=>c.name.length>20?c.name.slice(0,20)+'…':c.name),datasets:[{label:'Resultados',data:campaigns.map(c=>c.results),backgroundColor:campaigns.map((_,i)=>COLORS[i%COLORS.length]+'80'),borderColor:campaigns.map((_,i)=>COLORS[i%COLORS.length]),borderWidth:1,borderRadius:4}]}} options={chartOpts()}/>
+                    </div>
+                  </div>
+                  <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'10px',padding:'20px'}}>
+                    <div style={{fontSize:'11px',fontWeight:'700',color:'var(--text4)',marginBottom:'14px'}}>📈 CTR % por campaña</div>
+                    <div style={{height:'180px'}}>
+                      <Bar data={{labels:campaigns.map(c=>c.name.length>20?c.name.slice(0,20)+'…':c.name),datasets:[{label:'CTR %',data:campaigns.map(c=>+c.ctr.toFixed(2)),backgroundColor:campaigns.map((_,i)=>COLORS[i%COLORS.length]+'80'),borderColor:campaigns.map((_,i)=>COLORS[i%COLORS.length]),borderWidth:1,borderRadius:4}]}} options={chartOpts()}/>
+                    </div>
+                  </div>
+                  <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'10px',padding:'20px'}}>
+                    <div style={{fontSize:'11px',fontWeight:'700',color:'var(--text4)',marginBottom:'14px'}}>📉 CPM por campaña</div>
+                    <div style={{height:'180px'}}>
+                      <Bar data={{labels:campaigns.map(c=>c.name.length>20?c.name.slice(0,20)+'…':c.name),datasets:[{label:'CPM ($)',data:campaigns.map(c=>+c.cpm.toFixed(2)),backgroundColor:campaigns.map((_,i)=>COLORS[i%COLORS.length]+'80'),borderColor:campaigns.map((_,i)=>COLORS[i%COLORS.length]),borderWidth:1,borderRadius:4}]}} options={chartOpts()}/>
+                    </div>
+                  </div>
+                  {campaigns.some(c=>c.cpr>0)&&(
+                    <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'10px',padding:'20px'}}>
+                      <div style={{fontSize:'11px',fontWeight:'700',color:'var(--text4)',marginBottom:'14px'}}>💡 Costo por resultado por campaña</div>
+                      <div style={{height:'180px'}}>
+                        <Bar data={{labels:campaigns.filter(c=>c.cpr>0).map(c=>c.name.length>20?c.name.slice(0,20)+'…':c.name),datasets:[{label:'C/Resultado ($)',data:campaigns.filter(c=>c.cpr>0).map(c=>+c.cpr.toFixed(2)),backgroundColor:campaigns.filter(c=>c.cpr>0).map((_,i)=>COLORS[i%COLORS.length]+'80'),borderColor:campaigns.filter(c=>c.cpr>0).map((_,i)=>COLORS[i%COLORS.length]),borderWidth:1,borderRadius:4}]}} options={chartOpts()}/>
+                      </div>
+                    </div>
+                  )}
+                  <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'10px',padding:'20px'}}>
+                    <div style={{fontSize:'11px',fontWeight:'700',color:'var(--text4)',marginBottom:'14px'}}>🔄 Frecuencia por campaña</div>
+                    <div style={{height:'180px'}}>
+                      <Bar data={{labels:campaigns.map(c=>c.name.length>20?c.name.slice(0,20)+'…':c.name),datasets:[{label:'Frecuencia',data:campaigns.map(c=>+c.frequency.toFixed(2)),backgroundColor:campaigns.map(c=>c.frequency>3.5?'rgba(248,113,113,.5)':c.frequency>2.5?'rgba(252,211,77,.5)':'rgba(110,231,183,.5)'),borderColor:campaigns.map(c=>c.frequency>3.5?'#f87171':c.frequency>2.5?'#fcd34d':'#6ee7b7'),borderWidth:1,borderRadius:4}]}} options={chartOpts()}/>
+                    </div>
                   </div>
                 </div>
               )}
@@ -1133,10 +1167,44 @@ function ReportesInner() {
                 <span>Los conjuntos definen a quién se muestra tu anuncio (segmentación, presupuesto y ubicación). Haz clic para ver diagnóstico.</span>
               </div>
               {adsets.length>1&&(
-                <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'10px',padding:'20px',marginBottom:'16px'}}>
-                  <div style={{fontSize:'11px',fontWeight:'700',color:'var(--text4)',marginBottom:'16px'}}>Gasto por conjunto de anuncios</div>
-                  <div style={{height:'160px'}}>
-                    <Bar data={{labels:adsets.map(a=>a.name.length>22?a.name.slice(0,22)+'...':a.name),datasets:[{label:'Gastado ($)',data:adsets.map(a=>+a.spend.toFixed(2)),backgroundColor:adsets.map((_,i)=>COLORS[i%COLORS.length]+'80'),borderColor:adsets.map((_,i)=>COLORS[i%COLORS.length]),borderWidth:1,borderRadius:4}]}} options={chartOpts()}/>
+                <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(340px,1fr))',gap:'12px',marginBottom:'16px'}}>
+                  <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'10px',padding:'20px'}}>
+                    <div style={{fontSize:'11px',fontWeight:'700',color:'var(--text4)',marginBottom:'14px'}}>💰 Gasto por conjunto</div>
+                    <div style={{height:'180px'}}>
+                      <Bar data={{labels:adsets.map(a=>a.name.length>20?a.name.slice(0,20)+'…':a.name),datasets:[{label:'Gastado ($)',data:adsets.map(a=>+a.spend.toFixed(2)),backgroundColor:adsets.map((_,i)=>COLORS[i%COLORS.length]+'80'),borderColor:adsets.map((_,i)=>COLORS[i%COLORS.length]),borderWidth:1,borderRadius:4}]}} options={chartOpts()}/>
+                    </div>
+                  </div>
+                  <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'10px',padding:'20px'}}>
+                    <div style={{fontSize:'11px',fontWeight:'700',color:'var(--text4)',marginBottom:'14px'}}>🎯 Resultados por conjunto</div>
+                    <div style={{height:'180px'}}>
+                      <Bar data={{labels:adsets.map(a=>a.name.length>20?a.name.slice(0,20)+'…':a.name),datasets:[{label:'Resultados',data:adsets.map(a=>a.results),backgroundColor:adsets.map((_,i)=>COLORS[i%COLORS.length]+'80'),borderColor:adsets.map((_,i)=>COLORS[i%COLORS.length]),borderWidth:1,borderRadius:4}]}} options={chartOpts()}/>
+                    </div>
+                  </div>
+                  <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'10px',padding:'20px'}}>
+                    <div style={{fontSize:'11px',fontWeight:'700',color:'var(--text4)',marginBottom:'14px'}}>📈 CTR % por conjunto</div>
+                    <div style={{height:'180px'}}>
+                      <Bar data={{labels:adsets.map(a=>a.name.length>20?a.name.slice(0,20)+'…':a.name),datasets:[{label:'CTR %',data:adsets.map(a=>+a.ctr.toFixed(2)),backgroundColor:adsets.map((_,i)=>COLORS[i%COLORS.length]+'80'),borderColor:adsets.map((_,i)=>COLORS[i%COLORS.length]),borderWidth:1,borderRadius:4}]}} options={chartOpts()}/>
+                    </div>
+                  </div>
+                  <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'10px',padding:'20px'}}>
+                    <div style={{fontSize:'11px',fontWeight:'700',color:'var(--text4)',marginBottom:'14px'}}>📉 CPM por conjunto</div>
+                    <div style={{height:'180px'}}>
+                      <Bar data={{labels:adsets.map(a=>a.name.length>20?a.name.slice(0,20)+'…':a.name),datasets:[{label:'CPM ($)',data:adsets.map(a=>+a.cpm.toFixed(2)),backgroundColor:adsets.map((_,i)=>COLORS[i%COLORS.length]+'80'),borderColor:adsets.map((_,i)=>COLORS[i%COLORS.length]),borderWidth:1,borderRadius:4}]}} options={chartOpts()}/>
+                    </div>
+                  </div>
+                  {adsets.some(a=>a.cpr>0)&&(
+                    <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'10px',padding:'20px'}}>
+                      <div style={{fontSize:'11px',fontWeight:'700',color:'var(--text4)',marginBottom:'14px'}}>💡 Costo por resultado por conjunto</div>
+                      <div style={{height:'180px'}}>
+                        <Bar data={{labels:adsets.filter(a=>a.cpr>0).map(a=>a.name.length>20?a.name.slice(0,20)+'…':a.name),datasets:[{label:'C/Resultado ($)',data:adsets.filter(a=>a.cpr>0).map(a=>+a.cpr.toFixed(2)),backgroundColor:adsets.filter(a=>a.cpr>0).map((_,i)=>COLORS[i%COLORS.length]+'80'),borderColor:adsets.filter(a=>a.cpr>0).map((_,i)=>COLORS[i%COLORS.length]),borderWidth:1,borderRadius:4}]}} options={chartOpts()}/>
+                      </div>
+                    </div>
+                  )}
+                  <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'10px',padding:'20px'}}>
+                    <div style={{fontSize:'11px',fontWeight:'700',color:'var(--text4)',marginBottom:'14px'}}>🔄 Frecuencia por conjunto</div>
+                    <div style={{height:'180px'}}>
+                      <Bar data={{labels:adsets.map(a=>a.name.length>20?a.name.slice(0,20)+'…':a.name),datasets:[{label:'Frecuencia',data:adsets.map(a=>+a.frequency.toFixed(2)),backgroundColor:adsets.map(a=>a.frequency>3.5?'rgba(248,113,113,.5)':a.frequency>2.5?'rgba(252,211,77,.5)':'rgba(110,231,183,.5)'),borderColor:adsets.map(a=>a.frequency>3.5?'#f87171':a.frequency>2.5?'#fcd34d':'#6ee7b7'),borderWidth:1,borderRadius:4}]}} options={chartOpts()}/>
+                    </div>
                   </div>
                 </div>
               )}
@@ -1158,6 +1226,62 @@ function ReportesInner() {
                 <span>🖼</span>
                 <span>Cada anuncio tiene un <strong>Score del 0 al 100</strong> — ordenados del mejor al peor. Haz clic para ver qué mejorar.</span>
               </div>
+              {ads.length>1&&(()=>{
+                const top10 = [...ads].sort((a,b)=>qualityScore(b)-qualityScore(a)).slice(0,10)
+                const top10Spend = [...ads].sort((a,b)=>b.spend-a.spend).slice(0,10)
+                return (
+                  <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(340px,1fr))',gap:'12px',marginBottom:'16px'}}>
+                    <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'10px',padding:'20px'}}>
+                      <div style={{fontSize:'11px',fontWeight:'700',color:'var(--text4)',marginBottom:'4px'}}>⭐ Score por anuncio <span style={{fontWeight:'400',color:'#555'}}>(top 10)</span></div>
+                      <div style={{fontSize:'9px',color:'#444',fontFamily:'monospace',marginBottom:'12px'}}>Mayor score = mejor rendimiento combinado</div>
+                      <div style={{height:'200px'}}>
+                        <Bar data={{labels:top10.map(a=>a.name.length>18?a.name.slice(0,18)+'…':a.name),datasets:[{label:'Score /100',data:top10.map(a=>qualityScore(a)),backgroundColor:top10.map(a=>{const q=qualityScore(a);return q>=75?'rgba(110,231,183,.5)':q>=50?'rgba(252,211,77,.5)':'rgba(248,113,113,.5)'}),borderColor:top10.map(a=>{const q=qualityScore(a);return q>=75?'#6ee7b7':q>=50?'#fcd34d':'#f87171'}),borderWidth:1,borderRadius:4}]}} options={chartOpts()}/>
+                      </div>
+                    </div>
+                    <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'10px',padding:'20px'}}>
+                      <div style={{fontSize:'11px',fontWeight:'700',color:'var(--text4)',marginBottom:'4px'}}>💰 Gasto por anuncio <span style={{fontWeight:'400',color:'#555'}}>(top 10)</span></div>
+                      <div style={{fontSize:'9px',color:'#444',fontFamily:'monospace',marginBottom:'12px'}}>Los anuncios que más presupuesto consumieron</div>
+                      <div style={{height:'200px'}}>
+                        <Bar data={{labels:top10Spend.map(a=>a.name.length>18?a.name.slice(0,18)+'…':a.name),datasets:[{label:'Gastado ($)',data:top10Spend.map(a=>+a.spend.toFixed(2)),backgroundColor:top10Spend.map((_,i)=>COLORS[i%COLORS.length]+'80'),borderColor:top10Spend.map((_,i)=>COLORS[i%COLORS.length]),borderWidth:1,borderRadius:4}]}} options={chartOpts()}/>
+                      </div>
+                    </div>
+                    <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'10px',padding:'20px'}}>
+                      <div style={{fontSize:'11px',fontWeight:'700',color:'var(--text4)',marginBottom:'4px'}}>📈 CTR % por anuncio <span style={{fontWeight:'400',color:'#555'}}>(top 10)</span></div>
+                      <div style={{fontSize:'9px',color:'#444',fontFamily:'monospace',marginBottom:'12px'}}>Los creativos que más clics generaron</div>
+                      <div style={{height:'200px'}}>
+                        <Bar data={{labels:[...ads].sort((a,b)=>b.ctr-a.ctr).slice(0,10).map(a=>a.name.length>18?a.name.slice(0,18)+'…':a.name),datasets:[{label:'CTR %',data:[...ads].sort((a,b)=>b.ctr-a.ctr).slice(0,10).map(a=>+a.ctr.toFixed(2)),backgroundColor:[...ads].sort((a,b)=>b.ctr-a.ctr).slice(0,10).map((_,i)=>COLORS[i%COLORS.length]+'80'),borderColor:[...ads].sort((a,b)=>b.ctr-a.ctr).slice(0,10).map((_,i)=>COLORS[i%COLORS.length]),borderWidth:1,borderRadius:4}]}} options={chartOpts()}/>
+                      </div>
+                    </div>
+                    {ads.some(a=>a.results>0)&&(
+                      <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'10px',padding:'20px'}}>
+                        <div style={{fontSize:'11px',fontWeight:'700',color:'var(--text4)',marginBottom:'4px'}}>🎯 Resultados por anuncio <span style={{fontWeight:'400',color:'#555'}}>(top 10)</span></div>
+                        <div style={{fontSize:'9px',color:'#444',fontFamily:'monospace',marginBottom:'12px'}}>Los creativos que más conversiones generaron</div>
+                        <div style={{height:'200px'}}>
+                          <Bar data={{labels:[...ads].sort((a,b)=>b.results-a.results).slice(0,10).map(a=>a.name.length>18?a.name.slice(0,18)+'…':a.name),datasets:[{label:'Resultados',data:[...ads].sort((a,b)=>b.results-a.results).slice(0,10).map(a=>a.results),backgroundColor:[...ads].sort((a,b)=>b.results-a.results).slice(0,10).map((_,i)=>COLORS[i%COLORS.length]+'80'),borderColor:[...ads].sort((a,b)=>b.results-a.results).slice(0,10).map((_,i)=>COLORS[i%COLORS.length]),borderWidth:1,borderRadius:4}]}} options={chartOpts()}/>
+                        </div>
+                      </div>
+                    )}
+                    {ads.some(a=>a.cpr>0)&&(
+                      <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'10px',padding:'20px'}}>
+                        <div style={{fontSize:'11px',fontWeight:'700',color:'var(--text4)',marginBottom:'4px'}}>💡 Costo/resultado por anuncio <span style={{fontWeight:'400',color:'#555'}}>(más eficientes)</span></div>
+                        <div style={{fontSize:'9px',color:'#444',fontFamily:'monospace',marginBottom:'12px'}}>Menor costo por resultado = más eficiente</div>
+                        <div style={{height:'200px'}}>
+                          <Bar data={{labels:[...ads].filter(a=>a.cpr>0).sort((a,b)=>a.cpr-b.cpr).slice(0,10).map(a=>a.name.length>18?a.name.slice(0,18)+'…':a.name),datasets:[{label:'C/Resultado ($)',data:[...ads].filter(a=>a.cpr>0).sort((a,b)=>a.cpr-b.cpr).slice(0,10).map(a=>+a.cpr.toFixed(2)),backgroundColor:[...ads].filter(a=>a.cpr>0).sort((a,b)=>a.cpr-b.cpr).slice(0,10).map((_,i)=>COLORS[i%COLORS.length]+'80'),borderColor:[...ads].filter(a=>a.cpr>0).sort((a,b)=>a.cpr-b.cpr).slice(0,10).map((_,i)=>COLORS[i%COLORS.length]),borderWidth:1,borderRadius:4}]}} options={chartOpts()}/>
+                        </div>
+                      </div>
+                    )}
+                    {ads.some(a=>a.hookRate>0)&&(
+                      <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'10px',padding:'20px'}}>
+                        <div style={{fontSize:'11px',fontWeight:'700',color:'var(--text4)',marginBottom:'4px'}}>🎬 Hook Rate por anuncio <span style={{fontWeight:'400',color:'#555'}}>(videos)</span></div>
+                        <div style={{fontSize:'9px',color:'#444',fontFamily:'monospace',marginBottom:'12px'}}>Qué % de personas vio los primeros 3 segundos</div>
+                        <div style={{height:'200px'}}>
+                          <Bar data={{labels:[...ads].filter(a=>a.hookRate>0).sort((a,b)=>b.hookRate-a.hookRate).slice(0,10).map(a=>a.name.length>18?a.name.slice(0,18)+'…':a.name),datasets:[{label:'Hook Rate %',data:[...ads].filter(a=>a.hookRate>0).sort((a,b)=>b.hookRate-a.hookRate).slice(0,10).map(a=>+a.hookRate.toFixed(1)),backgroundColor:[...ads].filter(a=>a.hookRate>0).sort((a,b)=>b.hookRate-a.hookRate).slice(0,10).map(a=>a.hookRate>=25?'rgba(110,231,183,.5)':a.hookRate>=15?'rgba(252,211,77,.5)':'rgba(248,113,113,.5)'),borderColor:[...ads].filter(a=>a.hookRate>0).sort((a,b)=>b.hookRate-a.hookRate).slice(0,10).map(a=>a.hookRate>=25?'#6ee7b7':a.hookRate>=15?'#fcd34d':'#f87171'),borderWidth:1,borderRadius:4}]}} options={chartOpts()}/>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )
+              })()}
               {[...ads].sort((a,b)=>qualityScore(b)-qualityScore(a)).map((a,i)=><AdScoreCard key={i} ad={a}/>)}
               {ads.length===0&&(
                 <div style={{textAlign:'center',padding:'60px 20px',color:'var(--text4)'}}>
