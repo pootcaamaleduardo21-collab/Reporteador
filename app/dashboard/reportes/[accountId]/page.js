@@ -3,7 +3,7 @@ import React, { useEffect, useState, useRef } from 'react'
 import { usePlan } from '../../../lib/usePlan'
 import ProGate from '../../../components/ProGate'
 import PDFExportModal from '../../../components/PDFExportModal'
-import { useParams, useSearchParams } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import { supabase } from '../../../lib/supabase'
 import { Line, Bar, Doughnut } from 'react-chartjs-2'
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, ArcElement, Title, Tooltip, Legend, Filler } from 'chart.js'
@@ -537,7 +537,6 @@ const MapChart = ({ countryData, regionData }) => {
 
 export default function Reportes() {
   const { accountId } = useParams()
-  const searchParams = useSearchParams()
   const { isPro, loading: planLoading } = usePlan()
   const [userId, setUserId] = useState(null)
   const [showPDFModal, setShowPDFModal] = useState(false)
@@ -560,43 +559,49 @@ export default function Reportes() {
   const [demographics, setDemographics] = useState(null)
   const [loading, setLoading] = useState(false)
   const [loadingDemo, setLoadingDemo] = useState(false)
+  const [fetchError, setFetchError] = useState(null)
   const [accountName, setAccountName] = useState('')
   const [activeTab, setActiveTab] = useState('overview')
   const [platform, setPlatform] = useState(null)
   const [googleAdsData, setGoogleAdsData] = useState(null)
 
-  // Sync tab from URL ?tab= param
+  // Sync tab from URL ?tab= param (client-side only to avoid useSearchParams Suspense requirement)
   useEffect(() => {
-    const tab = searchParams?.get('tab')
+    if (typeof window === 'undefined') return
+    const params = new URLSearchParams(window.location.search)
+    const tab = params.get('tab')
     if (tab && ['overview','campanas','conjuntos','anuncios','audiencia','google-ads','tiktok-ads'].includes(tab)) {
       setActiveTab(tab)
     }
-  }, [searchParams])
+  }, [])
   const [comparing, setComparing] = useState(false)
   const reportRef = useRef(null)
 
   useEffect(() => {
     async function init() {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { window.location.href = '/'; return }
-      setUserId(user.id)
-      const { data: acc } = await supabase.from('ad_accounts').select('account_name,platform').eq('account_id', accountId).single()
-      if (!acc) { window.location.href = '/dashboard/meta-ads'; return }
-      setAccountName(acc.account_name || accountId)
-      setPlatform(acc.platform || 'meta_ads')
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) { window.location.href = '/'; return }
+        setUserId(user.id)
+        const { data: acc } = await supabase.from('ad_accounts').select('account_name,platform').eq('account_id', accountId).single()
+        if (!acc) { window.location.href = '/dashboard/meta-ads'; return }
+        setAccountName(acc.account_name || accountId)
+        setPlatform(acc.platform || 'meta_ads')
 
-      // Fetch appropriate token based on platform
-      if (acc.platform === 'google_ads') {
-        // For Google Ads, we need to extract customer_id from accountId
-        const customerId = accountId.replace('gads_', '')
-        const { data: tokenRow } = await supabase.from('google_ads_tokens_v2').select('access_token').eq('user_id', user.id).eq('customer_id', customerId).single()
-        if (!tokenRow) { window.location.href = '/dashboard'; return }
-        setToken(tokenRow.access_token)
-      } else {
-        // For Meta Ads
-        const { data: tokenRow } = await supabase.from('meta_tokens').select('access_token').eq('user_id', user.id).single()
-        if (!tokenRow) { window.location.href = '/dashboard'; return }
-        setToken(tokenRow.access_token)
+        // Fetch appropriate token based on platform
+        if (acc.platform === 'google_ads') {
+          const customerId = accountId.replace('gads_', '')
+          const { data: tokenRow } = await supabase.from('google_ads_tokens_v2').select('access_token').eq('user_id', user.id).eq('customer_id', customerId).single()
+          if (!tokenRow) { window.location.href = '/dashboard'; return }
+          setToken(tokenRow.access_token)
+        } else {
+          const { data: tokenRow } = await supabase.from('meta_tokens').select('access_token').eq('user_id', user.id).single()
+          if (!tokenRow) { window.location.href = '/dashboard'; return }
+          setToken(tokenRow.access_token)
+        }
+      } catch(e) {
+        console.error('init error:', e)
+        setFetchError('general')
       }
     }
     init()
@@ -618,6 +623,7 @@ export default function Reportes() {
 
   async function fetchData() {
     setLoading(true)
+    setFetchError(null)
     setOverview(null); setPrevOverview(null); setDaily([]); setCampaigns([]); setAdsets([]); setAds([])
     try {
       const range = getDateRange(preset, customFrom, customTo)
@@ -693,7 +699,15 @@ export default function Reportes() {
       setCampaigns((campJ.data||[]).map(d=>({name:d.campaign_name,objective:d.objective,...parseRow(d)})))
       setAdsets((adsetJ.data||[]).map(d=>({name:d.adset_name,campaign:d.campaign_name,...parseRow(d)})))
       setAds((adJ.data||[]).map(d=>({name:d.ad_name,adset:d.adset_name,campaign:d.campaign_name,status:adStatusMap[d.ad_name]||'UNKNOWN',...parseRow(d)})))
-    } catch(e){console.error(e)}
+    } catch(e){
+      console.error(e)
+      const msg = e?.message || String(e)
+      if (msg.includes('190') || msg.includes('OAuthException') || msg.includes('token')) {
+        setFetchError('token_expired')
+      } else {
+        setFetchError('general')
+      }
+    }
     setLoading(false)
   }
 
@@ -887,6 +901,24 @@ export default function Reportes() {
 
           {activeTab==='overview'&&(
             <>
+              {fetchError && (
+                <div style={{background:'rgba(248,113,113,.08)',border:'1px solid rgba(248,113,113,.2)',borderRadius:'10px',padding:'20px 24px',marginBottom:'24px',display:'flex',alignItems:'center',justifyContent:'space-between',gap:'16px'}}>
+                  <div>
+                    <div style={{fontSize:'13px',fontWeight:'700',color:'#f87171',marginBottom:'4px'}}>
+                      {fetchError === 'token_expired' ? '🔑 Sesión de Meta Ads vencida' : '⚠ Error al cargar los datos'}
+                    </div>
+                    <div style={{fontSize:'11px',color:'#888',lineHeight:'1.6'}}>
+                      {fetchError === 'token_expired'
+                        ? 'Tu token de acceso de Meta Ads expiró. Reconecta tu cuenta para continuar viendo los reportes.'
+                        : 'No se pudieron cargar los datos. Verifica tu conexión o intenta de nuevo.'}
+                    </div>
+                  </div>
+                  <button onClick={() => window.location.href='/dashboard/meta-ads'}
+                    style={{padding:'8px 16px',borderRadius:'7px',border:'1px solid rgba(248,113,113,.3)',background:'rgba(248,113,113,.12)',color:'#f87171',fontSize:'11px',fontWeight:'700',cursor:'pointer',fontFamily:'inherit',flexShrink:0}}>
+                    {fetchError === 'token_expired' ? 'Reconectar Meta →' : 'Reintentar'}
+                  </button>
+                </div>
+              )}
               {platform === 'google_ads' && googleAdsData ? (
                 <>
                   <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(155px,1fr))',gap:'10px',marginBottom:'24px'}}>

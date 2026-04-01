@@ -1,19 +1,26 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { supabase } from '../../lib/supabase'
 import { usePlan } from '../../lib/usePlan'
 
 export default function PlatformsPage() {
   const router = useRouter()
-  const searchParams = useSearchParams()
   const [user, setUser] = useState(null)
   const [accounts, setAccounts] = useState([])
   const [loading, setLoading] = useState(true)
   const [disconnecting, setDisconnecting] = useState(null)
-  const successMsg = searchParams?.get('success')
-  const errorMsg = searchParams?.get('error')
+  const [successMsg, setSuccessMsg] = useState(null)
+  const [errorMsg, setErrorMsg] = useState(null)
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search)
+      setSuccessMsg(params.get('success'))
+      setErrorMsg(params.get('error'))
+    }
+  }, [])
   const { platformLimit, plan } = usePlan()
 
   const platforms = [
