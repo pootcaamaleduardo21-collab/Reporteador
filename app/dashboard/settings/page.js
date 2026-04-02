@@ -11,9 +11,10 @@ export default function SettingsPage() {
   const [currency, setCurrency] = useState('MXN $')
   const [defaultPeriod, setDefaultPeriod] = useState('Este mes')
   const [niche, setNiche] = useState(DEFAULT_NICHE)
+  const [agencyLink, setAgencyLink] = useState('')
   const [saved, setSaved] = useState(false)
   const [cancelLoading, setCancelLoading] = useState(false)
-  const { plan, isPro } = usePlan()
+  const { plan, isPro, isAgency } = usePlan()
 
   useEffect(() => {
     async function init() {
@@ -31,6 +32,7 @@ export default function SettingsPage() {
       if (prefs.currency) setCurrency(prefs.currency)
       if (prefs.defaultPeriod) setDefaultPeriod(prefs.defaultPeriod)
       if (prefs.niche) setNiche(prefs.niche)
+      if (prefs.agencyLink) setAgencyLink(prefs.agencyLink)
     } catch(e) {}
   }, [])
 
@@ -45,7 +47,7 @@ export default function SettingsPage() {
 
   function savePrefs() {
     try {
-      localStorage.setItem('kaan_prefs', JSON.stringify({ theme, language, currency, defaultPeriod, niche }))
+      localStorage.setItem('kaan_prefs', JSON.stringify({ theme, language, currency, defaultPeriod, niche, agencyLink }))
     } catch(e) {}
     if (theme === 'Claro') { document.documentElement.setAttribute('data-theme', 'light') } else { document.documentElement.removeAttribute('data-theme') }
     setSaved(true)
@@ -268,6 +270,35 @@ export default function SettingsPage() {
           </div>
         </div>
       </div>
+
+      {/* ── Link de agencia (solo plan Agency) ── */}
+      {isAgency && (
+        <div style={{background:'var(--card)',border:'1px solid rgba(99,102,241,.25)',borderRadius:'14px',padding:'22px',marginBottom:'14px',marginTop:'14px'}}>
+          <div style={{display:'flex',alignItems:'center',gap:'10px',marginBottom:'14px'}}>
+            <div style={{width:'36px',height:'36px',borderRadius:'10px',background:'rgba(99,102,241,.12)',border:'1px solid rgba(99,102,241,.25)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'17px',flexShrink:0}}>🤝</div>
+            <div>
+              <div style={{fontSize:'13px',fontWeight:'800',color:'var(--text)'}}>Link de tu agencia</div>
+              <div style={{fontSize:'11px',color:'var(--text4)',marginTop:'2px'}}>URL que aparece en el botón "Contrata un profesional" del dashboard para todos tus clientes</div>
+            </div>
+            <span style={{marginLeft:'auto',fontSize:'10px',fontWeight:'700',color:'#a5b4fc',background:'rgba(99,102,241,.1)',border:'1px solid rgba(99,102,241,.2)',padding:'3px 10px',borderRadius:'20px',whiteSpace:'nowrap',flexShrink:0}}>✦ Agency</span>
+          </div>
+          <div style={{marginBottom:'10px'}}>
+            <label style={{fontSize:'11px',fontWeight:'700',color:'#555',textTransform:'uppercase',letterSpacing:'.06em',display:'block',marginBottom:'6px'}}>URL de destino</label>
+            <input
+              type="url"
+              value={agencyLink}
+              onChange={e=>setAgencyLink(e.target.value)}
+              placeholder="https://www.tuagencia.com/"
+              style={{width:'100%',boxSizing:'border-box',background:'rgba(255,255,255,.05)',border:'1.5px solid rgba(99,102,241,.2)',borderRadius:'10px',padding:'11px 14px',color:'var(--text)',fontSize:'13px',outline:'none',fontFamily:'"Plus Jakarta Sans",sans-serif',transition:'border-color .15s'}}
+              onFocus={e=>e.target.style.borderColor='rgba(99,102,241,.55)'}
+              onBlur={e=>e.target.style.borderColor='rgba(99,102,241,.2)'}
+            />
+          </div>
+          <div style={{fontSize:'11px',color:'var(--text4)',background:'rgba(255,255,255,.02)',border:'1px solid rgba(255,255,255,.05)',borderRadius:'8px',padding:'10px 12px',lineHeight:'1.6'}}>
+            💡 Si dejas este campo vacío, el botón apuntará a <strong style={{color:'#a5b4fc'}}>junmkt.com</strong> por defecto. Guarda los cambios para que el link se actualice en el dashboard.
+          </div>
+        </div>
+      )}
 
       <button onClick={savePrefs} style={{
         marginTop:'8px',padding:'11px 28px',borderRadius:'9px',

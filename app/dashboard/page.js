@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '../lib/supabase'
 import { usePlan } from '../lib/usePlan'
-import { NICHES, DEFAULT_NICHE, NICHE_TOOLS } from '../lib/niches'
+import { NICHES, DEFAULT_NICHE, NICHE_TOOLS, NICHE_TIPS } from '../lib/niches'
 
 const fmtN = v => (+v||0)>=1e6?((+v/1e6).toFixed(1)+'M'):(+v||0)>=1e3?((+v/1e3).toFixed(1)+'K'):String(Math.round(+v||0))
 const fmtDate = d => { try { return new Date(d).toLocaleDateString('es-MX',{day:'numeric',month:'short'}) } catch{return ''} }
@@ -46,13 +46,17 @@ export default function DashboardHome() {
   const [pipComision, setPipComision] = useState('3')
   const [pipCierre, setPipCierre] = useState('10')
   const [pipMeta, setPipMeta] = useState('')
-  const { isPro } = usePlan()
+  const { isPro, isAgency } = usePlan()
   const router = useRouter()
 
   // ── Onboarding de nicho (solo primera vez) ──
   const [showNicheModal, setShowNicheModal] = useState(false)
   const [selectedNiche, setSelectedNiche] = useState(DEFAULT_NICHE)
   const [activeNiche, setActiveNiche] = useState(DEFAULT_NICHE)
+  // ── Tips carousel ──
+  const [tipIdx, setTipIdx] = useState(0)
+  const [agencyLinkRaw, setAgencyLinkRaw] = useState('')
+  const agencyLink = agencyLinkRaw || 'https://www.junmkt.com/'
 
   const nicheTool = NICHE_TOOLS[activeNiche] || NICHE_TOOLS[DEFAULT_NICHE]
   const nicheObj = NICHES.find(n => n.id === activeNiche) || NICHES[0]
@@ -66,6 +70,7 @@ export default function DashboardHome() {
         setSelectedNiche(prefs.niche)
         setActiveNiche(prefs.niche)
       }
+      if (prefs.agencyLink) setAgencyLinkRaw(prefs.agencyLink)
     } catch(e) {}
   }, [])
 
@@ -78,6 +83,13 @@ export default function DashboardHome() {
     setActiveNiche(selectedNiche)
     setShowNicheModal(false)
   }
+
+  // ── Auto-advance tips carousel ──
+  useEffect(() => {
+    const tips = NICHE_TIPS[activeNiche] || NICHE_TIPS['real_estate']
+    const timer = setInterval(() => setTipIdx(i => (i + 1) % tips.length), 6000)
+    return () => clearInterval(timer)
+  }, [activeNiche])
 
   function connectMeta() {
     if (!user) return
@@ -681,6 +693,88 @@ export default function DashboardHome() {
           })()}
         </div>
       </div>
+
+      {/* ══ MARKETING TIPS CAROUSEL ══ */}
+      {(()=>{
+        const tips = NICHE_TIPS[activeNiche] || NICHE_TIPS['real_estate']
+        const tip = tips[tipIdx] || tips[0]
+        const tagColor = {
+          'Contenido':'#6ee7b7','Audiencias Meta':'#60a5fa','Audiencias LinkedIn':'#818cf8',
+          'Presupuesto':'#fbbf24','Copywriting':'#f9a8d4','Meta Ads':'#60a5fa',
+          'Google Ads':'#34d399','Optimización':'#a78bfa','Estrategia':'#fb923c',
+        }[tip.tag] || '#a5b4fc'
+        return (
+          <div style={{background:'rgba(255,255,255,.02)',border:'1px solid rgba(255,255,255,.07)',borderRadius:'16px',padding:'22px 24px',animation:'fadeIn .45s ease',marginBottom:'0'}}>
+            {/* Header */}
+            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'16px',flexWrap:'wrap',gap:'10px'}}>
+              <div style={{display:'flex',alignItems:'center',gap:'10px'}}>
+                <div style={{width:'36px',height:'36px',borderRadius:'10px',background:'rgba(165,180,252,.1)',border:'1px solid rgba(165,180,252,.2)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'17px',flexShrink:0}}>💡</div>
+                <div>
+                  <div style={{fontSize:'14px',fontWeight:'800',color:'var(--text)',marginBottom:'1px'}}>Tips de Marketing</div>
+                  <div style={{fontSize:'11px',color:'var(--text4)'}}>Estrategias adaptadas a tu industria · {nicheObj.emoji} {nicheTool.label}</div>
+                </div>
+              </div>
+              {/* Prev / Next */}
+              <div style={{display:'flex',alignItems:'center',gap:'8px',flexShrink:0}}>
+                <button onClick={()=>setTipIdx(i=>(i-1+tips.length)%tips.length)}
+                  style={{width:'28px',height:'28px',borderRadius:'7px',border:'1px solid rgba(255,255,255,.1)',background:'rgba(255,255,255,.04)',color:'#888',cursor:'pointer',fontSize:'13px',display:'flex',alignItems:'center',justifyContent:'center',lineHeight:1}}>‹</button>
+                <span style={{fontSize:'11px',color:'var(--text4)',minWidth:'32px',textAlign:'center'}}>{tipIdx+1}/{tips.length}</span>
+                <button onClick={()=>setTipIdx(i=>(i+1)%tips.length)}
+                  style={{width:'28px',height:'28px',borderRadius:'7px',border:'1px solid rgba(255,255,255,.1)',background:'rgba(255,255,255,.04)',color:'#888',cursor:'pointer',fontSize:'13px',display:'flex',alignItems:'center',justifyContent:'center',lineHeight:1}}>›</button>
+              </div>
+            </div>
+
+            {/* Tip card */}
+            <div key={tipIdx} style={{background:'rgba(255,255,255,.03)',border:'1px solid rgba(255,255,255,.06)',borderRadius:'12px',padding:'18px 20px',animation:'fadeIn .3s ease'}}>
+              <div style={{display:'flex',alignItems:'flex-start',gap:'14px'}}>
+                <div style={{fontSize:'28px',flexShrink:0,lineHeight:1,marginTop:'2px'}}>{tip.icon}</div>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'6px',flexWrap:'wrap'}}>
+                    <span style={{fontSize:'10px',fontWeight:'700',color:tagColor,background:'rgba(255,255,255,.05)',border:`1px solid ${tagColor}33`,padding:'2px 8px',borderRadius:'20px',whiteSpace:'nowrap'}}>
+                      {tip.tag}
+                    </span>
+                  </div>
+                  <div style={{fontSize:'14px',fontWeight:'800',color:'var(--text)',marginBottom:'6px',lineHeight:'1.35'}}>{tip.title}</div>
+                  <div style={{fontSize:'12px',color:'var(--text3)',lineHeight:'1.65'}}>{tip.tip}</div>
+                  {tip.link && (
+                    <a href={tip.link} target="_blank" rel="noopener noreferrer"
+                      style={{display:'inline-flex',alignItems:'center',gap:'5px',marginTop:'10px',fontSize:'11px',fontWeight:'700',color:'#a5b4fc',textDecoration:'none',background:'rgba(99,102,241,.08)',border:'1px solid rgba(99,102,241,.2)',padding:'5px 12px',borderRadius:'7px',transition:'opacity .15s'}}
+                      onMouseEnter={e=>e.currentTarget.style.opacity='.75'} onMouseLeave={e=>e.currentTarget.style.opacity='1'}>
+                      Crear anuncio →
+                    </a>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Dots */}
+            <div style={{display:'flex',justifyContent:'center',gap:'5px',marginTop:'14px'}}>
+              {tips.map((_,i)=>(
+                <button key={i} onClick={()=>setTipIdx(i)}
+                  style={{width:i===tipIdx?'18px':'6px',height:'6px',borderRadius:'3px',border:'none',cursor:'pointer',padding:0,
+                    background:i===tipIdx?'#a5b4fc':'rgba(255,255,255,.12)',transition:'all .25s ease'}}>
+                </button>
+              ))}
+            </div>
+
+            {/* CTA — Contrata un profesional */}
+            <div style={{marginTop:'16px',padding:'14px 16px',borderRadius:'11px',background:'linear-gradient(135deg,rgba(99,102,241,.08) 0%,rgba(139,92,246,.06) 100%)',border:'1px solid rgba(99,102,241,.18)',display:'flex',alignItems:'center',justifyContent:'space-between',gap:'12px',flexWrap:'wrap'}}>
+              <div style={{display:'flex',alignItems:'center',gap:'10px'}}>
+                <span style={{fontSize:'20px'}}>🤝</span>
+                <div>
+                  <div style={{fontSize:'12px',fontWeight:'800',color:'var(--text)',marginBottom:'2px'}}>¿Prefieres que lo haga alguien experto?</div>
+                  <div style={{fontSize:'11px',color:'var(--text4)'}}>Delega tus campañas a una agencia especializada en tu industria.</div>
+                </div>
+              </div>
+              <a href={agencyLink} target="_blank" rel="noopener noreferrer"
+                style={{display:'inline-flex',alignItems:'center',gap:'6px',padding:'9px 18px',borderRadius:'9px',background:'linear-gradient(135deg,#6366f1,#8b5cf6)',color:'#fff',textDecoration:'none',fontSize:'12px',fontWeight:'700',whiteSpace:'nowrap',flexShrink:0,boxShadow:'0 4px 14px rgba(99,102,241,.25)',transition:'opacity .15s'}}
+                onMouseEnter={e=>e.currentTarget.style.opacity='.85'} onMouseLeave={e=>e.currentTarget.style.opacity='1'}>
+                Contrata un profesional ↗
+              </a>
+            </div>
+          </div>
+        )
+      })()}
 
       {/* ══ BOOST RADAR ══ */}
       {metaToken && (
