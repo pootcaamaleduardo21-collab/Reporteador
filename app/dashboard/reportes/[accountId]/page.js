@@ -2853,6 +2853,7 @@ function ReportesInner() {
         preset={preset}
         platform={platform}
         overview={overview}
+        prevOverview={isPro ? prevOverview : null}
         campaigns={isPro ? campaigns : []}
         adsets={isPro ? adsets : []}
         ads={isPro ? ads : []}
