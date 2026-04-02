@@ -10,7 +10,7 @@ export async function GET(request) {
   const params = new URLSearchParams({
     client_id: process.env.META_APP_ID,
     redirect_uri: `${APP_URL}/api/auth/callback/meta`,
-    scope: 'ads_read,ads_management,read_insights,business_management,pages_show_list,pages_read_engagement,instagram_basic,instagram_manage_insights',
+    scope: 'ads_read,read_insights,pages_show_list,pages_read_engagement,instagram_basic,instagram_manage_insights',
     response_type: 'code',
     state,
   })
