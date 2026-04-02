@@ -124,6 +124,58 @@ const qualityScore = (row) => {
 const qualityLabel = s => s>=75?{label:'Excelente',color:'#6ee7b7'}:s>=50?{label:'Bueno',color:'#fcd34d'}:{label:'Mejorar',color:'#f87171'}
 const delta = (curr, prev) => { if (!prev||prev===0) return null; const pct = ((curr-prev)/prev*100).toFixed(1); return { pct, up: curr>=prev } }
 
+// ── Google Ads quality & diagnosis ──────────────────────────
+const GADS_BENCHMARKS = { SEARCH:{ctr:3,cpm:50}, DISPLAY:{ctr:0.35,cpm:5}, VIDEO:{ctr:0.5,cpm:10}, SHOPPING:{ctr:0.8,cpm:30}, PERFORMANCE_MAX:{ctr:1,cpm:20} }
+const gadsQualityScore = (row) => {
+  if (!row) return 0
+  const bench = GADS_BENCHMARKS[row.channelType] || GADS_BENCHMARKS.SEARCH
+  let s = 0
+  if (row.ctr >= bench.ctr*2) s+=25; else if(row.ctr>=bench.ctr) s+=15; else if(row.ctr>0) s+=5
+  if (row.conversions>10) s+=25; else if(row.conversions>3) s+=18; else if(row.conversions>0) s+=10
+  const cr = row.clicks>0 ? row.conversions/row.clicks*100 : 0
+  if (cr>=5) s+=25; else if(cr>=2) s+=15; else if(cr>=1) s+=8
+  if (row.spend>0&&row.convValue>0) { const r=row.convValue/row.spend; if(r>=3) s+=25; else if(r>=2) s+=15; else if(r>=1) s+=5 }
+  return Math.min(s,100)
+}
+const diagnoseGads = (row) => {
+  const issues=[], wins=[]
+  const bench = GADS_BENCHMARKS[row.channelType] || GADS_BENCHMARKS.SEARCH
+  const isSearch = row.channelType==='SEARCH'
+  const cr = row.clicks>0 ? (row.conversions/row.clicks*100) : 0
+  if (row.ctr<bench.ctr/2) issues.push({t:'R',msg:`CTR muy bajo (${row.ctr.toFixed(2)}%)`,action:isSearch?'Mejora títulos, descripciones y extensiones':'Renueva el creativo — imagen o video'})
+  else if(row.ctr<bench.ctr) issues.push({t:'Y',msg:`CTR mejorable (${row.ctr.toFixed(2)}%)`,action:'Prueba variaciones de copy o segmentación más específica'})
+  else wins.push({t:'G',msg:`CTR excelente (${row.ctr.toFixed(2)}%)`,action:'Escala el presupuesto 20-30% gradualmente'})
+  if (row.conversions===0&&row.spend>200) issues.push({t:'R',msg:'Sin conversiones con gasto significativo',action:'Verifica el tracking de conversiones y la landing page'})
+  else if(row.conversions===0&&row.spend>50) issues.push({t:'Y',msg:'Sin conversiones aún',action:'Dale más tiempo o revisa la segmentación y el mensaje'})
+  else if(row.conversions>0) { const cpa=row.spend/row.conversions; wins.push({t:'G',msg:`${row.conversions.toFixed(1)} conversiones · CPA: $${cpa.toFixed(0)}`,action:'Mantén activo y escala si el CPA es rentable'}) }
+  if (cr>0&&cr<1) issues.push({t:'Y',msg:`Tasa de conversión baja (${cr.toFixed(1)}%)`,action:'Mejora la landing page y el llamado a la acción'})
+  else if(cr>=5) wins.push({t:'G',msg:`Excelente tasa de conversión (${cr.toFixed(1)}%)`,action:'La landing convierte muy bien — escala tráfico'})
+  if (row.spend>0&&row.convValue>0) { const roas=row.convValue/row.spend; if(roas<1) issues.push({t:'R',msg:`ROAS negativo (${roas.toFixed(2)}x)`,action:'El costo supera el valor generado — revisa precios y márgenes'}); else if(roas>=3) wins.push({t:'G',msg:`ROAS excelente (${roas.toFixed(2)}x)`,action:'Campaña muy rentable — aumenta presupuesto agresivamente'}) }
+  return {issues,wins}
+}
+const GadsDiagPanel = ({row}) => {
+  const {issues,wins} = diagnoseGads(row)
+  const all = [...wins,...issues]
+  if (all.length===0) return <div style={{fontSize:'11px',color:'#444',fontFamily:'monospace',padding:'8px'}}>Sin datos suficientes para diagnosticar</div>
+  const colors={R:'#f87171',Y:'#fcd34d',G:'#6ee7b7'}
+  const bgs={R:'rgba(248,113,113,.04)',Y:'rgba(252,211,77,.04)',G:'rgba(110,231,183,.05)'}
+  const borders={R:'rgba(248,113,113,.1)',Y:'rgba(252,211,77,.1)',G:'rgba(110,231,183,.15)'}
+  return (
+    <div style={{borderTop:'1px solid #1a1a22',paddingTop:'12px',marginTop:'8px'}}>
+      <div style={{fontSize:'9px',color:'#444',fontFamily:'monospace',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:'8px'}}>Diagnóstico</div>
+      {all.map((item,i)=>(
+        <div key={i} style={{display:'flex',gap:'8px',marginBottom:'6px',padding:'8px 12px',background:bgs[item.t],borderRadius:'6px',border:'1px solid '+borders[item.t]}}>
+          <span style={{fontSize:'10px',color:colors[item.t],fontWeight:'800',flexShrink:0,fontFamily:'monospace',minWidth:'16px'}}>{item.t==='G'?'OK':item.t==='Y'?'!':'!!'}</span>
+          <div>
+            <div style={{fontSize:'12px',color:colors[item.t],fontWeight:'600',marginBottom:'2px'}}>{item.msg}</div>
+            <div style={{fontSize:'11px',color:'#444',fontFamily:'monospace'}}>Acción: {item.action}</div>
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 const diagnoseCampaign = (row) => {
   const issues = [], wins = []
   if (row.frequency > 3.5) issues.push({ t:'R', msg:'Fatiga publicitaria detectada', action:'Pausa anuncios con frecuencia >3.5 y lanza nuevos creativos esta semana' })
@@ -238,6 +290,34 @@ const VideoMetrics = ({ row }) => {
     </div>
   )
 }
+
+// ── Generic Google Ads card (expandable) ───────────────────
+const CampCard = ({ title, subtitle, status, statusOk, children }) => {
+  const [open, setOpen] = React.useState(false)
+  return (
+    <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'10px',padding:'16px 20px',marginBottom:'8px'}}>
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',cursor:'pointer',flexWrap:'wrap',gap:'8px',marginBottom:open?'12px':'0'}} onClick={()=>setOpen(!open)}>
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'2px'}}>
+            <div style={{color:'#fff',fontSize:'13px',fontWeight:'700',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{title}</div>
+            {status && <span style={{fontSize:'9px',fontFamily:'monospace',padding:'2px 7px',borderRadius:'3px',background:statusOk?'rgba(110,231,183,.12)':'rgba(255,255,255,.06)',color:statusOk?'#6ee7b7':'#555',border:`1px solid ${statusOk?'rgba(110,231,183,.25)':'rgba(255,255,255,.08)'}`}}>{status}</span>}
+          </div>
+          {subtitle && <div style={{color:'#555',fontSize:'10px',fontFamily:'monospace',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{subtitle}</div>}
+        </div>
+        <div style={{color:'#444',fontSize:'14px',flexShrink:0}}>{open?'▲':'▼'}</div>
+      </div>
+      {open && children}
+    </div>
+  )
+}
+
+const EmptyState = ({icon,title,sub}) => (
+  <div style={{textAlign:'center',padding:'60px 20px',color:'var(--text4)'}}>
+    <div style={{fontSize:'32px',marginBottom:'12px'}}>{icon}</div>
+    <div style={{fontSize:'14px',fontWeight:'700',color:'var(--text)',marginBottom:'6px'}}>{title}</div>
+    {sub && <div style={{fontSize:'12px',color:'var(--text4)'}}>{sub}</div>}
+  </div>
+)
 
 const ExpandCard = ({ name, sub, badge, row }) => {
   const [open, setOpen] = React.useState(false)
@@ -579,6 +659,14 @@ function ReportesInner() {
   const [activeTab, setActiveTab] = useState('overview')
   const [platform, setPlatform] = useState(null)
   const [googleAdsData, setGoogleAdsData] = useState(null)
+  const [gadsError, setGadsError] = useState(null)
+  // Google Ads histórico
+  const [gadsHistorico, setGadsHistorico] = useState(null)
+  const [loadingGadsHistorico, setLoadingGadsHistorico] = useState(false)
+  const [gadsHistoricoError, setGadsHistoricoError] = useState(null)
+  const [gadsHistoricoFrom, setGadsHistoricoFrom] = useState(()=>{const d=new Date();d.setDate(1);d.setMonth(d.getMonth()-5);return d.toISOString().slice(0,7)})
+  const [gadsHistoricoTo, setGadsHistoricoTo] = useState(()=>{const d=new Date();d.setDate(1);return d.toISOString().slice(0,7)})
+  // Meta histórico
   const [historicoData, setHistoricoData] = useState(null)
   const [loadingHistorico, setLoadingHistorico] = useState(false)
   const [historicoError, setHistoricoError] = useState(null)
@@ -595,7 +683,9 @@ function ReportesInner() {
   // Sync tab from URL ?tab= param
   useEffect(() => {
     const tab = searchParams?.get('tab')
-    if (tab && ['overview','campanas','conjuntos','anuncios','audiencia','historico','google-ads','tiktok-ads'].includes(tab)) {
+    if (tab && ['overview','campanas','conjuntos','anuncios','audiencia','historico',
+                 'gads-campanas','gads-grupos','gads-anuncios','gads-audiencia','gads-historico',
+                 'google-ads','tiktok-ads'].includes(tab)) {
       setActiveTab(tab)
     }
   }, [searchParams])
@@ -648,6 +738,7 @@ function ReportesInner() {
 
   useEffect(() => {
     if (token && platform === 'meta_ads' && activeTab === 'historico' && !historicoData && !loadingHistorico) fetchHistorico()
+    if (token && platform === 'google_ads' && activeTab === 'gads-historico' && !gadsHistorico && !loadingGadsHistorico) fetchGadsHistorico()
   }, [token, platform, activeTab])
 
   async function fetchData() {
@@ -743,6 +834,7 @@ function ReportesInner() {
   async function fetchGoogleAdsData() {
     setLoading(true)
     setGoogleAdsData(null)
+    setGadsError(null)
     try {
       const range = getDateRange(preset, customFrom, customTo)
       if (!range||!range.since||!range.until) { setLoading(false); return }
@@ -750,25 +842,44 @@ function ReportesInner() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { setLoading(false); return }
 
-      const response = await fetch('/api/google-ads/fetch', {
+      const res = await fetch('/api/google-ads/fetch', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: user.id,
-          customerId: customerId,
-          dateFrom: range.since,
-          dateTo: range.until
-        })
+        body: JSON.stringify({ userId: user.id, customerId, dateFrom: range.since, dateTo: range.until })
       })
-
-      const data = await response.json()
+      const data = await res.json()
       if (data.success) {
         setGoogleAdsData(data)
       } else {
-        console.error('Error fetching Google Ads data:', data.error)
+        setGadsError(data.error || 'Error al obtener datos de Google Ads')
       }
-    } catch(e){console.error('Error in fetchGoogleAdsData:', e)}
+    } catch(e) {
+      console.error('fetchGoogleAdsData:', e)
+      setGadsError(e.message || 'Error de conexión')
+    }
     setLoading(false)
+  }
+
+  async function fetchGadsHistorico() {
+    setLoadingGadsHistorico(true)
+    setGadsHistorico(null)
+    setGadsHistoricoError(null)
+    try {
+      const customerId = accountId.replace('gads_', '')
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      const res = await fetch('/api/google-ads/fetch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id, customerId, type: 'historico', monthFrom: gadsHistoricoFrom, monthTo: gadsHistoricoTo })
+      })
+      const data = await res.json()
+      if (data.success) setGadsHistorico(data)
+      else setGadsHistoricoError(data.error || 'Error al cargar histórico')
+    } catch(e) {
+      setGadsHistoricoError(e.message || 'Error de conexión')
+    }
+    setLoadingGadsHistorico(false)
   }
 
   async function fetchDemographics() {
@@ -911,8 +1022,22 @@ function ReportesInner() {
 
   const isGoogle = platform === 'google_ads'
   const tabs = isGoogle
-    ? [{id:'overview',label:'Resumen',icon:'📊',desc:'Vista general de la cuenta'},{id:'google-ads',label:'Campañas',icon:'🎯',desc:'Detalle por campaña'}]
-    : [{id:'overview',label:'Resumen',icon:'📊',desc:'Vista general'},{id:'campanas',label:'Campañas',icon:'🎯',desc:'Cada campaña activa'},{id:'conjuntos',label:'Conjuntos',icon:'👥',desc:'Grupos de anuncios'},{id:'anuncios',label:'Anuncios',icon:'🖼',desc:'Creativos individuales'},{id:'audiencia',label:'Audiencia',icon:'🗺',desc:'Quién ve tus anuncios'},{id:'historico',label:'Histórico',icon:'📅',desc:'Mes a mes'}]
+    ? [
+        {id:'overview',        label:'Resumen',           icon:'📊', desc:'Vista general de la cuenta'},
+        {id:'gads-campanas',   label:'Campañas',          icon:'🎯', desc:'Cada campaña activa'},
+        {id:'gads-grupos',     label:'Grupos de anuncios',icon:'👥', desc:'Ad Groups'},
+        {id:'gads-anuncios',   label:'Anuncios',          icon:'🖼', desc:'Creativos individuales'},
+        {id:'gads-audiencia',  label:'Audiencias',        icon:'🗺', desc:'Quién ve tus anuncios'},
+        {id:'gads-historico',  label:'Histórico',         icon:'📅', desc:'Mes a mes'},
+      ]
+    : [
+        {id:'overview', label:'Resumen',    icon:'📊', desc:'Vista general'},
+        {id:'campanas', label:'Campañas',   icon:'🎯', desc:'Cada campaña activa'},
+        {id:'conjuntos',label:'Conjuntos',  icon:'👥', desc:'Grupos de anuncios'},
+        {id:'anuncios', label:'Anuncios',   icon:'🖼', desc:'Creativos individuales'},
+        {id:'audiencia',label:'Audiencia',  icon:'🗺', desc:'Quién ve tus anuncios'},
+        {id:'historico',label:'Histórico',  icon:'📅', desc:'Mes a mes'},
+      ]
   const objInfo = OBJECTIVE_MAP[detectedObjective] || OBJECTIVE_MAP.MULTIPLE
 
   const METRIC_HELP = {
@@ -1049,20 +1174,112 @@ function ReportesInner() {
                   </button>
                 </div>
               )}
-              {platform === 'google_ads' && googleAdsData ? (
-                <>
-                  <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(155px,1fr))',gap:'10px',marginBottom:'24px'}}>
-                    <MetricCard l='Gasto total' v={fmt$(googleAdsData.campaigns?.reduce((s,c)=>s+c.spend,0)||0)} sub='ejecutado'/>
-                    <MetricCard l='Impresiones' v={fmtN(googleAdsData.campaigns?.reduce((s,c)=>s+c.impressions,0)||0)} sub='total'/>
-                    <MetricCard l='Clics' v={fmtN(googleAdsData.campaigns?.reduce((s,c)=>s+c.clicks,0)||0)} sub='trafico'/>
-                    <MetricCard l='CTR' v={fmtP((googleAdsData.campaigns?.reduce((s,c)=>s+c.clicks,0)||0)/Math.max(googleAdsData.campaigns?.reduce((s,c)=>s+c.impressions,0)||1,1)*100)} sub='tasa'/>
-                    <MetricCard l='CPC' v={fmt$((googleAdsData.campaigns?.reduce((s,c)=>s+c.spend,0)||0)/Math.max(googleAdsData.campaigns?.reduce((s,c)=>s+c.clicks,0)||1,1))} sub='por clic'/>
-                    <MetricCard l='CPM' v={fmt$((googleAdsData.campaigns?.reduce((s,c)=>s+c.spend,0)||0)/(Math.max(googleAdsData.campaigns?.reduce((s,c)=>s+c.impressions,0)||1,1)/1000))} sub='por mil'/>
-                    <MetricCard l='Conversiones' v={fmtN(googleAdsData.campaigns?.reduce((s,c)=>s+c.conversions,0)||0)} sub='total'/>
-                    <MetricCard l='Valor de conversiones' v={fmt$(googleAdsData.campaigns?.reduce((s,c)=>s+c.conversion_value,0)||0)} sub='total'/>
-                  </div>
-                </>
-              ) : overview && (
+              {platform === 'google_ads' && googleAdsData ? (()=>{
+                const s = googleAdsData.summary || {}
+                const hasConv = s.totalConversions > 0
+                const isBad   = !hasConv && s.totalSpend > 100
+                const color   = hasConv ? '#6ee7b7' : isBad ? '#f87171' : '#fcd34d'
+                const bg      = hasConv ? 'rgba(110,231,183,.05)' : isBad ? 'rgba(248,113,113,.05)' : 'rgba(252,211,77,.05)'
+                const border  = hasConv ? 'rgba(110,231,183,.2)' : isBad ? 'rgba(248,113,113,.2)' : 'rgba(252,211,77,.2)'
+                const icon    = hasConv ? '✅' : isBad ? '🔴' : '⏳'
+                const headline= hasConv ? 'La inversión está generando conversiones' : isBad ? 'Hubo gasto pero no se registraron conversiones — revisa el tracking' : 'Poca actividad en este período'
+                // tendencia diaria
+                const dl = googleAdsData.daily||[]
+                let trendMsg = null
+                if (dl.length>=6) {
+                  const half = Math.floor(dl.length/2)
+                  const f1 = dl.slice(0,half), f2 = dl.slice(dl.length-half)
+                  const cpa1 = f1.filter(d=>d.conversions>0).reduce((s,d)=>s+(d.spend/d.conversions),0)/Math.max(f1.filter(d=>d.conversions>0).length,1)
+                  const cpa2 = f2.filter(d=>d.conversions>0).reduce((s,d)=>s+(d.spend/d.conversions),0)/Math.max(f2.filter(d=>d.conversions>0).length,1)
+                  if (cpa1>0&&cpa2>0) {
+                    const pct = Math.round((cpa1-cpa2)/cpa1*100)
+                    if (pct>10) trendMsg={up:true,text:`El CPA bajó ${pct}% en la segunda mitad del período — las campañas están mejorando`}
+                    else if (pct<-10) trendMsg={up:false,text:`El CPA subió ${Math.abs(pct)}% en la segunda mitad — revisa la competencia y las pujas`}
+                  }
+                }
+                return (
+                  <>
+                    {/* Executive summary */}
+                    <div style={{background:bg,border:'1px solid '+border,borderRadius:'14px',padding:'20px 24px',marginBottom:'24px'}}>
+                      <div style={{display:'flex',alignItems:'flex-start',gap:'16px',flexWrap:'wrap'}}>
+                        <div style={{fontSize:'36px',lineHeight:1,flexShrink:0}}>{icon}</div>
+                        <div style={{flex:1,minWidth:'220px'}}>
+                          <div style={{fontSize:'15px',fontWeight:'800',color,marginBottom:'8px'}}>{headline}</div>
+                          <div style={{fontSize:'13px',color:'#999',lineHeight:'1.8'}}>
+                            Se invirtieron{' '}<strong style={{color:'#fff',fontSize:'14px'}}>{fmt$(s.totalSpend)}</strong>
+                            {hasConv && <> y se obtuvieron{' '}<strong style={{color:'#6ee7b7',fontSize:'14px'}}>{s.totalConversions.toFixed(1)} conversiones</strong></>}
+                            {s.cpa>0 && <> — cada conversión costó en promedio{' '}<strong style={{color:'#fff'}}>{fmt$(s.cpa)}</strong></>}
+                            {s.roas>0 && <> · ROAS de{' '}<strong style={{color:s.roas>=2?'#6ee7b7':'#fcd34d'}}>{s.roas.toFixed(2)}x</strong></>}
+                          </div>
+                          {trendMsg && (
+                            <div style={{marginTop:'8px',fontSize:'12px',color:trendMsg.up?'#6ee7b7':'#fcd34d',display:'flex',alignItems:'center',gap:'6px'}}>
+                              <span>{trendMsg.up?'📈':'📉'}</span><span>{trendMsg.text}</span>
+                            </div>
+                          )}
+                        </div>
+                        <div style={{display:'flex',gap:'24px',flexWrap:'wrap',alignItems:'center',flexShrink:0}}>
+                          {[
+                            {l:'Impresiones',v:fmtN(s.totalImpressions),c:'#a78bfa'},
+                            {l:'Clics',v:fmtN(s.totalClicks),c:'#60a5fa'},
+                            {l:'CTR',v:fmtP(s.ctr),c:s.ctr>=2?'#6ee7b7':s.ctr>=1?'#fcd34d':'#f87171'},
+                          ].map((x,i)=>(
+                            <div key={i} style={{textAlign:'center'}}>
+                              <div style={{fontSize:'22px',fontWeight:'800',color:x.c,marginBottom:'2px'}}>{x.v}</div>
+                              <div style={{fontSize:'9px',color:'#555',fontFamily:'monospace',maxWidth:'80px',textAlign:'center',lineHeight:'1.4',textTransform:'uppercase',letterSpacing:'.04em'}}>{x.l}</div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* KPIs */}
+                    <div style={{marginBottom:'8px'}}>
+                      <div style={{fontSize:'11px',fontWeight:'700',color:'var(--text4)',textTransform:'uppercase',letterSpacing:'.07em',marginBottom:'10px'}}>📌 Métricas clave</div>
+                      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(155px,1fr))',gap:'10px',marginBottom:'20px'}}>
+                        <MetricCard l='Gasto total' v={fmt$(s.totalSpend)} sub='ejecutado'/>
+                        <MetricCard l='Conversiones' v={s.totalConversions.toFixed(1)} sub={hasConv?'obtenidas':'sin conversiones'} pos={hasConv} alert={!hasConv&&s.totalSpend>100}/>
+                        <MetricCard l='CPA' v={s.cpa>0?fmt$(s.cpa):'Sin datos'} sub='costo por conversión' alert={s.cpa===0&&s.totalSpend>100}/>
+                        <MetricCard l='ROAS' v={s.roas>0?s.roas.toFixed(2)+'x':'Sin datos'} sub='retorno sobre inversión' pos={s.roas>=2} alert={s.roas>0&&s.roas<1}/>
+                      </div>
+                    </div>
+                    <div style={{marginBottom:'24px'}}>
+                      <div style={{fontSize:'11px',fontWeight:'700',color:'var(--text4)',textTransform:'uppercase',letterSpacing:'.07em',marginBottom:'10px'}}>⚡ Rendimiento del anuncio</div>
+                      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(145px,1fr))',gap:'10px',marginBottom:'20px'}}>
+                        <MetricCard l='CTR' v={fmtP(s.ctr)} sub={s.ctr>=2?'Excelente ✓':s.ctr>=1?'Bueno':'Bajo — mejorar'} pos={s.ctr>=2} alert={s.ctr<0.5}/>
+                        <MetricCard l='CPC' v={fmt$(s.cpc)} sub='por clic recibido'/>
+                        <MetricCard l='CPM' v={fmt$(s.cpm)} sub='por 1,000 impresiones'/>
+                        <MetricCard l='Clics' v={fmtN(s.totalClicks)} sub='tráfico total'/>
+                        <MetricCard l='Impresiones' v={fmtN(s.totalImpressions)} sub='veces mostrado'/>
+                        {s.totalConvValue>0&&<MetricCard l='Valor de conv.' v={fmt$(s.totalConvValue)} sub='ingresos atribuidos' pos/>}
+                      </div>
+                    </div>
+
+                    {/* Daily charts */}
+                    {(googleAdsData.daily||[]).length>1 && (
+                      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'16px',marginBottom:'24px'}}>
+                        <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'10px',padding:'20px'}}>
+                          <div style={{fontSize:'11px',fontWeight:'700',color:'var(--text4)',marginBottom:'14px'}}>Gasto vs Conversiones por día</div>
+                          <div style={{height:'200px'}}>
+                            <Line data={{labels:(googleAdsData.daily||[]).map(d=>d.date.slice(5)),datasets:[
+                              {label:'Gasto ($)',data:(googleAdsData.daily||[]).map(d=>+d.spend.toFixed(2)),borderColor:'#f97316',backgroundColor:'rgba(249,115,22,.08)',fill:true,tension:.4,yAxisID:'y',pointRadius:2,borderWidth:2},
+                              {label:'Conversiones',data:(googleAdsData.daily||[]).map(d=>+d.conversions.toFixed(1)),borderColor:'#6ee7b7',backgroundColor:'rgba(110,231,183,.06)',fill:true,tension:.4,yAxisID:'y1',pointRadius:2,borderWidth:2}
+                            ]}} options={chartOpts(true)}/>
+                          </div>
+                        </div>
+                        <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'10px',padding:'20px'}}>
+                          <div style={{fontSize:'11px',fontWeight:'700',color:'var(--text4)',marginBottom:'14px'}}>CTR y CPC por día</div>
+                          <div style={{height:'200px'}}>
+                            <Line data={{labels:(googleAdsData.daily||[]).map(d=>d.date.slice(5)),datasets:[
+                              {label:'CTR %',data:(googleAdsData.daily||[]).map(d=>+(d.clicks/(d.impressions||1)*100).toFixed(2)),borderColor:'#6ee7b7',backgroundColor:'rgba(110,231,183,.06)',fill:true,tension:.4,yAxisID:'y',pointRadius:2,borderWidth:2},
+                              {label:'CPC ($)',data:(googleAdsData.daily||[]).map(d=>+(d.clicks>0?d.spend/d.clicks:0).toFixed(2)),borderColor:'#fcd34d',backgroundColor:'rgba(252,211,77,.06)',fill:true,tension:.4,yAxisID:'y1',pointRadius:2,borderWidth:2}
+                            ]}} options={chartOpts(true)}/>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )
+              })() : overview && (
                 <>
                   {comparing&&prevOverview&&(
                     <div style={{background:'rgba(110,231,183,.05)',border:'1px solid rgba(110,231,183,.2)',borderRadius:'8px',padding:'10px 16px',marginBottom:'16px',fontSize:'11px',color:'#6ee7b7',display:'flex',alignItems:'center',gap:'8px'}}>
@@ -1171,29 +1388,6 @@ function ReportesInner() {
                 </>
               )}
 
-
-              {platform === 'google_ads' && googleAdsData?.daily?.length>1&&(
-                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'16px',marginBottom:'24px'}}>
-                  <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'10px',padding:'20px'}}>
-                    <div style={{fontSize:'11px',fontWeight:'700',color:'var(--text4)',marginBottom:'14px'}}>Gasto vs Clics por dia</div>
-                    <div style={{height:'200px'}}>
-                      <Line data={{labels:googleAdsData.daily.map(d=>d.date.slice(5)),datasets:[
-                        {label:'Gastado ($)',data:googleAdsData.daily.map(d=>+d.spend.toFixed(2)),borderColor:'#f97316',backgroundColor:'rgba(249,115,22,.08)',fill:true,tension:.4,yAxisID:'y',pointRadius:2,borderWidth:2},
-                        {label:'Clics',data:googleAdsData.daily.map(d=>d.clicks),borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,.08)',fill:true,tension:.4,yAxisID:'y1',pointRadius:2,borderWidth:2}
-                      ]}} options={chartOpts(true)}/>
-                    </div>
-                  </div>
-                  <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'10px',padding:'20px'}}>
-                    <div style={{fontSize:'11px',fontWeight:'700',color:'var(--text4)',marginBottom:'14px'}}>CTR y CPM por dia</div>
-                    <div style={{height:'200px'}}>
-                      <Line data={{labels:googleAdsData.daily.map(d=>d.date.slice(5)),datasets:[
-                        {label:'CTR %',data:googleAdsData.daily.map(d=>+(d.clicks/(d.impressions||1)*100).toFixed(2)),borderColor:'#6ee7b7',backgroundColor:'rgba(110,231,183,.06)',fill:true,tension:.4,yAxisID:'y',pointRadius:2,borderWidth:2},
-                        {label:'CPM',data:googleAdsData.daily.map(d=>+(d.spend/(d.impressions/1000||1)).toFixed(2)),borderColor:'#fcd34d',backgroundColor:'rgba(252,211,77,.06)',fill:true,tension:.4,yAxisID:'y1',pointRadius:2,borderWidth:2}
-                      ]}} options={chartOpts(true)}/>
-                    </div>
-                  </div>
-                </div>
-              )}
 
               {platform === 'meta_ads' && daily.length>1&&(
                 <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'16px',marginBottom:'24px'}}>
@@ -1617,94 +1811,559 @@ function ReportesInner() {
               )}
             </>
           )}
-{activeTab==='google-ads'&&(
-  <>
-    {!googleAdsData ? (
-      <div style={{textAlign:'center',padding:'80px 0',color:'#444',fontFamily:'monospace',fontSize:'12px'}}>
-        Cargando datos de Google Ads...
+{/* ══ GOOGLE ADS TABS ══ */}
+{(()=>{
+  if (!isGoogle) return null
+  // Shared loading/error state
+  if (loading) return (
+    <div style={{textAlign:'center',padding:'80px 0'}}>
+      <div style={{width:'32px',height:'32px',borderRadius:'50%',border:'3px solid rgba(99,102,241,.2)',borderTop:'3px solid #6366f1',animation:'spin 1s linear infinite',margin:'0 auto 12px'}}></div>
+      <div style={{fontSize:'12px',color:'var(--text4)'}}>Cargando datos de Google Ads...</div>
+    </div>
+  )
+  if (gadsError) return (
+    <div style={{background:'rgba(248,113,113,.06)',border:'1px solid rgba(248,113,113,.2)',borderRadius:'10px',padding:'20px 24px',marginBottom:'20px',display:'flex',alignItems:'center',gap:'16px'}}>
+      <div style={{fontSize:'24px'}}>⚠️</div>
+      <div style={{flex:1}}>
+        <div style={{fontSize:'13px',fontWeight:'700',color:'#f87171',marginBottom:'4px'}}>Error al cargar Google Ads</div>
+        <div style={{fontSize:'12px',color:'var(--text4)'}}>{gadsError}</div>
       </div>
-    ) : (
+      <button onClick={fetchGoogleAdsData} style={{padding:'8px 16px',borderRadius:'7px',border:'1px solid rgba(248,113,113,.3)',background:'rgba(248,113,113,.12)',color:'#f87171',fontSize:'11px',fontWeight:'700',cursor:'pointer',fontFamily:'inherit'}}>Reintentar</button>
+    </div>
+  )
+  if (!googleAdsData) return null
+
+  const gd = googleAdsData
+  const s  = gd.summary || {}
+  const sn = n => n && n.length>32 ? n.slice(0,32)+'…' : (n||'—')
+  const barBg     = (arr,i) => i===0?'rgba(110,231,183,.55)':i===arr.length-1&&arr.length>2?'rgba(248,113,113,.4)':'rgba(99,102,241,.35)'
+  const barBorder = (arr,i) => i===0?'#6ee7b7':i===arr.length-1&&arr.length>2?'#f87171':'#6366f1'
+  const rowH      = n => Math.min(420, Math.max(140, n*46))
+
+  // ── RESUMEN (overview) ───────────────────────────────────────
+  if (activeTab==='overview') return null // se renderiza en el bloque overview principal
+
+  // ── CAMPAÑAS ─────────────────────────────────────────────────
+  if (activeTab==='gads-campanas') {
+    const camps = gd.campaigns || []
+    const sorted = [...camps].sort((a,b)=>b.conversions-a.conversions)
+    const byCtr  = [...camps].sort((a,b)=>b.ctr-a.ctr)
+    const hasConv = camps.some(c=>c.conversions>0)
+    return (
       <>
-        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(155px,1fr))',gap:'10px',marginBottom:'24px'}}>
-          <MetricCard l='Gasto total' v={fmt$(googleAdsData.campaigns?.reduce((s,c)=>s+c.spend,0)||0)} sub='ejecutado'/>
-          <MetricCard l='Impresiones' v={fmtN(googleAdsData.campaigns?.reduce((s,c)=>s+c.impressions,0)||0)} sub='total'/>
-          <MetricCard l='Clics' v={fmtN(googleAdsData.campaigns?.reduce((s,c)=>s+c.clicks,0)||0)} sub='trafico'/>
-          <MetricCard l='CTR' v={fmtP((googleAdsData.campaigns?.reduce((s,c)=>s+c.clicks,0)||0)/Math.max(googleAdsData.campaigns?.reduce((s,c)=>s+c.impressions,0)||1,1)*100)} sub='%'/>
-          <MetricCard l='CPC' v={fmt$((googleAdsData.campaigns?.reduce((s,c)=>s+c.spend,0)||0)/Math.max(googleAdsData.campaigns?.reduce((s,c)=>s+c.clicks,0)||1,1))} sub='por clic'/>
-          <MetricCard l='CPM' v={fmt$((googleAdsData.campaigns?.reduce((s,c)=>s+c.spend,0)||0)/(Math.max(googleAdsData.campaigns?.reduce((s,c)=>s+c.impressions,0)||1,1)/1000))} sub='por mil'/>
-          <MetricCard l='Conversiones' v={fmtN(googleAdsData.campaigns?.reduce((s,c)=>s+c.conversions,0)||0)} sub='total'/>
-          <MetricCard l='Valor de conversiones' v={fmt$(googleAdsData.campaigns?.reduce((s,c)=>s+c.conversion_value,0)||0)} sub='total'/>
+        <div style={{background:'rgba(59,130,246,.06)',border:'1px solid rgba(59,130,246,.15)',borderRadius:'8px',padding:'10px 16px',marginBottom:'16px',fontSize:'11px',color:'#60a5fa',display:'flex',alignItems:'center',gap:'8px'}}>
+          <span>🎯</span><span>Cada fila es una campaña. Haz clic para ver su diagnóstico y recomendaciones.</span>
         </div>
 
-        {googleAdsData.campaigns?.length>0&&(
-          <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'10px',padding:'20px',marginBottom:'24px'}}>
-            <div style={{fontSize:'11px',fontWeight:'700',color:'var(--text4)',marginBottom:'14px'}}>Campañas - Gasto por campaña</div>
-            <div style={{height:'200px'}}>
-              <Bar data={{labels:googleAdsData.campaigns.map(c=>c.name.length>20?c.name.slice(0,20)+'...':c.name),datasets:[{label:'Gastado ($)',data:googleAdsData.campaigns.map(c=>+c.spend.toFixed(2)),backgroundColor:googleAdsData.campaigns.map((_,i)=>COLORS[i%COLORS.length]+'80'),borderColor:googleAdsData.campaigns.map((_,i)=>COLORS[i%COLORS.length]),borderWidth:1,borderRadius:4}]}} options={chartOpts()}/>
-            </div>
-          </div>
-        )}
-
-        {googleAdsData.daily?.length>1&&(
-          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'16px',marginBottom:'24px'}}>
-            <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'10px',padding:'20px'}}>
-              <div style={{fontSize:'11px',fontWeight:'700',color:'var(--text4)',marginBottom:'14px'}}>Gasto vs Clics por dia</div>
-              <div style={{height:'200px'}}>
-                <Line data={{labels:googleAdsData.daily.map(d=>d.date.slice(5)),datasets:[
-                  {label:'Gastado ($)',data:googleAdsData.daily.map(d=>+d.spend.toFixed(2)),borderColor:'#f97316',backgroundColor:'rgba(249,115,22,.08)',fill:true,tension:.4,yAxisID:'y',pointRadius:2,borderWidth:2},
-                  {label:'Clics',data:googleAdsData.daily.map(d=>d.clicks),borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,.08)',fill:true,tension:.4,yAxisID:'y1',pointRadius:2,borderWidth:2}
-                ]}} options={chartOpts(true)}/>
-              </div>
-            </div>
-            <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'10px',padding:'20px'}}>
-              <div style={{fontSize:'11px',fontWeight:'700',color:'var(--text4)',marginBottom:'14px'}}>CTR y CPM por dia</div>
-              <div style={{height:'200px'}}>
-                <Line data={{labels:googleAdsData.daily.map(d=>d.date.slice(5)),datasets:[
-                  {label:'CTR %',data:googleAdsData.daily.map(d=>+(d.clicks/(d.impressions||1)*100).toFixed(2)),borderColor:'#6ee7b7',backgroundColor:'rgba(110,231,183,.06)',fill:true,tension:.4,yAxisID:'y',pointRadius:2,borderWidth:2},
-                  {label:'CPM',data:googleAdsData.daily.map(d=>+(d.spend/(d.impressions/1000||1)).toFixed(2)),borderColor:'#fcd34d',backgroundColor:'rgba(252,211,77,.06)',fill:true,tension:.4,yAxisID:'y1',pointRadius:2,borderWidth:2}
-                ]}} options={chartOpts(true)}/>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {googleAdsData.campaigns?.length>0&&(
+        {camps.length > 0 && (
           <>
-            <div style={{fontSize:'12px',color:'#888',fontFamily:'monospace',marginBottom:'12px',fontWeight:'700'}}>Campañas</div>
-            {googleAdsData.campaigns.map((c,i)=>(
-              <div key={i} style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'10px',padding:'16px 20px',marginBottom:'8px'}}>
-                <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'10px'}}>
-                  <div>
-                    <div style={{color:'#fff',fontSize:'13px',fontWeight:'700',marginBottom:'2px'}}>{c.name}</div>
-                    <div style={{color:'#555',fontSize:'10px',fontFamily:'monospace'}}>Status: {c.status || 'DESCONOCIDO'}</div>
-                  </div>
-                  <div style={{textAlign:'right'}}>
-                    <div style={{fontSize:'16px',fontWeight:'800',color:'#fff'}}>{fmt$(c.spend)}</div>
-                    <div style={{fontSize:'10px',color:'#555',fontFamily:'monospace'}}>{fmtN(c.clicks)} clics</div>
-                  </div>
+            {/* CHART 1 — ¿Qué campaña genera más conversiones? */}
+            <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'14px',padding:'24px',marginBottom:'14px'}}>
+              <div style={{marginBottom:'16px'}}>
+                <div style={{fontSize:'15px',fontWeight:'800',color:'#e0e0e0',marginBottom:'4px'}}>
+                  {hasConv ? '¿Cuál campaña genera más conversiones?' : '¿Cómo se distribuye el presupuesto?'}
                 </div>
-                <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(80px,1fr))',gap:'6px'}}>
-                  {[
-                    {l:'Impresiones',v:fmtN(c.impressions)},
-                    {l:'CTR',v:fmtP(c.ctr)},
-                    {l:'CPC',v:fmt$(c.cpc)},
-                    {l:'CPM',v:fmt$(c.cpm)},
-                    {l:'Conversiones',v:fmtN(c.conversions)},
-                    {l:'Valor',v:fmt$(c.conversion_value)},
-                  ].map(m=><MiniMetric key={m.l} {...m}/>)}
+                <div style={{fontSize:'11px',color:'#555',fontFamily:'monospace'}}>
+                  {hasConv ? 'Verde = líder · Rojo = la que menos genera' : 'Sin conversiones · mostrando gasto por campaña'}
                 </div>
               </div>
-            ))}
+              <div style={{height:rowH(sorted.length)+'px'}}>
+                <Bar data={{
+                  labels:(hasConv?sorted:camps).map(c=>sn(c.name)),
+                  datasets:[{
+                    label:hasConv?'Conversiones':'Gasto ($)',
+                    data:(hasConv?sorted:camps).map(c=>hasConv?+c.conversions.toFixed(1):+c.spend.toFixed(2)),
+                    backgroundColor:(hasConv?sorted:camps).map((_,i,arr)=>barBg(arr,i)),
+                    borderColor:(hasConv?sorted:camps).map((_,i,arr)=>barBorder(arr,i)),
+                    borderWidth:1,borderRadius:4
+                  }]
+                }} options={hBarOpts(hasConv?'':'')}/>
+              </div>
+              {hasConv && sorted[0] && (
+                <div style={{marginTop:'14px',padding:'12px 16px',background:'rgba(110,231,183,.05)',border:'1px solid rgba(110,231,183,.15)',borderRadius:'8px',fontSize:'12px',color:'#999',lineHeight:'1.7'}}>
+                  <strong style={{color:'#6ee7b7'}}>🏆 {sn(sorted[0].name)}</strong>{' '}lidera con{' '}
+                  <strong style={{color:'#fff'}}>{sorted[0].conversions.toFixed(1)} conversiones</strong>
+                  {sorted[0].spend>0 && <> · CPA de <strong style={{color:'#fcd34d'}}>{fmt$(sorted[0].spend/sorted[0].conversions)}</strong></>}.
+                </div>
+              )}
+            </div>
+
+            {/* CHART 2 — CTR por campaña */}
+            <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'14px',padding:'24px',marginBottom:'14px'}}>
+              <div style={{marginBottom:'16px'}}>
+                <div style={{fontSize:'15px',fontWeight:'800',color:'#e0e0e0',marginBottom:'4px'}}>¿Cuál campaña tiene mejor CTR?</div>
+                <div style={{fontSize:'11px',color:'#555',fontFamily:'monospace'}}>Mayor CTR = más relevante para tu audiencia · Verde = mejor · Rojo = más baja</div>
+              </div>
+              <div style={{height:rowH(byCtr.length)+'px'}}>
+                <Bar data={{
+                  labels:byCtr.map(c=>sn(c.name)),
+                  datasets:[{
+                    label:'CTR %',
+                    data:byCtr.map(c=>+c.ctr.toFixed(2)),
+                    backgroundColor:byCtr.map((_,i,arr)=>barBg(arr,i)),
+                    borderColor:byCtr.map((_,i,arr)=>barBorder(arr,i)),
+                    borderWidth:1,borderRadius:4
+                  }]
+                }} options={hBarOpts('%')}/>
+              </div>
+              {byCtr[0] && (
+                <div style={{marginTop:'14px',padding:'12px 16px',background:'rgba(110,231,183,.05)',border:'1px solid rgba(110,231,183,.15)',borderRadius:'8px',fontSize:'12px',color:'#999',lineHeight:'1.7'}}>
+                  <strong style={{color:'#6ee7b7'}}>✓ {sn(byCtr[0].name)}</strong> tiene el mejor CTR ({byCtr[0].ctr.toFixed(2)}%) — su anuncio es el más relevante para las búsquedas.
+                </div>
+              )}
+            </div>
           </>
         )}
 
-        {!googleAdsData.campaigns||googleAdsData.campaigns.length===0&&(
-          <div style={{textAlign:'center',padding:'60px 0',color:'#444',fontFamily:'monospace'}}>Sin datos disponibles para este periodo</div>
+        {/* Tarjetas de campaña con diagnóstico */}
+        {camps.map((c,i)=>{
+          const cr = c.clicks>0 ? (c.conversions/c.clicks*100) : 0
+          const roas = c.spend>0 && c.convValue>0 ? c.convValue/c.spend : 0
+          return (
+            <CampCard key={i} title={c.name} subtitle={c.channelLabel||c.channelType||'—'} status={c.status} statusOk={c.status==='ENABLED'}>
+              <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(90px,1fr))',gap:'6px',marginBottom:'8px'}}>
+                {[
+                  {l:'Gasto',v:fmt$(c.spend)},
+                  {l:'Impresiones',v:fmtN(c.impressions)},
+                  {l:'Clics',v:fmtN(c.clicks)},
+                  {l:'CTR',v:fmtP(c.ctr),pos:c.ctr>=2,alert:c.ctr<0.5},
+                  {l:'CPC',v:fmt$(c.cpc)},
+                  {l:'CPM',v:fmt$(c.cpm)},
+                  {l:'Conversiones',v:c.conversions.toFixed(1),pos:c.conversions>0},
+                  {l:'Conv. Rate',v:fmtP(cr),pos:cr>=2,alert:cr>0&&cr<1},
+                  ...(c.convValue>0?[{l:'Valor conv.',v:fmt$(c.convValue)}]:[]),
+                  ...(roas>0?[{l:'ROAS',v:roas.toFixed(2)+'x',pos:roas>=2,alert:roas>0&&roas<1}]:[]),
+                ].map(m=><MiniMetric key={m.l} {...m}/>)}
+              </div>
+              <GadsDiagPanel row={c}/>
+            </CampCard>
+          )
+        })}
+        {camps.length===0&&<EmptyState icon='🎯' title='Sin campañas en este período' sub='Prueba otro rango de fechas'/>}
+      </>
+    )
+  }
+
+  // ── GRUPOS DE ANUNCIOS ───────────────────────────────────────
+  if (activeTab==='gads-grupos') {
+    const groups = gd.adGroups || []
+    const sorted = [...groups].sort((a,b)=>b.conversions-a.conversions)
+    const byCtr  = [...groups].sort((a,b)=>b.ctr-a.ctr)
+    const hasConv = groups.some(g=>g.conversions>0)
+    return (
+      <>
+        <div style={{background:'rgba(99,102,241,.06)',border:'1px solid rgba(99,102,241,.15)',borderRadius:'8px',padding:'10px 16px',marginBottom:'16px',fontSize:'11px',color:'#a5b4fc',display:'flex',alignItems:'center',gap:'8px'}}>
+          <span>👥</span><span>Un grupo de anuncios agrupa keywords y anuncios bajo una misma campaña. Identifica cuál está convirtiendo mejor.</span>
+        </div>
+
+        {groups.length > 0 && (
+          <>
+            <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'14px',padding:'24px',marginBottom:'14px'}}>
+              <div style={{marginBottom:'16px'}}>
+                <div style={{fontSize:'15px',fontWeight:'800',color:'#e0e0e0',marginBottom:'4px'}}>
+                  {hasConv ? '¿Qué grupo de anuncios convierte mejor?' : '¿Cómo se distribuye el gasto entre grupos?'}
+                </div>
+                <div style={{fontSize:'11px',color:'#555',fontFamily:'monospace'}}>Verde = líder · Rojo = el que menos aporta</div>
+              </div>
+              <div style={{height:rowH(Math.min(sorted.length,12))+'px'}}>
+                <Bar data={{
+                  labels:(hasConv?sorted:groups).slice(0,12).map(g=>sn(g.name)),
+                  datasets:[{
+                    label:hasConv?'Conversiones':'Gasto ($)',
+                    data:(hasConv?sorted:groups).slice(0,12).map(g=>hasConv?+g.conversions.toFixed(1):+g.spend.toFixed(2)),
+                    backgroundColor:(hasConv?sorted:groups).slice(0,12).map((_,i,arr)=>barBg(arr,i)),
+                    borderColor:(hasConv?sorted:groups).slice(0,12).map((_,i,arr)=>barBorder(arr,i)),
+                    borderWidth:1,borderRadius:4
+                  }]
+                }} options={hBarOpts()}/>
+              </div>
+            </div>
+
+            <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'14px',padding:'24px',marginBottom:'14px'}}>
+              <div style={{marginBottom:'16px'}}>
+                <div style={{fontSize:'15px',fontWeight:'800',color:'#e0e0e0',marginBottom:'4px'}}>¿Cuál grupo tiene mejor CTR?</div>
+                <div style={{fontSize:'11px',color:'#555',fontFamily:'monospace'}}>El CTR más alto indica que ese grupo tiene los anuncios más relevantes</div>
+              </div>
+              <div style={{height:rowH(Math.min(byCtr.length,12))+'px'}}>
+                <Bar data={{
+                  labels:byCtr.slice(0,12).map(g=>sn(g.name)),
+                  datasets:[{label:'CTR %',data:byCtr.slice(0,12).map(g=>+g.ctr.toFixed(2)),backgroundColor:byCtr.slice(0,12).map((_,i,arr)=>barBg(arr,i)),borderColor:byCtr.slice(0,12).map((_,i,arr)=>barBorder(arr,i)),borderWidth:1,borderRadius:4}]
+                }} options={hBarOpts('%')}/>
+              </div>
+            </div>
+          </>
+        )}
+
+        {groups.map((g,i)=>{
+          const cr = g.clicks>0 ? (g.conversions/g.clicks*100) : 0
+          return (
+            <CampCard key={i} title={g.name} subtitle={`${g.channelLabel||g.channelType||'—'} · ${g.campaignName}`} status={g.status} statusOk={g.status==='ENABLED'}>
+              <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(90px,1fr))',gap:'6px'}}>
+                {[
+                  {l:'Gasto',v:fmt$(g.spend)},
+                  {l:'Impresiones',v:fmtN(g.impressions)},
+                  {l:'Clics',v:fmtN(g.clicks)},
+                  {l:'CTR',v:fmtP(g.ctr),pos:g.ctr>=2,alert:g.ctr<0.5},
+                  {l:'CPC',v:fmt$(g.cpc)},
+                  {l:'Conversiones',v:g.conversions.toFixed(1),pos:g.conversions>0},
+                  {l:'Conv. Rate',v:fmtP(cr),pos:cr>=2},
+                ].map(m=><MiniMetric key={m.l} {...m}/>)}
+              </div>
+            </CampCard>
+          )
+        })}
+        {groups.length===0&&<EmptyState icon='👥' title='Sin grupos de anuncios en este período' sub='Prueba otro rango de fechas'/>}
+      </>
+    )
+  }
+
+  // ── ANUNCIOS ─────────────────────────────────────────────────
+  if (activeTab==='gads-anuncios') {
+    const adsList = gd.ads || []
+    const scored  = [...adsList].map(a=>({...a, score:gadsQualityScore(a)})).sort((a,b)=>b.score-a.score)
+    const hasConv = adsList.some(a=>a.conversions>0)
+    const winner  = scored[0]
+    const loser   = scored.length>1 ? scored[scored.length-1] : null
+    const byCtr   = [...adsList].sort((a,b)=>b.ctr-a.ctr)
+    return (
+      <>
+        {winner && (
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'12px',marginBottom:'16px'}}>
+            <div style={{background:'rgba(110,231,183,.06)',border:'1px solid rgba(110,231,183,.2)',borderRadius:'12px',padding:'16px 20px'}}>
+              <div style={{fontSize:'10px',color:'#6ee7b7',fontWeight:'700',marginBottom:'6px',textTransform:'uppercase',letterSpacing:'.07em'}}>🏆 Mejor anuncio</div>
+              <div style={{fontSize:'13px',fontWeight:'800',color:'#fff',marginBottom:'4px'}}>{sn(winner.name)}</div>
+              <div style={{fontSize:'12px',color:'#888'}}>{hasConv ? `${winner.conversions.toFixed(1)} conv · CTR ${winner.ctr.toFixed(2)}%` : `CTR ${winner.ctr.toFixed(2)}% · ${fmtN(winner.clicks)} clics`}</div>
+            </div>
+            {loser && (
+              <div style={{background:'rgba(248,113,113,.05)',border:'1px solid rgba(248,113,113,.15)',borderRadius:'12px',padding:'16px 20px'}}>
+                <div style={{fontSize:'10px',color:'#f87171',fontWeight:'700',marginBottom:'6px',textTransform:'uppercase',letterSpacing:'.07em'}}>⚠️ Necesita atención</div>
+                <div style={{fontSize:'13px',fontWeight:'800',color:'#fff',marginBottom:'4px'}}>{sn(loser.name)}</div>
+                <div style={{fontSize:'12px',color:'#888'}}>{hasConv ? `${loser.conversions.toFixed(1)} conv · CTR ${loser.ctr.toFixed(2)}%` : `CTR ${loser.ctr.toFixed(2)}% · ${fmtN(loser.clicks)} clics`}</div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {adsList.length>0 && (
+          <>
+            <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'14px',padding:'24px',marginBottom:'14px'}}>
+              <div style={{marginBottom:'16px'}}>
+                <div style={{fontSize:'15px',fontWeight:'800',color:'#e0e0e0',marginBottom:'4px'}}>¿Cuál anuncio tiene mejor CTR?</div>
+                <div style={{fontSize:'11px',color:'#555',fontFamily:'monospace'}}>Mayor CTR = más relevante y atractivo para la audiencia</div>
+              </div>
+              <div style={{height:rowH(Math.min(byCtr.length,10))+'px'}}>
+                <Bar data={{
+                  labels:byCtr.slice(0,10).map(a=>sn(a.name)),
+                  datasets:[{label:'CTR %',data:byCtr.slice(0,10).map(a=>+a.ctr.toFixed(2)),backgroundColor:byCtr.slice(0,10).map((_,i,arr)=>barBg(arr,i)),borderColor:byCtr.slice(0,10).map((_,i,arr)=>barBorder(arr,i)),borderWidth:1,borderRadius:4}]
+                }} options={hBarOpts('%')}/>
+              </div>
+            </div>
+          </>
+        )}
+
+        {scored.map((a,i)=>{
+          const cr   = a.clicks>0 ? (a.conversions/a.clicks*100) : 0
+          const roas = a.spend>0 && a.convValue>0 ? a.convValue/a.spend : 0
+          const ql   = qualityLabel(a.score)
+          return (
+            <CampCard key={i} title={a.name||`Anuncio ${i+1}`} subtitle={`${a.channelLabel||a.channelType||'—'} · ${a.campaignName}`} status={a.status} statusOk={a.status==='ENABLED'}>
+              <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'10px'}}>
+                <div style={{fontSize:'9px',fontWeight:'700',padding:'3px 10px',borderRadius:'20px',background:`rgba(${ql.color==='#6ee7b7'?'110,231,183':ql.color==='#fcd34d'?'252,211,77':'248,113,113'},.15)`,color:ql.color,border:`1px solid ${ql.color}40`}}>Score {a.score}/100 · {ql.label}</div>
+                <div style={{height:'4px',flex:1,background:'rgba(255,255,255,.06)',borderRadius:'2px',overflow:'hidden'}}>
+                  <div style={{height:'100%',width:a.score+'%',background:ql.color,borderRadius:'2px',transition:'width .6s ease'}}></div>
+                </div>
+              </div>
+              <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(90px,1fr))',gap:'6px',marginBottom:'8px'}}>
+                {[
+                  {l:'Gasto',v:fmt$(a.spend)},
+                  {l:'Clics',v:fmtN(a.clicks)},
+                  {l:'CTR',v:fmtP(a.ctr),pos:a.ctr>=2,alert:a.ctr<0.5},
+                  {l:'CPC',v:fmt$(a.cpc)},
+                  {l:'Conversiones',v:a.conversions.toFixed(1),pos:a.conversions>0},
+                  {l:'Conv. Rate',v:fmtP(cr),pos:cr>=2},
+                  ...(roas>0?[{l:'ROAS',v:roas.toFixed(2)+'x',pos:roas>=2,alert:roas<1}]:[]),
+                  ...(a.videoViews>0?[{l:'Vistas',v:fmtN(a.videoViews)},{l:'View Rate',v:fmtP(a.viewRate),pos:a.viewRate>=15}]:[]),
+                ].map(m=><MiniMetric key={m.l} {...m}/>)}
+              </div>
+              <GadsDiagPanel row={a}/>
+            </CampCard>
+          )
+        })}
+        {adsList.length===0&&<EmptyState icon='🖼' title='Sin anuncios en este período' sub='Prueba otro rango de fechas'/>}
+      </>
+    )
+  }
+
+  // ── AUDIENCIAS ───────────────────────────────────────────────
+  if (activeTab==='gads-audiencia') {
+    const demo = gd.demographics || {}
+    const age    = demo.age    || []
+    const gender = demo.gender || []
+    const device = demo.device || []
+    const geo    = demo.geo    || []
+    const hasData = age.length>0||gender.length>0||device.length>0||geo.length>0
+    return (
+      <>
+        <div style={{background:'rgba(59,130,246,.06)',border:'1px solid rgba(59,130,246,.15)',borderRadius:'8px',padding:'10px 16px',marginBottom:'20px',fontSize:'11px',color:'#60a5fa',display:'flex',alignItems:'center',gap:'8px'}}>
+          <span>🗺</span><span>Muestra <strong>quién ve realmente tus anuncios</strong> en Google — por edad, género, dispositivo y país.</span>
+        </div>
+
+        {!hasData && <EmptyState icon='🗺' title='Sin datos de audiencia' sub='Aumenta el rango de fechas para obtener datos demográficos'/>}
+
+        {age.length>0 && (
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'16px',marginBottom:'20px'}}>
+            <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'10px',padding:'20px'}}>
+              <div style={{fontSize:'11px',fontWeight:'700',color:'var(--text4)',marginBottom:'14px'}}>Gasto por grupo de edad</div>
+              <div style={{height:'220px'}}>
+                <Bar data={{labels:age.map(d=>d.label),datasets:[{label:'Gasto ($)',data:age.map(d=>+d.spend.toFixed(2)),backgroundColor:age.map((_,i)=>COLORS[i%COLORS.length]+'80'),borderColor:age.map((_,i)=>COLORS[i%COLORS.length]),borderWidth:1,borderRadius:4}]}} options={chartOpts()}/>
+              </div>
+            </div>
+            <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'10px',padding:'20px'}}>
+              <div style={{fontSize:'11px',fontWeight:'700',color:'var(--text4)',marginBottom:'14px'}}>CTR por grupo de edad</div>
+              <div style={{height:'220px'}}>
+                <Bar data={{labels:age.map(d=>d.label),datasets:[{label:'CTR %',data:age.map(d=>d.impressions>0?+(d.clicks/d.impressions*100).toFixed(2):0),backgroundColor:age.map((_,i)=>COLORS[i%COLORS.length]+'80'),borderColor:age.map((_,i)=>COLORS[i%COLORS.length]),borderWidth:1,borderRadius:4}]}} options={chartOpts()}/>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {gender.length>0 && (
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'16px',marginBottom:'20px'}}>
+            <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'10px',padding:'20px'}}>
+              <div style={{fontSize:'11px',fontWeight:'700',color:'var(--text4)',marginBottom:'14px'}}>Distribución por género (gasto)</div>
+              <div style={{height:'220px'}}>
+                <Doughnut data={{labels:gender.map(d=>d.label),datasets:[{data:gender.map(d=>+d.spend.toFixed(2)),backgroundColor:['#3b82f6','#ec4899','#6ee7b7'],borderWidth:0}]}} options={doughnutOpts}/>
+              </div>
+            </div>
+            <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'10px',padding:'20px'}}>
+              <div style={{fontSize:'11px',fontWeight:'700',color:'var(--text4)',marginBottom:'14px'}}>Conversiones por género</div>
+              <div style={{height:'220px'}}>
+                <Bar data={{labels:gender.map(d=>d.label),datasets:[{label:'Conversiones',data:gender.map(d=>+d.conversions.toFixed(1)),backgroundColor:['#3b82f680','#ec489980'],borderColor:['#3b82f6','#ec4899'],borderWidth:1,borderRadius:4}]}} options={chartOpts()}/>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {device.length>0 && (
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'16px',marginBottom:'20px'}}>
+            <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'10px',padding:'20px'}}>
+              <div style={{fontSize:'11px',fontWeight:'700',color:'var(--text4)',marginBottom:'14px'}}>Gasto por dispositivo</div>
+              <div style={{height:'220px'}}>
+                <Doughnut data={{labels:device.map(d=>d.label),datasets:[{data:device.map(d=>+d.spend.toFixed(2)),backgroundColor:COLORS.slice(0,device.length).map(c=>c+'cc'),borderWidth:0}]}} options={doughnutOpts}/>
+              </div>
+            </div>
+            <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'10px',padding:'20px'}}>
+              <div style={{fontSize:'11px',fontWeight:'700',color:'var(--text4)',marginBottom:'14px'}}>CTR por dispositivo</div>
+              <div style={{height:'220px'}}>
+                <Bar data={{labels:device.map(d=>d.label),datasets:[{label:'CTR %',data:device.map(d=>d.impressions>0?+(d.clicks/d.impressions*100).toFixed(2):0),backgroundColor:COLORS.slice(0,device.length).map(c=>c+'80'),borderColor:COLORS.slice(0,device.length),borderWidth:1,borderRadius:4}]}} options={chartOpts()}/>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {geo.length>0 && (
+          <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'12px',padding:'20px',marginBottom:'20px'}}>
+            <div style={{fontSize:'11px',fontWeight:'700',color:'var(--text4)',marginBottom:'16px'}}>Top países por gasto</div>
+            {geo.map((g,i)=>{
+              const total = geo.reduce((s,x)=>s+x.spend,0)
+              const pct   = total>0 ? g.spend/total*100 : 0
+              return (
+                <div key={i} style={{marginBottom:'10px'}}>
+                  <div style={{display:'flex',justifyContent:'space-between',marginBottom:'4px'}}>
+                    <span style={{fontSize:'12px',color:'var(--text)',fontWeight:'600'}}>{g.name}</span>
+                    <div style={{display:'flex',gap:'16px',fontSize:'11px',color:'var(--text4)'}}>
+                      <span>{fmt$(g.spend)}</span>
+                      <span>{fmtN(g.clicks)} clics</span>
+                      <span>{g.conversions.toFixed(1)} conv.</span>
+                    </div>
+                  </div>
+                  <div style={{height:'5px',background:'rgba(255,255,255,.06)',borderRadius:'3px',overflow:'hidden'}}>
+                    <div style={{height:'100%',width:pct+'%',background:COLORS[i%COLORS.length],borderRadius:'3px'}}></div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
         )}
       </>
-    )}
-  </>
-)}
+    )
+  }
+
+  // ── HISTÓRICO ────────────────────────────────────────────────
+  if (activeTab==='gads-historico') {
+    return (
+      <>
+        {/* Selector de período */}
+        <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'12px',padding:'16px 20px',marginBottom:'20px',display:'flex',alignItems:'center',gap:'12px',flexWrap:'wrap'}}>
+          <span style={{fontSize:'11px',color:'var(--text4)',fontWeight:'700',flexShrink:0}}>Período:</span>
+          <select value={gadsHistoricoFrom} onChange={e=>{setGadsHistoricoFrom(e.target.value);setGadsHistorico(null)}} style={{padding:'6px 10px',borderRadius:'7px',border:'1px solid var(--border)',background:'var(--bg)',color:'var(--text)',fontSize:'11px',cursor:'pointer',fontFamily:'inherit'}}>
+            {HIST_MONTHS.map(m=><option key={m.value} value={m.value}>{m.label}</option>)}
+          </select>
+          <span style={{fontSize:'11px',color:'var(--text4)'}}>→</span>
+          <select value={gadsHistoricoTo} onChange={e=>{setGadsHistoricoTo(e.target.value);setGadsHistorico(null)}} style={{padding:'6px 10px',borderRadius:'7px',border:'1px solid var(--border)',background:'var(--bg)',color:'var(--text)',fontSize:'11px',cursor:'pointer',fontFamily:'inherit'}}>
+            {HIST_MONTHS.filter(m=>m.value>=gadsHistoricoFrom).map(m=><option key={m.value} value={m.value}>{m.label}</option>)}
+          </select>
+          <button onClick={fetchGadsHistorico} style={{padding:'6px 16px',borderRadius:'7px',border:'1px solid rgba(99,102,241,.4)',background:'rgba(99,102,241,.15)',color:'#a5b4fc',fontSize:'11px',fontWeight:'700',cursor:'pointer',fontFamily:'inherit'}}>
+            {loadingGadsHistorico ? 'Cargando…' : 'Ver período'}
+          </button>
+        </div>
+
+        {loadingGadsHistorico&&(
+          <div style={{textAlign:'center',padding:'60px 0'}}>
+            <div style={{width:'28px',height:'28px',borderRadius:'50%',border:'3px solid rgba(99,102,241,.2)',borderTop:'3px solid #6366f1',animation:'spin 1s linear infinite',margin:'0 auto 12px'}}></div>
+            <div style={{fontSize:'12px',color:'var(--text4)'}}>Cargando histórico...</div>
+          </div>
+        )}
+
+        {gadsHistoricoError&&(
+          <div style={{background:'rgba(248,113,113,.06)',border:'1px solid rgba(248,113,113,.2)',borderRadius:'8px',padding:'16px',color:'#f87171',fontSize:'12px',marginBottom:'16px'}}>{gadsHistoricoError}</div>
+        )}
+
+        {gadsHistorico&&(()=>{
+          const data = gadsHistorico.monthly || []
+          if (data.length===0) return <EmptyState icon='📅' title='Sin datos en este período' sub='Selecciona un período con actividad'/>
+          const labels = data.map(m=>{ const [y,mo]=m.month.split('-'); return new Date(y,+mo-1).toLocaleString('es-MX',{month:'short',year:'2-digit'}).toUpperCase() })
+          const totSpend = data.reduce((s,m)=>s+m.spend,0)
+          const totConv  = data.reduce((s,m)=>s+m.conversions,0)
+          const totClk   = data.reduce((s,m)=>s+m.clicks,0)
+          const totVal   = data.reduce((s,m)=>s+m.convValue,0)
+          const avgCtr   = data.reduce((s,m)=>s+m.ctr,0)/data.length
+          const avgCpa   = totConv>0?totSpend/totConv:0
+          const avgRoas  = totSpend>0?totVal/totSpend:0
+          return (
+            <>
+              {/* Resumen del período */}
+              <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(140px,1fr))',gap:'10px',marginBottom:'20px'}}>
+                {[
+                  {l:'Gasto total',v:fmt$(totSpend),sub:'en el período'},
+                  {l:'Conversiones',v:fmtN(totConv),sub:'total',pos:totConv>0},
+                  {l:'Clics totales',v:fmtN(totClk),sub:'tráfico'},
+                  {l:'CTR promedio',v:fmtP(avgCtr),sub:'del período'},
+                  ...(avgCpa>0?[{l:'CPA promedio',v:fmt$(avgCpa),sub:'por conversión'}]:[]),
+                  ...(avgRoas>0?[{l:'ROAS promedio',v:avgRoas.toFixed(2)+'x',sub:'retorno',pos:avgRoas>=2}]:[]),
+                  ...(totVal>0?[{l:'Valor total',v:fmt$(totVal),sub:'generado'}]:[]),
+                ].map(m=><MetricCard key={m.l} l={m.l} v={m.v} sub={m.sub} pos={m.pos}/>)}
+              </div>
+
+              {/* Gasto mes a mes */}
+              <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'12px',padding:'20px',marginBottom:'14px'}}>
+                <div style={{fontSize:'14px',fontWeight:'800',color:'#e0e0e0',marginBottom:'3px'}}>💰 Gasto mes a mes</div>
+                <div style={{fontSize:'10px',color:'#555',fontFamily:'monospace',marginBottom:'14px'}}>¿Cuánto se invirtió cada mes?</div>
+                <div style={{height:'220px'}}>
+                  <Bar data={{labels,datasets:[{label:'Gasto ($)',data:data.map(m=>+m.spend.toFixed(2)),backgroundColor:'rgba(249,115,22,.45)',borderColor:'#f97316',borderWidth:1,borderRadius:4}]}} options={chartOpts()}/>
+                </div>
+              </div>
+
+              {/* Conversiones mes a mes */}
+              <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'12px',padding:'20px',marginBottom:'14px'}}>
+                <div style={{fontSize:'14px',fontWeight:'800',color:'#e0e0e0',marginBottom:'3px'}}>🎯 Conversiones mes a mes</div>
+                <div style={{fontSize:'10px',color:'#555',fontFamily:'monospace',marginBottom:'14px'}}>¿Cuántos resultados generó cada mes?</div>
+                <div style={{height:'220px'}}>
+                  <Bar data={{labels,datasets:[{label:'Conversiones',data:data.map(m=>+m.conversions.toFixed(1)),backgroundColor:'rgba(110,231,183,.45)',borderColor:'#6ee7b7',borderWidth:1,borderRadius:4}]}} options={chartOpts()}/>
+                </div>
+              </div>
+
+              {/* CTR y CPA tendencia */}
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'16px',marginBottom:'14px'}}>
+                <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'12px',padding:'20px'}}>
+                  <div style={{fontSize:'13px',fontWeight:'800',color:'#e0e0e0',marginBottom:'3px'}}>📈 CTR por mes</div>
+                  <div style={{fontSize:'10px',color:'#555',fontFamily:'monospace',marginBottom:'12px'}}>Tendencia de relevancia</div>
+                  <div style={{height:'180px'}}>
+                    <Line data={{labels,datasets:[{label:'CTR %',data:data.map(m=>+m.ctr.toFixed(2)),borderColor:'#6ee7b7',backgroundColor:'rgba(110,231,183,.06)',fill:true,tension:.4,pointRadius:3,borderWidth:2}]}} options={chartOpts()}/>
+                  </div>
+                </div>
+                <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'12px',padding:'20px'}}>
+                  <div style={{fontSize:'13px',fontWeight:'800',color:'#e0e0e0',marginBottom:'3px'}}>💵 CPA por mes</div>
+                  <div style={{fontSize:'10px',color:'#555',fontFamily:'monospace',marginBottom:'12px'}}>Costo por conversión (más bajo = mejor)</div>
+                  <div style={{height:'180px'}}>
+                    <Line data={{labels,datasets:[{label:'CPA ($)',data:data.map(m=>+m.cpa.toFixed(2)),borderColor:'#fcd34d',backgroundColor:'rgba(252,211,77,.06)',fill:true,tension:.4,pointRadius:3,borderWidth:2}]}} options={chartOpts()}/>
+                  </div>
+                </div>
+              </div>
+
+              {/* ROAS si hay valor de conversiones */}
+              {data.some(m=>m.convValue>0) && (
+                <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'12px',padding:'20px',marginBottom:'14px'}}>
+                  <div style={{fontSize:'14px',fontWeight:'800',color:'#e0e0e0',marginBottom:'3px'}}>📊 ROAS mes a mes</div>
+                  <div style={{fontSize:'10px',color:'#555',fontFamily:'monospace',marginBottom:'14px'}}>Retorno sobre inversión publicitaria — +2x es bueno, +4x excelente</div>
+                  <div style={{height:'200px'}}>
+                    <Line data={{labels,datasets:[
+                      {label:'ROAS',data:data.map(m=>+m.roas.toFixed(2)),borderColor:'#a78bfa',backgroundColor:'rgba(167,139,250,.06)',fill:true,tension:.4,pointRadius:3,borderWidth:2},
+                    ]}} options={{...chartOpts(),plugins:{...chartOpts().plugins,annotation:{annotations:{line1:{type:'line',yMin:2,yMax:2,borderColor:'rgba(110,231,183,.4)',borderWidth:1,borderDash:[4,4]}}}}}}/>
+                  </div>
+                </div>
+              )}
+
+              {/* Breakdown por tipo de canal */}
+              {(gadsHistorico.channelTypes||[]).length>1 && (
+                <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'12px',padding:'20px',marginBottom:'14px'}}>
+                  <div style={{fontSize:'14px',fontWeight:'800',color:'#e0e0e0',marginBottom:'3px'}}>🗂 Gasto por tipo de campaña</div>
+                  <div style={{fontSize:'10px',color:'#555',fontFamily:'monospace',marginBottom:'14px'}}>Search vs Display vs Video vs Shopping — ¿dónde va el presupuesto?</div>
+                  <div style={{height:'220px'}}>
+                    <Bar data={{
+                      labels,
+                      datasets:(gadsHistorico.channelTypes||[]).map((ct,i)=>({
+                        label:{SEARCH:'Search',DISPLAY:'Display',VIDEO:'Video',SHOPPING:'Shopping',PERFORMANCE_MAX:'Perf Max',DEMAND_GEN:'Demand Gen'}[ct]||ct,
+                        data:data.map(m=>(m.byChannel||{})[ct]?.spend?.toFixed(2)||0),
+                        backgroundColor:COLORS[i%COLORS.length]+'80',
+                        borderColor:COLORS[i%COLORS.length],
+                        borderWidth:1,borderRadius:3,
+                      }))
+                    }} options={{...chartOpts(),plugins:{...chartOpts().plugins,legend:{labels:{color:'#888',font:{family:'Plus Jakarta Sans, sans-serif',size:11},boxWidth:10,padding:12}}}}}/>
+                  </div>
+                </div>
+              )}
+
+              {/* Tabla: mejor campaña por mes */}
+              <div style={{background:'var(--sidebar)',border:'1px solid var(--border)',borderRadius:'12px',padding:'20px',marginBottom:'14px'}}>
+                <div style={{fontSize:'14px',fontWeight:'800',color:'#e0e0e0',marginBottom:'3px'}}>🏆 Campaña líder por mes</div>
+                <div style={{fontSize:'10px',color:'#555',fontFamily:'monospace',marginBottom:'16px'}}>La campaña con más conversiones en cada mes del período</div>
+                <div style={{overflowX:'auto'}}>
+                  <table style={{width:'100%',borderCollapse:'collapse'}}>
+                    <thead>
+                      <tr style={{borderBottom:'1px solid rgba(255,255,255,.07)'}}>
+                        {['Mes','Campaña líder','Tipo','Conversiones','Invertido','CPA'].map(h=>(
+                          <th key={h} style={{padding:'8px 12px',textAlign:'left',fontSize:'9px',color:'#444',fontFamily:'monospace',textTransform:'uppercase',letterSpacing:'.07em',fontWeight:'600',whiteSpace:'nowrap'}}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {data.map((m,i)=>{
+                        const best = m.bestCampaign
+                        const monthLabel = labels[i]
+                        if (!best) return (
+                          <tr key={i} style={{borderBottom:'1px solid rgba(255,255,255,.04)'}}>
+                            <td style={{padding:'10px 12px',color:'#a5b4fc',fontFamily:'monospace',fontWeight:'700'}}>{monthLabel}</td>
+                            <td colSpan={5} style={{padding:'10px 12px',color:'#444',fontSize:'11px',fontFamily:'monospace'}}>Sin actividad</td>
+                          </tr>
+                        )
+                        const cpa = best.conversions>0 ? best.spend/best.conversions : 0
+                        return (
+                          <tr key={i} style={{borderBottom:'1px solid rgba(255,255,255,.04)'}}
+                            onMouseEnter={e=>e.currentTarget.style.background='rgba(255,255,255,.025)'}
+                            onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
+                            <td style={{padding:'10px 12px',color:'#a5b4fc',fontFamily:'monospace',fontWeight:'700',whiteSpace:'nowrap'}}>{monthLabel}</td>
+                            <td style={{padding:'10px 12px',color:'#e0e0e0',fontSize:'12px',maxWidth:'200px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{best.name}</td>
+                            <td style={{padding:'10px 12px'}}><span style={{fontSize:'9px',fontFamily:'monospace',color:'#888',background:'rgba(255,255,255,.05)',padding:'2px 8px',borderRadius:'4px',whiteSpace:'nowrap'}}>{({SEARCH:'Search',DISPLAY:'Display',VIDEO:'Video',SHOPPING:'Shopping',PERFORMANCE_MAX:'Perf Max',DEMAND_GEN:'Demand Gen'})[best.type]||best.type||'—'}</span></td>
+                            <td style={{padding:'10px 12px',color:best.conversions>0?'#6ee7b7':'#555',fontWeight:'700',fontSize:'13px'}}>{best.conversions.toFixed(1)}</td>
+                            <td style={{padding:'10px 12px',color:'#fff',fontSize:'12px'}}>{fmt$(best.spend)}</td>
+                            <td style={{padding:'10px 12px',color:cpa>0?'#fff':'#555',fontSize:'12px'}}>{cpa>0?fmt$(cpa):'—'}</td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </>
+          )
+        })()}
+      </>
+    )
+  }
+
+  return null
+})()}
 {activeTab==='tiktok-ads'&&(
   <div style={{background:'rgba(168,85,247,.05)',border:'1px solid rgba(168,85,247,.15)',borderRadius:'8px',padding:'20px',marginBottom:'20px'}}>
     <div style={{fontSize:'14px',color:'#a855f7',fontFamily:'monospace',fontWeight:'700',marginBottom:'12px'}}>TikTok Ads</div>
