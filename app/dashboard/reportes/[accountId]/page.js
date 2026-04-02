@@ -2854,7 +2854,11 @@ function ReportesInner() {
         platform={platform}
         overview={overview}
         campaigns={isPro ? campaigns : []}
+        adsets={isPro ? adsets : []}
         ads={isPro ? ads : []}
+        daily={isPro ? daily : []}
+        demographics={isPro ? demographics : null}
+        historicoData={isPro ? historicoData : null}
         userId={userId}
         isPro={isPro}
       />
